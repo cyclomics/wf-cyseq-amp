@@ -1,90 +1,87 @@
-The system design is divided into several viewpoints. Each viewpoint, describes one aspect of the workflow, and what practices and philosphies should be followed. Here we propose a series of questions that should be answered per viewpoint. Keep in mind that depending on the workflow, not all questions might be relevant and can be skipped. Of course, additional information can be written into the adequate viewpoint even if it is not an answer to one of these questions. **It is as important to write the design as to explain the reason behind each decision**, in this manner it is easier for multiple people to follow the same principles.
-
 ### 1. Context Viewpoint
 
-*Describe the system’s environment and boundaries*
+The purpose of <ins>wf-cyclomicsseq-amp</ins> is to:
 
-- What is the main purpose of the workflow? 
-  - Try to be as concrete as possible, this is very important as it defines what the tool should do, and what it should not.
-  - Think whether it has a single purpose or multiple; if it has multiple purposes, should it be split into different tools? Argue why it should be a single tool.
-  - Explain the biological application for which the tool is developed. If possible, mention a biological application for which a user might expect the tool to be applicable, but for which it is either not applicable.
-  - Example:
-    - *This workflow takes as input a series of FASTQ files, aligns them, and creates a series of report files on certain statistics.*
-    - *The tool is developed for CyclomicsSeq sequencing amplicons, with insert sizes ranging from 100-500 bp.*
-    - *This tool is not applicable for other sequencing technologies.*
+- Analyse CyclomicsSeq amplicon sequencing data to generate consensus reads and call variants in known amplicon loci. Amplicon inserts should no smaller than 50 bp.
 
-- Who is the intended user of the tool?
-  - Probably, most Cyclomics tools will be used by experienced bioinformaticians that are comfortable with the CLI, but consider this also for notebook repositories.
-  - Examples: Bioinformatician, wetlab person, technician, researcher.
+This workflow takes as input:
+1. A folder containing FASTQ files, or optionally a folder containing several folders for different barcodes each containing a subfolder with FASTQ files. FASTQ files can optionally be gzipped.
+2. The human reference genome, version GRCh38.p14.
+3. A BED file with the loci for the amplicon inserts amplified during PCR (excluding primers).
 
-- What does the tool NOT do and why? For example, data will not be aligned, it is expected to be aligned. It will not do variant calling, we reserve this to external tools. It will report metrics, but not make plots.
+What <ins>wf-cyclomicsseq-amp</ins> **is not** meant to do:
+
+- Analyse experiments with amplicon insert sizes smaller than 50 bp.
+- Process other technologies' amplicon sequencing data.
+- Analyse CyclomicsSeq genome-wide sequencing data, for which there was no PCR amplification of known loci.
+- Analyse variants using other reference genomes, or experiments on other species. While this is technically possible, variants will not be annotated.
+
+This workflow is intended to be used either by bioinformaticians through the CLI, or by technicians and researchers through the [EPI2ME](https://epi2me.nanoporetech.com/) GUI.
 
 ### 2. Composition and Structure Viewpoint
 
-*Describe how the system is decomposed into parts*
+This is a relatively linear workflow, composed of the following parts, each a different module:
 
-- What are the main components/modules of the workflow? 
-  - How are the different modules organized? 
-  - What are the responsibilities of each module?
-    - What does a module do, and what does it not do
-    - Where does the responsibility of a module start and end?
-  - Should modules be organized by steps in a processing pipeline?
-  - Should modules be different alternatives of the same step in a processing pipeline?
-  - Should modules be organized by different input file types?
-  
+1. Input processing
+
+    Generate unique run IDs, process input folders to ingest FASTQ files (per barcode, if provided), and index reference genome. 
+
+2. Consensus read generation
+
+    Align FASTQ reads to reference genome into BAM files, filter read BAM alignments, and generate consensus FASTQ reads.
+
+3. Consensus read alignment
+
+    Align consensus FASTQ reads to reference genome into BAM files.
+
+4. Variant calling
+
+    Call variants from consensus read BAM alignments within the amplicon loci specified in the provided BED file, and filter and annotate variants using the Ensembl-VEP REST API.
+
+5. Reporting
+
+    Calculate run metrics and generate metric plots, generate variant table, and create a full HTML report.
+
 ### 3. Logical Viewpoint
 
-*Describe the system’s functional behavior and domain abstractions*
+This is a real-time workflow. It handles a stream of FASTQ files inside an input folder. It checks for new FASTQ files until a sequencing summary or DONE file is available.
 
-- What are the entry points of data?
-  - Is this a real-time workflow? Does it handle a stream of data over time? When conditions close the stream of input data?
-- What are the output points of data?
-- Are results deterministic? Is there a seed setting?
-- How are we organizing the processes for easy testing?
+This datastream allows for data to be processed up to and including consensus read alignment, after which the stream should close (with the presence of a sequencing summary or DONE file) and proceed to variant calling.
+
+The final outputs are:
+- A report HTML file
+- Consensus read alignment BAM files
+- Filtered and annotated variants in a VCF file
+- Nextflow execution HTML reports
+
+Results are completely deterministic.
 
 ### 4. Dependency Viewpoint
 
-*Show what the system depends on what, and why.*
+Dependencies shall be managed with Docker containers, which shall be compatible with Singularity/Apptainer. This assumes the user and host OS must be able to run Docker or Singularity/Apptainer images. Conda is not supported. 
 
-- What is the philosophy behind environment/containers?
-  - Single container for the whole workflow?
-  - Container per process?
-  - Versioning of containers and the tools inside
-  - Are containers shared between processes?
-
-- Do we allow plugins in the workflow?
-
-- How do we handle updates to tools?
-
-- How much do we shape the workflow relative to the tools? For example, given two tools that do the same job which one should be chosen:
-  - one processes a single file in a single core into a single output file
-  - one processes a set of files in a single core into a dir with multiple files
-  - one processes a single file with multiple cores into a single output file
-  - one processes a set of files with multiple cores into a dir with multiple files
-
-- If two tools that do the same job are implemented (e.g. in different modules following a strategy pattern), what are the dependency implications? How should they be handled (e.g. separate containers)
-
-- Environment assumptions (OS, environment paths, installed tools, filesystem permissions)
+Each process should declare a container including the minimal software required for its execution. If two processes require the same minimal software, they may share the same container. Containers should be explicitly versioned in `nextflow.config`, and should be updated there accordingly and bundled with new workflow releases.
 
 ### 5. Information Viewpoint
 
-*Describe the structure and lifecycle of data.*
+Inputs:
+1. A folder containing FASTQ files, or optionally a folder containing several folders for different barcodes each containing a subfolder with FASTQ files. FASTQ files can optionally be gzipped.
+2. The human reference genome, version GRCh38.p14.
+3. A BED file with the loci for the amplicon inserts amplified during PCR (excluding primers).
 
-- What kind of inputs are expected?
-  - File formats. What type of file formats do we expect? How will we handle these file formats, do we need external libraries or will we write our own parsers?
-  - How much validation will be done on the input data?
-  - Amount of data. How much data will we processing? Are there lots of large files, small files, or a single large or small file?
-  
-- What kind of outputs are expected?
-  - Should we have multiple files as outputs?
-  - Should we have a single file as output?
+- The ingestion workflow validates that each file is formatted correctly by checking the first data entry of each file.
 
-- Do we keep intermediate files?
-- How explicit are we with input files? 
-  - Do we try to find a file if not given?
-  - Do we have defaults?
-  - When do we use defaults?
+- If FASTQ files are larger than a user-adjustable maximum number of reads, they shall be split into smaller FASTQ files whose size is the same as the user-adjustable setting.
 
+Outputs:
+1. A report HTML file
+2. Consensus read alignment BAM files
+3. Filtered and annotated variants in a VCF file
+4. Nextflow execution HTML reports
+
+If the input folder contained barcode subfolders, than the output shall contain subfolders for each input barcode, each containing the outputs listed above.
+
+TODO:
 - How much parallelization is done in the workflow vs within the tool? How should we configure the tools in that regard? How should we choose the tools in that regard?
   - one processes a single file in a single core into a single output file
   - one processes a set of files in a single core into a dir with multiple files
@@ -93,35 +90,30 @@ The system design is divided into several viewpoints. Each viewpoint, describes 
 
 ### 6. Patterns Use Viewpoint
 
-*Explain the design patterns used and their rationale.*
-
-- Do you use a pipeline pattern where the output from one step is the input for the next?
-- Is there a standard skip pattern? (e.g input -> A into output C with optional step B in between)
-- Is there a standard aggregate pattern?  (e.g input -> A1, A2, A3 into output -> B)
-- Is there a standard split pattern? (e.g input -> A into output -> B1, B2, B3)
-- Is there a standard strategy pattern (e.g. input -> A1 OR A2 into output -> B)
+The workflow shall prioritize using the least amount of branching possible. A skip pattern is allowed for optional steps (for example, to filter variants). A strategy pattern is allowed for alternative steps (for example, for an alternative variant caller).
 
 ### 7. Interface and Interaction Viewpoint
 
+This workflow has a standard Nextflow CLI, as well as a GUI through [EPI2ME](https://epi2me.nanoporetech.com/).
+
+All configuration is done in `nextflow.config`, including user arguments and user-adjustable parameters.
+
 *Define all exposed interfaces.*
 
-- Is there a CLI interface?
-- Is there a GUI interface? Is it integrated into a GUI platform (e.g. EPI2ME)?
+TODO:
 - How are Error and exit code semantics organized?
 - Are there any file naming conventions?
 - What is printed to stdout?
 - How is logging performed? What are the different levels of logging? What should go into info, warning, debug?
 - What type of configuration parameters do we expect? 
-  - General configuration parameters (settings that are only set once).
-  - Per call configuration parameters (settings that might change everytime the tool is used).
   - What is the expected experience of the user in choosing the right settings?
   - How will user settings be differentiated from developer settings? For example, --input-path is a user setting, while --max-window-size is probably something more internal. 
 
 ### 8. State Dynamics Viewpoint
 
-*Describe how the system’s state changes over time.*
+Input data is validated at the start of the workflow by the ingestion module.
 
-- Is input data validated at the start of the process or the entire (sub)workflow?
+TODO:
 - If there is an error, do we stop completely, or do we try to keep running as many other processes as possible?
 - How can you know that an output file is complete?
 
@@ -129,10 +121,9 @@ The system design is divided into several viewpoints. Each viewpoint, describes 
 
 *Describe core algorithms and their properties.*
 
-- If your code includes scripts, explain any relevant algorithms. For example, is an in-house script used for variant calling? How does it work?
-
 ### 10. Resource Viewpoint
 
+TODO:
 *Describe resource usage and constraints.*
 
 - What is the expected max memory usage?
