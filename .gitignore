@@ -1,0 +1,4 @@
+.nextflow*
+output/
+test_data/
+work/
