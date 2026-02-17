@@ -2,3 +2,5 @@
 output/
 test_data/
 work/
+
+.nf-test/
