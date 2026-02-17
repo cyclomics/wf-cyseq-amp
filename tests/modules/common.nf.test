@@ -1,0 +1,47 @@
+// # Tests for modules/common.nf: 
+
+// ## Tested processes:
+// getFirstRead 
+// testProcess 
+
+// ## Uses data:
+// tests/data/dummy.fastq
+// tests/data/tiny_reference.fasta
+
+
+nextflow_process {
+
+    name "Test process testProcess"
+    script "../../modules/common.nf"
+    process "testProcess"
+
+    test("Error on non existent reference") {
+        when {
+            process {
+                """
+                input[0] = Channel.fromPath('tests/data/not_found.fasta', checkIfExists: true)
+                """
+            }
+        }
+
+        then {
+            assert process.failed
+        }
+    }
+
+    test("Should pass through reference genome") {
+        when {
+            process {
+                """
+                input[0] = Channel.fromPath('tests/data/tiny_reference.fasta')
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out[0].size() == 1
+            assert process.out[0].get(0) == 'tiny_reference.fasta'
+        }
+    }
+}

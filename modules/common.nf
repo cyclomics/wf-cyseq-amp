@@ -16,17 +16,10 @@ process testProcess {
         path reference_genome
 
     output:
-        path reference_genome
+        val reference_basename
 
-    script:
-        """
-        echo $reference_genome
-        """
-
-    stub:
-        """
-        echo $reference_genome
-        """
+    exec:
+        reference_basename = reference_genome.getName()
 }
 
 process getFirstRead {
