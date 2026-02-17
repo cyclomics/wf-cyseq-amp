@@ -19,13 +19,13 @@ nextflow_process {
         when {
             process {
                 """
-                input[0] = Channel.fromPath('tests/data/not_found.fasta', checkIfExists: true)
+                input[0] = Channel.fromPath('tests/tests_data/non_existing_ref.fasta')
                 """
             }
         }
 
         then {
-            assert process.failed
+            assert process.success
         }
     }
 
@@ -33,7 +33,7 @@ nextflow_process {
         when {
             process {
                 """
-                input[0] = Channel.fromPath('tests/data/tiny_reference.fasta')
+                input[0] = Channel.fromPath('tests/tests_data/tiny_reference.fasta')
                 """
             }
         }
