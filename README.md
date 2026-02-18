@@ -9,6 +9,27 @@ Each nextflow process should have unit test to test its behaviour, tagged as `un
 Additionally there sould be integration tests for sub-workflows if these are used.
 Finally there should be end-to-end tests for the main workflow.
 
+### Writing tests
+nf-test has a build in test generation tool:
+``` bash
+./nf-test generate --help
+Unknown option: '--help'
+Usage: nf-test generate [COMMAND]
+Commands:
+  function
+  pipeline
+  process
+  workflow
+```
+
+#### tips:
+use a tag like tag = 'dev' and run 
+
+./nf-test test tests/modules/ingress.nf.test --tag dev
+
+To only run the test you are working on!
+
+
 ### Github actions
 There are currently 3 github actions related to testing, this can be optimized with sharding later.
 

@@ -1,0 +1,32 @@
+{
+    "Test Function getFastqExcludeList": {
+        "content": [
+            [
+                "fastq_fail",
+                "fail"
+            ]
+        ],
+        "timestamp": "2026-02-18T14:52:29.631533",
+        "meta": {
+            "nf-test": "0.9.4",
+            "nextflow": "25.10.4"
+        }
+    },
+    "Test Function getInvalidParents": {
+        "content": [
+            [
+                "fastq",
+                "pass",
+                "fastq_pass",
+                "fastq_fail",
+                "fail",
+                "home"
+            ]
+        ],
+        "timestamp": "2026-02-18T15:02:00.346618",
+        "meta": {
+            "nf-test": "0.9.4",
+            "nextflow": "25.10.4"
+        }
+    }
+}

@@ -3,9 +3,10 @@ nextflow_function {
     name "Test ingress module functions"
     script "modules/ingress.nf"
  
-    test("Basic Test Function generateUid") {
+    test("Function generateUid: Basic Test") {
         // given an alphabet of a single letter, the result is N times that letter
         function "generateUid"
+        tag "unit-test"
         when {
             function {
                 """
@@ -21,10 +22,11 @@ nextflow_function {
         }
     }
 
-    test("Alphabet test Function generateUid") {
+    test("Function generateUid: Alphabet test") {
         // given a slightly more complex alphabet, make sure the expected alphabet is used, and everything else is not in there
         // TODO: this can theoretically fail now due to probability?
         function "generateUid"
+        tag "unit-test"
         when {
             function {
                 """
@@ -43,9 +45,10 @@ nextflow_function {
         }
     }
 
-    test("Test Function getFastqExcludeList") {
+    test("Function getFastqExcludeList: Test") {
         // This is a simple anonymous function 
         function "getFastqExcludeList"
+        tag "unit-test"
         when {
             function {
                 // has no inputs
@@ -57,9 +60,10 @@ nextflow_function {
         }
     }
 
-    test("Test Function getInvalidParents") {
+    test("Function getInvalidParents: Test") {
         // This is a simple anonymous function 
         function "getInvalidParents"
+        tag "unit-test"
         when {
             function {
                 // has no inputs
@@ -71,9 +75,10 @@ nextflow_function {
         }
     }
 
-    test("Simple Test Function findValidParent with traling slash") {
+    test("Function findValidParent: Simple Test  with traling slash") {
         // first test of findValidParent 
         function "findValidParent"
+        tag "unit-test"
         when {
             function {
                 """
@@ -86,9 +91,11 @@ nextflow_function {
             assert function.result == '/somewhere/very/far/far/away'
         }
     }
-    test("Simple Test Function findValidParent without traling slash") {
+
+    test("Function findValidParent: Simple Test without traling slash") {
         // no trailing / in dir
         function "findValidParent"
+        tag "unit-test"
         when {
             function {
                 """
@@ -101,16 +108,17 @@ nextflow_function {
             assert function.result == '/somewhere/very/far/far/away'
         }
     }
-    test("Test Function findValidParent with filter") {
+
+    test("Function findValidParent: Test with filter") {
         // filter out a subfolder that is invalid by a given definition
         function "findValidParent"
-        
+        tag "unit-test"
         when {
             function {
                 """
                 input[0] = file('/somewhere/very/far/far/away/')
                 input[1] = ['away','miss']
-                """      
+                """
             }
         }
         then {
@@ -118,9 +126,47 @@ nextflow_function {
             assert function.result == '/somewhere/very/far/far'
         }
     }
-    test("Real World Test Function findValidParent") {
+
+    test("Function findValidParent: Real World Test") {
         // filter out all the things we do not consider valid parent directories
         function "findValidParent"
+        tag "unit-test"
+        when {
+            function {
+                """
+                input[0] = file('/data/CYC000409_gDNA_BBCS_RCA/CYC000409/20240918_1535_P2S-01772-A_PAW58321_a3846868/fastq_pass/barcode12')
+                input[1] = ['fastq_pass']
+                """      
+            }
+        }
+        then {
+            assert function.success
+            assert function.result == '/data/CYC000409_gDNA_BBCS_RCA/CYC000409'
+        }
+    }
+
+    test("Function findValidParent: Test completely invalid path") {
+        // filter out all the things we do not consider valid parent directories
+        function "findValidParent"
+        tag "unit-test"
+        when {
+            function {
+                """
+                input[0] = file('/somewhere/very/far/far/away/')
+                input[1] = ['somewhere','very', 'far', 'away']
+                """      
+            }
+        }
+        then {
+            assert function.success
+            assert function.result == '/'
+        }
+    }
+
+    test("Function getValidParent: Basic test") {
+
+        function "getValidParent"
+
         tag "dev"
         when {
             function {
@@ -131,7 +177,9 @@ nextflow_function {
         }
         then {
             assert function.success
-            assert function.result == '/data/CYC000409_gDNA_BBCS_RCA/CYC000409'
+            assert function.result[0] == 'barcode12'
+            assert function.result[1] == 'CYC000409'
         }
     }
+
 }
