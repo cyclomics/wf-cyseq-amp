@@ -1,0 +1,30 @@
+{
+    "Should pass through reference genome": {
+        "content": [
+            {
+                "0": [
+                    ">chr1\n"
+                ]
+            }
+        ],
+        "timestamp": "2026-02-18T08:49:31.646405",
+        "meta": {
+            "nf-test": "0.9.4",
+            "nextflow": "25.10.4"
+        }
+    },
+    "Error on non existent reference": {
+        "content": [
+            {
+                "0": [
+                    
+                ]
+            }
+        ],
+        "timestamp": "2026-02-17T16:31:11.359667",
+        "meta": {
+            "nf-test": "0.9.4",
+            "nextflow": "24.10.4"
+        }
+    }
+}

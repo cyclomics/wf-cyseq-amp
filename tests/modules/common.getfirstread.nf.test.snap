@@ -1,0 +1,30 @@
+{
+    "Should run without failures": {
+        "content": [
+            {
+                "0": [
+                    "/Users/damirebergen/wf-cyclomicsseq-amp/.nf-test/tests/abce59a5dc66815d69c28f24ac40689e/work/bf/61e0354697fe15271d0d81d827509a/first_read.fastq"
+                ]
+            }
+        ],
+        "timestamp": "2026-02-17T16:47:03.784715",
+        "meta": {
+            "nf-test": "0.9.4",
+            "nextflow": "24.10.4"
+        }
+    },
+    "Extract the first read from fastq file": {
+        "content": [
+            {
+                "0": [
+                    "first_read.fastq:md5,5987e0a3328caf3b77db88780c1f20ab"
+                ]
+            }
+        ],
+        "timestamp": "2026-02-18T12:15:41.646654",
+        "meta": {
+            "nf-test": "0.9.4",
+            "nextflow": "25.10.4"
+        }
+    }
+}
