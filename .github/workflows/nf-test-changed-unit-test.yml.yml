@@ -6,8 +6,10 @@ on:
       - main
       - dev
   push:
-    branches:
-      Feat--testing-init
+    branches-ignore:
+      - main
+      - dev
+
 jobs:
   full-nf-test:
     runs-on: ubuntu-latest

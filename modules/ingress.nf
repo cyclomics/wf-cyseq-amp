@@ -138,7 +138,6 @@ def getValidParent(dir,
     /*
     get a sample and file id from a path
 
-
     dir: {String} the current directory to check
     invalidList: {List} a list of directory names to ignore
     barcodePattern: {Pattern} a regex pattern to identify barcode folders, defaults to ONT barcode folders
@@ -159,5 +158,3 @@ def getValidParent(dir,
     
     return [barcode, validParent?.simpleName ?: ""]
 }
-
-
