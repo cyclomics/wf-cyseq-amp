@@ -1,9 +1,13 @@
-name: CI Tests
+name: Full nf-test 
 
-on: [push, pull_request]
+on:
+  pull_request:
+    branches-ignore:
+      - main
+      - dev
 
 jobs:
-  test:
+  full-nf-test:
     runs-on: ubuntu-latest
 
     steps:
@@ -26,5 +30,5 @@ jobs:
           wget -qO- https://get.nf-test.com | bash
           sudo mv nf-test /usr/local/bin/
 
-      - name: Run Tests
-        run: nf-test test --ci
+      - name: Run changed unit tests only
+        run: nf-test test --ci --tag unit-test --changed-since HEAD^

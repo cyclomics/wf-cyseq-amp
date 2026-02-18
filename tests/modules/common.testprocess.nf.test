@@ -3,7 +3,9 @@ nextflow_process {
     name "Test Process testProcess"
     script "modules/common.nf"
     process "testProcess"
+    
     test("Error on non existent reference") {
+        tag "unit-test"
         when {
             params {}
             process {
@@ -19,6 +21,7 @@ nextflow_process {
     }
 
     test("Should pass through reference genome") {
+        tag "unit-test"
         when {
             params {}
             process {
