@@ -7,6 +7,7 @@ nextflow_function {
         // given an alphabet of a single letter, the result is N times that letter
         function "generateUid"
         tag "unit-test"
+        tag "function"
         when {
             function {
                 """
@@ -27,6 +28,7 @@ nextflow_function {
         // TODO: this can theoretically fail now due to probability?
         function "generateUid"
         tag "unit-test"
+        tag "function"
         when {
             function {
                 """
@@ -49,6 +51,7 @@ nextflow_function {
         // This is a simple anonymous function 
         function "getFastqExcludeList"
         tag "unit-test"
+        tag "function"
         when {
             function {
                 // has no inputs
@@ -64,6 +67,7 @@ nextflow_function {
         // This is a simple anonymous function 
         function "getInvalidParents"
         tag "unit-test"
+        tag "function"
         when {
             function {
                 // has no inputs
@@ -78,6 +82,7 @@ nextflow_function {
         // This is a simple anonymous function 
         function "getMinKnowBarcodeFolderPattern"
         tag "unit-test"
+        tag "function"
         when {
             function {
                 // has no inputs
@@ -100,6 +105,7 @@ nextflow_function {
         // This is a simple anonymous function 
         function "getMinKnowAutoRunFolderPattern"
         tag "unit-test"
+        tag "function"
         when {
             function {
                 // has no inputs
@@ -117,6 +123,7 @@ nextflow_function {
         // first test of findValidParent 
         function "findValidParent"
         tag "unit-test"
+        tag "function"
         when {
             function {
                 """
@@ -134,6 +141,7 @@ nextflow_function {
         // no trailing / in dir
         function "findValidParent"
         tag "unit-test"
+        tag "function"
         when {
             function {
                 """
@@ -151,6 +159,7 @@ nextflow_function {
         // filter out a subfolder that is invalid by a given definition
         function "findValidParent"
         tag "unit-test"
+        tag "function"
         when {
             function {
                 """
@@ -169,6 +178,7 @@ nextflow_function {
         // filter out all the things we do not consider valid parent directories
         function "findValidParent"
         tag "unit-test"
+        tag "function"
         when {
             function {
                 """
@@ -187,6 +197,7 @@ nextflow_function {
         // filter out all the things we do not consider valid parent directories
         function "findValidParent"
         tag "unit-test"
+        tag "function"
         when {
             function {
                 """
@@ -204,7 +215,8 @@ nextflow_function {
     test("Function getValidParent: Basic test") {
 
         function "getValidParent"
-        tag "dev"
+        tag "unit-test"
+        tag "function"
         when {
             function {
                 """
