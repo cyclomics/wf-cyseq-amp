@@ -10,11 +10,9 @@ workflow ingressFastqFiles {
 
     main:
         def runUID = generateUid( (('A'..'Z')+('a'..'z')+('0'..'9')).join(), 7 )
-        def excludeList = getFastqExcludeList()
-        def invalidParents = getInvalidParents()
-        def barcodePattern = getMinKnowBarcodeFolderPattern()
-        def runFolderPattern = getMinKnowAutoRunFolderPattern()
-
+        def excludeList = ['fastq_fail', 'fail']
+        def invalidParents = ['fastq', 'pass', 'fastq_pass', 'fastq_fail', 'fail', 'home']
+       
         if (params.input_dir.endsWith("/")) {
             read_pattern = "${params.input_dir}${params.read_pattern}"
         }
@@ -36,7 +34,7 @@ workflow ingressFastqFiles {
         read_fastq.dump(tag: "read_fastq_no_fail")
 
         read_fastq = read_fastq.map { it ->
-            def (barcode, sample_ID) = getValidParent(it.Parent, invalidParents, barcodePattern, runFolderPattern)
+            def (barcode, sample_ID) = getValidParent(it.Parent, invalidParents)
             
             if (params.sample_id != "") {
                     sample_ID = params.sample_id.toString()
@@ -72,11 +70,6 @@ workflow ingressFastqFiles {
 def generateUid(String alphabet, int n) {
     // Generate a random UID of length n using the provided alphabet.
     (1..n).collect { alphabet[ new java.util.Random().nextInt( alphabet.length() ) ] }.join()
-}
-
-def getFastqExcludeList() {
-    // Return a list of generally ignored folders for ONT sequencing
-    ['fastq_fail', 'fail']
 }
 
 def getInvalidParents() {

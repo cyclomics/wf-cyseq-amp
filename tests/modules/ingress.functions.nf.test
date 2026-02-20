@@ -47,37 +47,6 @@ nextflow_function {
         }
     }
 
-    test("Function getFastqExcludeList: Test") {
-        // This is a simple anonymous function 
-        function "getFastqExcludeList"
-        tag "unit-test"
-        tag "function"
-        when {
-            function {
-                // has no inputs
-            }
-        }
-        then {
-            assert function.success
-            assert function.result == ['fastq_fail', 'fail']
-        }
-    }
-
-    test("Function getInvalidParents: Test") {
-        // This is a simple anonymous function 
-        function "getInvalidParents"
-        tag "unit-test"
-        tag "function"
-        when {
-            function {
-                // has no inputs
-            }
-        }
-        then {
-            assert function.success
-            assert function.result == ['fastq', 'pass', 'fastq_pass', 'fastq_fail', 'fail', 'home']
-        }
-    }
     test("Function getMinKnowBarcodeFolderPattern: Test") {
         // This is a simple anonymous function 
         function "getMinKnowBarcodeFolderPattern"
@@ -118,6 +87,26 @@ nextflow_function {
             assert !('20240101_runname' ==~ function.result)
         }
     }
+
+    test("Function asPattern: Test") {
+        // asPattern converts string/Pattern inputs to Pattern objects for use with ==~ operator
+        // Since Pattern objects can't be serialized by nf-test, we just verify the function succeeds
+        function "asPattern"
+        tag "unit-test"
+        tag "function"
+
+        when {
+            function {
+                """
+                input[0] = "aStringWeWantToMatch\\\\d+MoreText"
+                """
+            }
+        }
+        then {
+            assert function.success
+        }
+    }
+
 
     test("Function findValidParent: Simple Test  with traling slash") {
         // first test of findValidParent 
