@@ -33,7 +33,7 @@ To only run the test you are working on!
 ### Github actions
 There are currently 3 github actions related to testing, this can be optimized with sharding later.
 
-1. nf-test-ci-tests.yml
+1. nf-test-full-tests.yml
 This runs all the nf-test tests and will run on pushes and PR's into main and dev
 
 1. nf-test-unit-test.yml
