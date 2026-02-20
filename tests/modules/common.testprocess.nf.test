@@ -10,7 +10,7 @@ nextflow_process {
             params {}
             process {
                 """
-                input[0] = file("${projectDir}/data/this_file_does_ont_exist.fasta")
+                input[0] = file("${projectDir}/tests/data/this_file_does_ont_exist.fasta")
                 """
             }
         }
@@ -26,7 +26,7 @@ nextflow_process {
             params {}
             process {
                 """
-                input[0] = file("${projectDir}/data/tiny_ref.fasta")
+                input[0] = file("${projectDir}/tests/data/simple/tiny_ref.fasta")
                 """
             }
         }

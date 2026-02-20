@@ -13,7 +13,7 @@ nextflow_process {
             }
             process {
                 """
-                input[0] = file("${projectDir}/data/dummy.fastq")
+                input[0] = file("${projectDir}/tests/data/simple/dummy.fastq")
                 """
             }
         }
