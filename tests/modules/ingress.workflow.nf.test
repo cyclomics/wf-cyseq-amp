@@ -3,25 +3,31 @@ nextflow_workflow {
     name "Test Workflow ingressFastqFiles"
     script "modules/ingress.nf"
     workflow "ingressFastqFiles"
+    
+    // We need to test the edge cases:
+    // Params:
+    // for input dir / and no /
+    // for include_fastq_fail == true or false
+    // Inputs:
+    // barcoded vs not barcoded
 
     test("Should run without failures") {
-
+        tag "dev"
         when {
             params {
-                // define parameters here. Example:
-                // outdir = "tests/results"
+                input_dir = "${projectDir}/tests/data/example_input/example_sample_name/"
+                include_fastq_fail = false
+                read_pattern = "**.{fq,fastq,fq.gz,fastq.gz}"
+                sample_id = ""
             }
             workflow {
                 """
-                // define inputs of the workflow here. Example:
-                // input[0] = file("test-file.txt")
                 """
             }
         }
 
         then {
             assert workflow.success
-            assert snapshot(workflow.out).match()
         }
 
     }

@@ -4,16 +4,13 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 workflow ingressFastqFiles {
-    take:
-        input_dir
-        read_pattern
-
     main:
         def runUID = generateUid( (('A'..'Z')+('a'..'z')+('0'..'9')).join(), 7 )
         def excludeList = ['fastq_fail', 'fail']
         def invalidParents = ['fastq', 'pass', 'fastq_pass', 'fastq_fail', 'fail', 'home']
        
-        if (params.input_dir.endsWith("/")) {
+        def read_pattern
+        if (params.input_dir.toString().endsWith("/")) {
             read_pattern = "${params.input_dir}${params.read_pattern}"
         }
         else {
