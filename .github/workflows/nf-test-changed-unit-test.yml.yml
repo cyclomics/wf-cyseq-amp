@@ -1,4 +1,4 @@
-name: Full nf-test 
+name: Changed unit-tests in nf-test 
 
 on:
   pull_request:

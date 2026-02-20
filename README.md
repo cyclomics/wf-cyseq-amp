@@ -22,6 +22,10 @@ Commands:
   workflow
 ```
 
+#### Naming tests
+tests should follow the same folder structure as the repo. The name of the test file is [FILE].[PROCESSNAME|workflow|function].nf.test .
+
+
 #### tips:
 use a tag like tag = 'dev' and run 
 
