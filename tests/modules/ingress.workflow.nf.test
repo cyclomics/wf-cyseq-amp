@@ -11,8 +11,9 @@ nextflow_workflow {
     // Inputs:
     // barcoded vs not barcoded
 
-    test("Should run without failures") {
-        tag "dev"
+    test("Input dir with trailing slash") {
+        tag "workflow"
+        tag "integation-test"
         when {
             params {
                 input_dir = "${projectDir}/tests/data/example_input/example_sample_name/"
@@ -28,8 +29,101 @@ nextflow_workflow {
 
         then {
             assert workflow.success
+            assert workflow.out.read_fastq.size() == 2
+        }
+    }
+
+    test("Input dir without trailing slash") {
+        tag "workflow"
+        tag "integation-test"
+        when {
+            params {
+                input_dir = "${projectDir}/tests/data/example_input/example_sample_name"
+                include_fastq_fail = false
+                read_pattern = "**.{fq,fastq,fq.gz,fastq.gz}"
+                sample_id = ""
+            }
+            workflow {
+                """
+                """
+            }
+        }
+
+        then {
+            assert workflow.success
+            assert workflow.out.read_fastq.size() == 2
+        }
+    }
+
+    test("Include fastq_fail true") {
+        tag "workflow"
+        tag "integation-test"
+        when {
+            params {
+                input_dir = "${projectDir}/tests/data/example_input/example_sample_name/"
+                include_fastq_fail = true
+                read_pattern = "**.{fq,fastq,fq.gz,fastq.gz}"
+                sample_id = ""
+            }
+            workflow {
+                """
+                """
+            }
+        }
+
+        then {
+            assert workflow.success
+            assert workflow.out.read_fastq.size() == 3
         }
 
     }
 
+    test("Barcoded sample") {
+        tag "workflow"
+        tag "integation-test"
+        when {
+            params {
+                input_dir = "${projectDir}/tests/data/example_input/example_sample_name_barcoded/"
+                include_fastq_fail = false
+                read_pattern = "**.{fq,fastq,fq.gz,fastq.gz}"
+                sample_id = ""
+            }
+            workflow {
+                """
+                """
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.read_fastq.size() == 3
+            assert workflow.out.read_fastq[0][0].startsWith("example_sample_name_barcoded_")
+            assert workflow.out.read_fastq[0][0].endsWith("_barcode01")
+            assert workflow.out.read_fastq[0][1] == "dummy"
+            assert workflow.out.read_fastq[0][2].endsWith("wf-cyclomicsseq-amp/tests/data/example_input/example_sample_name_barcoded/barcode01/dummy.fastq")
+        }
+    }
+
+    test("Override sample_id with param") {
+        tag "workflow"
+        tag "integation-test"
+        when {
+            params {
+                input_dir = "${projectDir}/tests/data/example_input/example_sample_name/"
+                include_fastq_fail = false
+                read_pattern = "**.{fq,fastq,fq.gz,fastq.gz}"
+                sample_id = "CustomSampleName"
+            }
+            workflow {
+                """
+                """
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.read_fastq.size() == 2
+            assert workflow.out.read_fastq[0][0].startsWith("CustomSampleName_")
+            assert workflow.out.read_fastq[0][1] == "dummy01"
+            assert workflow.out.read_fastq[0][2].endsWith("wf-cyclomicsseq-amp/tests/data/example_input/example_sample_name/fastq_pass/dummy01.fastq")
+        }
+    }
 }

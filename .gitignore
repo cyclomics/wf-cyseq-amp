@@ -4,3 +4,7 @@ test_data/
 work/
 
 .nf-test/
+
+**.DS_store
+**.DS_Store
+**.ds_store
