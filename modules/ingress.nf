@@ -35,17 +35,8 @@ workflow ingressFastqFiles {
 
         read_fastq = read_fastq.map { it ->
             def (barcode, sample_ID) = getValidParent(it.Parent, invalidParents)
-            
-            if (params.sample_id != "") {
-                    sample_ID = params.sample_id.toString()
-                }
-                sample_ID = sample_ID.replaceAll("\\s+", "_")
-                sample_ID = sample_ID + "_" + runUID
-                if (barcode != "") {
-                    sample_ID = sample_ID + "_" + barcode
-                }
-
-                tuple(sample_ID, it.simpleName, it)
+            sample_ID = formatSampleId(sample_ID, barcode, runUID)
+            tuple(sample_ID, it.simpleName, it)
             }
         
         read_fastq.dump(tag: "read_fastq_sample_tagged")
@@ -93,6 +84,25 @@ def asPattern(patternLike) {
         return patternLike
     }
     return java.util.regex.Pattern.compile(patternLike.toString())
+}
+
+def formatSampleId(String sample_ID, String barcode, String runUID) {
+    // Format the sample ID by combining sample_ID, barcode, and runUID with optional param override
+    // If params.sample_id is set, it overrides the sample_ID
+    // Replaces whitespace with underscores and combines components with underscores
+    
+    if (params.sample_id != "") {
+        sample_ID = params.sample_id.toString()
+    }
+    
+    sample_ID = sample_ID.replaceAll("\\s+", "_")
+    sample_ID = sample_ID + "_" + runUID
+    
+    if (barcode != "") {
+        sample_ID = sample_ID + "_" + barcode
+    }
+    
+    return sample_ID
 }
 
 def findValidParent(dir,
