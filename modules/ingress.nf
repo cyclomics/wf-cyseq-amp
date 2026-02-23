@@ -126,18 +126,12 @@ def findValidParent(dir,
     */
     
     def folder_name = dir.simpleName
-    if (barcodePattern == "") {
-        barcodeRegex = asPattern(getMinKnowBarcodeFolderPattern())
-    }
-    else {
-        barcodeRegex = asPattern(barcodePattern)
-    }
-    if (runFolderPattern == "") {
-        runFolderRegex = asPattern(getMinKnowAutoRunFolderPattern())
-    }
-    else {
-        runFolderRegex = asPattern(runFolderPattern)
-    }
+    def barcodeRegex = (barcodePattern == "")
+        ? asPattern(getMinKnowBarcodeFolderPattern())
+        : asPattern(barcodePattern)
+    def runFolderRegex = (runFolderPattern == "")
+        ? asPattern(getMinKnowAutoRunFolderPattern())
+        : asPattern(runFolderPattern)
 
 
     def invalidFolderName = invalidList.contains(folder_name) || 
