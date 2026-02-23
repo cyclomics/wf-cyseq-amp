@@ -20,5 +20,5 @@ jobs:
           version: "latest-edge"
 
       - name: Check Nextflow syntax
-        run: nextflow check main.nf
+        run: nextflow inspect main.nf
         # TODO: we want to run a linter as well??
