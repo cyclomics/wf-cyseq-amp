@@ -1,8 +1,25 @@
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    FUNCTIONS
+    WORKFLOWS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+workflow commonWorkflow {
+    channel.of(params).dump(tag: 'params')
+
+    def reference_path = params.reference_genome ?: 'data/tiny_ref.fasta'
+    def reads_glob = params.input_dir ? "${params.input_dir}/${params.read_pattern}" : 'data/dummy.fastq'
+
+    def reference_ch = channel.fromPath(reference_path, checkIfExists: true)
+    def reads_ch = channel.fromPath(reads_glob, checkIfExists: true)
+
+    reference_ch.dump(tag: 'reference_ch')
+    reads_ch.dump(tag: 'reads_ch')
+    testProcess(reference_ch)
+    getFirstRead(reads_ch)
+
+    testProcess.out.view()
+    getFirstRead.out.view()
+}
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -56,23 +73,6 @@ process getFirstRead {
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    WORKFLOWS
+    FUNCTIONS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-workflow commonWorkflow {
-    Channel.of(params).dump(tag: 'params')
-
-    def reference_path = params.reference_genome ?: 'data/tiny_ref.fasta'
-    def reads_glob = params.input_dir ? "${params.input_dir}/${params.read_pattern}" : 'data/dummy.fastq'
-
-    def reference_ch = Channel.fromPath(reference_path, checkIfExists: true)
-    def reads_ch = Channel.fromPath(reads_glob, checkIfExists: true)
-
-    reference_ch.dump(tag: 'reference_ch')
-    reads_ch.dump(tag: 'reads_ch')
-    testProcess(reference_ch)
-    getFirstRead(reads_ch)
-
-    testProcess.out.view()
-    getFirstRead.out.view()
-}

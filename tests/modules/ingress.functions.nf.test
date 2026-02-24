@@ -108,15 +108,18 @@ nextflow_function {
     }
 
 
-    test("Function findValidParent: Simple Test  with traling slash") {
-        // first test of findValidParent 
-        function "findValidParent"
+    test("Function findValidParentDir: Simple Test  with traling slash") {
+        // first test of findValidParentDir 
+        function "findValidParentDir"
         tag "unit-test"
         tag "function"
         when {
             function {
                 """
                 input[0] = file('/somewhere/very/far/far/away/')
+                input[1] = []
+                input[2] = "barcode\\\\d+MoreText"
+                input[3] = "aStringWeWantToMatch\\\\d+MoreText"
                 """      
             }
         }
@@ -126,15 +129,18 @@ nextflow_function {
         }
     }
 
-    test("Function findValidParent: Simple Test without traling slash") {
+    test("Function findValidParentDir: Simple Test without traling slash") {
         // no trailing / in dir
-        function "findValidParent"
+        function "findValidParentDir"
         tag "unit-test"
         tag "function"
         when {
             function {
                 """
                 input[0] = file('/somewhere/very/far/far/away')
+                input[1] = []
+                input[2] = "barcode\\\\d+MoreText"
+                input[3] = "aStringWeWantToMatch\\\\d+MoreText"
                 """      
             }
         }
@@ -144,9 +150,9 @@ nextflow_function {
         }
     }
 
-    test("Function findValidParent: Test with filter") {
+    test("Function findValidParentDir: Test with filter") {
         // filter out a subfolder that is invalid by a given definition
-        function "findValidParent"
+        function "findValidParentDir"
         tag "unit-test"
         tag "function"
         when {
@@ -154,6 +160,8 @@ nextflow_function {
                 """
                 input[0] = file('/somewhere/very/far/far/away/')
                 input[1] = ['away','miss']
+                input[2] = "barcode\\\\d+MoreText"
+                input[3] = "aStringWeWantToMatch\\\\d+MoreText"
                 """
             }
         }
@@ -163,9 +171,9 @@ nextflow_function {
         }
     }
 
-    test("Function findValidParent: Real World Test") {
+    test("Function findValidParentDir: Real World Test") {
         // filter out all the things we do not consider valid parent directories
-        function "findValidParent"
+        function "findValidParentDir"
         tag "unit-test"
         tag "function"
         when {
@@ -173,6 +181,8 @@ nextflow_function {
                 """
                 input[0] = file('/data/CYC000409_gDNA_BBCS_RCA/CYC000409/20240918_1535_P2S-01772-A_PAW58321_a3846868/fastq_pass/barcode12')
                 input[1] = ['fastq_pass']
+                input[2] = "^barcode\\\\d{2,3}"
+                input[3] = "^\\\\d{8}_\\\\d{4}_.+"
                 """      
             }
         }
@@ -182,9 +192,9 @@ nextflow_function {
         }
     }
 
-    test("Function findValidParent: Test completely invalid path") {
+    test("Function findValidParentDir: Test completely invalid path") {
         // filter out all the things we do not consider valid parent directories
-        function "findValidParent"
+        function "findValidParentDir"
         tag "unit-test"
         tag "function"
         when {
@@ -192,6 +202,8 @@ nextflow_function {
                 """
                 input[0] = file('/somewhere/very/far/far/away/')
                 input[1] = ['somewhere','very', 'far', 'away']
+                input[2] = "barcode\\\\d+MoreText"
+                input[3] = "aStringWeWantToMatch\\\\d+MoreText"
                 """      
             }
         }
@@ -201,15 +213,18 @@ nextflow_function {
         }
     }
 
-    test("Function getValidParent: Basic test") {
+    test("Function extractSampleInfo: Basic test") {
 
-        function "getValidParent"
+        function "extractSampleInfo"
         tag "unit-test"
         tag "function"
         when {
             function {
                 """
                 input[0] = file('/data/CYC000409_gDNA_BBCS_RCA/CYC000409/20240918_1535_P2S-01772-A_PAW58321_a3846868/fastq_pass/barcode12/')
+                input[1] = ['fastq_pass']
+                input[2] = "^barcode\\\\d{2,3}"
+                input[3] = "^\\\\d{8}_\\\\d{4}_.+"
                 """      
             }
         }
@@ -227,7 +242,7 @@ nextflow_function {
         tag "function"
         when {
             params {
-                sample_id = ""
+                sample_name = ""
             }
             function {
                 """
@@ -250,7 +265,7 @@ nextflow_function {
         tag "function"
         when {
             params {
-                sample_id = ""
+                sample_name = ""
             }
             function {
                 """
@@ -266,14 +281,14 @@ nextflow_function {
         }
     }
 
-    test("Function formatSampleId: Test with params.sample_id override") {
-        // Test that params.sample_id overrides the input sample_ID
+    test("Function formatSampleId: Test with params.sample_name override") {
+        // Test that params.sample_name overrides the input sample_name
         function "formatSampleId"
         tag "unit-test"
         tag "function"
         when {
             params {
-                sample_id = "OverriddenSample"
+                sample_name = "OverriddenSample"
             }
             function {
                 """
@@ -296,7 +311,7 @@ nextflow_function {
         tag "function"
         when {
             params {
-                sample_id = ""
+                sample_name = ""
             }
             function {
                 """

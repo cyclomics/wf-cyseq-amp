@@ -1,9 +1,12 @@
 .nextflow*
 output/
+simulation/
+work/
 test_data/
 work/
 
-.nf-test/
+*DONE.*
+.nf-test*
 
 **.DS_store
 **.DS_Store

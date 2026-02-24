@@ -3,44 +3,93 @@
     WORKFLOWS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-workflow ingressFastqFiles {
+workflow ingress_fastq_files {
+    take:
+        input_dir
+
     main:
-        def runUID = generateUid( (('A'..'Z')+('a'..'z')+('0'..'9')).join(), 7 )
-        def excludeList = ['fastq_fail', 'fail']
-        def invalidParents = ['fastq', 'pass', 'fastq_pass', 'fastq_fail', 'fail', 'home']
-       
-        def read_pattern
-        if (params.input_dir.toString().endsWith("/")) {
-            read_pattern = "${params.input_dir}${params.read_pattern}"
-        }
-        else {
-            read_pattern = "${params.input_dir}/${params.read_pattern}"
-        }
 
-        read_fastq = channel.fromPath(read_pattern, checkIfExists: true)
-        read_fastq.dump(tag: "read_fastq_all")
+        def RUN_UID = generateUid( (('A'..'Z')+('a'..'z')+('0'..'9')).join(), 7 )
 
-        if (params.include_fastq_fail) {
-            read_fastq = read_fastq
-        }
-        else {
-            read_fastq = read_fastq.filter { 
-                !(it.Parent.SimpleName in excludeList || it.Parent?.Parent.SimpleName in excludeList) 
-            }
-        }
-        read_fastq.dump(tag: "read_fastq_no_fail")
+        def exclude_list = ['fastq_fail', 'fail']
+        def invalid_parents = ['fastq', 'pass', 'fastq_pass', 'fastq_fail', 'fail', 'home']
+        def barcodePattern = asPattern(getMinKnowBarcodeFolderPattern())
+        def runFolderPattern = asPattern(getMinKnowAutoRunFolderPattern())
 
-        read_fastq = read_fastq.map { it ->
-            def (barcode, sample_ID) = getValidParent(it.Parent, invalidParents)
-            sample_ID = formatSampleId(sample_ID, barcode, runUID)
-            tuple(sample_ID, it.simpleName, it)
+        def READ_PATTERN = input_dir.endsWith("/")
+            ? "${input_dir}${params.read_pattern}"
+            : "${input_dir}/${params.read_pattern}"
+        
+        def STOP_PATTERN = input_dir.endsWith("/")
+            ? "${input_dir}${params.stop_pattern}"
+            : "${input_dir}/${params.stop_pattern}"
+
+        log.info "Looking for FASTQ files with pattern: ${READ_PATTERN}"
+        log.info "Stopping when files matching pattern appear: ${STOP_PATTERN}"
+
+        // -------------------------------------------------------------------
+        // Initial STOP file
+        initial_stop_files = channel.fromPath(STOP_PATTERN)
+            .ifEmpty('empty')
+            .map {it -> it != 'empty' ? it.simpleName : "empty" }
+        
+        InitiateRealtimeIngress(initial_stop_files)
+        stop_file_found = InitiateRealtimeIngress.out.stop
+
+        // -------------------------------------------------------------------
+        // Real-time STOP files
+        rt_stop_files = channel.watchPath(STOP_PATTERN, 'create,modify')
+            .until{  stop_file_found }
+        
+        CheckRealtimeIngress(rt_stop_files.last(), stop_file_found)
+        stop_file_found = CheckRealtimeIngress.out.stop
+        stop_files = CheckRealtimeIngress.out.stop_files
+
+        // -------------------------------------------------------------------
+        // Existing FASTQ files
+        initial_fastq_files = params.process_existing_files ?
+            channel.fromPath(READ_PATTERN, checkIfExists: true) :
+            channel.empty()
+
+        initial_fastq_files = initial_fastq_files
+            .map { file -> tuple(file.parent.simpleName, file.simpleName, file) }
+            .filter { _parent_name, sample_name, _file -> sample_name != "DONE" }
+
+        // -------------------------------------------------------------------
+        // Real-time FASTQ files (stop when DONE appears)
+        rt_fastq_files = channel.watchPath(READ_PATTERN, 'create,modify')
+            .until { file -> file.name ==~ 'DONE.*\\.fastq.gz' }
+            .map { file -> tuple(file.parent.simpleName, file.simpleName, file) }
+
+        // -------------------------------------------------------------------
+        // Merge channels and add sample ID tagging
+        read_fastq = initial_fastq_files
+            .concat(rt_fastq_files)
+            .map { _parent_name, file_name, file ->
+            
+                def (barcode, sample_id) = extractSampleInfo(
+                    file.parent,
+                    invalid_parents,
+                    barcodePattern,
+                    runFolderPattern
+                    )
+
+                sample_id = formatSampleId(sample_id, barcode, RUN_UID)
+                tuple(sample_id, file_name, file)
             }
         
-        read_fastq.dump(tag: "read_fastq_sample_tagged")
-        read_fastq.dump(tag: "read_fastq")
+        // TODO: we shouldn't even parse those files to begin with
+        if (params.include_fastq_fail == false) {
+            read_fastq = read_fastq.filter { 
+                _parent_name, _sample_name, file -> !(file.Parent.SimpleName in exclude_list || file.Parent?.Parent.SimpleName in exclude_list) 
+            }
+        }
+        
+        read_fastq.dump(tag: "ingress-fastq")
 
     emit:
-        read_fastq
+        read_fastq = read_fastq
+        stop_files = stop_files
 }
 
 
@@ -49,6 +98,66 @@ workflow ingressFastqFiles {
     PROCESSES
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+process InitiateRealtimeIngress {
+    publishDir params.input_dir, pattern: "*DONE.*", mode: 'copy'
+
+    input:
+        val stop_file
+    
+    output:
+        path "*DONE.*", optional: true, emit: stop_files
+        val stop_file_created, emit: stop
+    
+    script:
+        stop_file_created = false
+        if (stop_file == 'empty') {
+            stop_file_created = false
+            log.warn('Initially there is no stop file')
+            """
+            ls
+            """
+        }
+        else {
+            log.warn("Stop file found, injecting pseudo files  to initiate exit in 3 seconds.")
+            stop_file_created = true
+            """
+            sleep 3;
+            echo \$(date) >> sequencing_summary_abc_DONE.txt
+            echo \$(date) | gzip -c > DONE.fastq.gz
+            """
+        }
+
+}
+
+process CheckRealtimeIngress {
+    publishDir params.input_dir, pattern: "*DONE.*", mode: 'copy'
+
+    input:
+        val stop_file
+        val exit_started
+
+    output:
+        path "*DONE.*", optional: true, emit: stop_files
+        val stop_file_created, emit: stop
+
+    script:
+        stop_file_created = true
+        if (exit_started){
+            log.warn("Stop condition met, but exit_started was already true.")
+            """
+            ls
+            """
+        }
+        else {
+            log.warn("Stop condition met.")
+            """
+            sleep 3;
+            echo \$(date) >> sequencing_summary_abc_DONE.txt
+            echo \$(date) | gzip -c > DONE.fastq.gz
+            """
+        }
+}
+
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -60,9 +169,11 @@ def generateUid(String alphabet, int n) {
     (1..n).collect { alphabet[ new java.util.Random().nextInt( alphabet.length() ) ] }.join()
 }
 
-def getInvalidParents() {
-    // Return a list of invalid parent directories
-    ['fastq', 'pass', 'fastq_pass', 'fastq_fail', 'fail', 'home']
+def asPattern(patternLike) {
+    if (patternLike instanceof java.util.regex.Pattern) {
+        return patternLike
+    }
+    return java.util.regex.Pattern.compile(patternLike.toString())
 }
 
 def getMinKnowBarcodeFolderPattern() {
@@ -76,37 +187,32 @@ def getMinKnowAutoRunFolderPattern() {
     '^\\d{8}_\\d{4}_.+'
 }
 
-def asPattern(patternLike) {
-    if (patternLike instanceof java.util.regex.Pattern) {
-        return patternLike
-    }
-    return java.util.regex.Pattern.compile(patternLike.toString())
-}
-
-def formatSampleId(String sample_ID, String barcode, String runUID) {
-    // Format the sample ID by combining sample_ID, barcode, and runUID with optional param override
-    // If params.sample_id is set, it overrides the sample_ID
+def formatSampleId(String sample_id, String barcode, String run_uid) {
+    // Format the sample ID by combining sample_id, barcode, and run_uid with optional param override
+    // If params.sample_id is set, it overrides the sample_id
     // Replaces whitespace with underscores and combines components with underscores
     
-    if (params.sample_id != "") {
-        sample_ID = params.sample_id.toString()
+    if (params.sample_name != "") {
+        sample_id = params.sample_name.toString()
+        sample_id = sample_id.replaceAll("\\s+", "_")
+        sample_id = sample_id + "_" + run_uid
+
+    } else if (sample_id != "") {
+        sample_id = sample_id.replaceAll("\\s+", "_")
+        sample_id = sample_id + "_" + run_uid
+
+    } else {
+        sample_id = run_uid
     }
-    
-    sample_ID = sample_ID.replaceAll("\\s+", "_")
-    sample_ID = sample_ID + "_" + runUID
     
     if (barcode != "") {
-        sample_ID = sample_ID + "_" + barcode
+        sample_id = sample_id + "_" + barcode
     }
     
-    return sample_ID
+    return sample_id
 }
 
-def findValidParent(dir,
-    invalidList=['fastq', 'pass', 'fastq_pass', 'fastq_fail', 'fail', 'home'],
-    barcodePattern= "", 
-    runFolderPattern= ""
-    ) {
+def findValidParentDir(dir, invalidList, barcodePattern, runFolderPattern) {
     /* Recursively find a valid parent directory path that is not in the invalid list and does not match the barcode or run folder patterns.
     
     The valid parent is normally the sample ID given in MinKnow
@@ -118,45 +224,34 @@ def findValidParent(dir,
 
     dir: {String} the current directory to check
     invalidList: {List} a list of directory names to ignore
-    barcodePattern: {Pattern} a regex pattern to identify barcode folders, defaults to ONT barcode folders
-    runFolderPattern: {Pattern} a regex pattern to identify run folders, defaults to MINKNOW run folder pattern    
+    barcodePattern: {Pattern} a regex pattern to identify barcode folders
+    runFolderPattern: {Pattern} a regex pattern to identify run folders    
     
     Returns:
     - The valid parent directory path, or / if no valid parent is found.
     */
-    
     def folder_name = dir.simpleName
-    def barcodeRegex = (barcodePattern == "")
-        ? asPattern(getMinKnowBarcodeFolderPattern())
-        : asPattern(barcodePattern)
-    def runFolderRegex = (runFolderPattern == "")
-        ? asPattern(getMinKnowAutoRunFolderPattern())
-        : asPattern(runFolderPattern)
-
 
     def invalidFolderName = invalidList.contains(folder_name) || 
-                     folder_name ==~ barcodeRegex || 
-                     folder_name ==~ runFolderRegex
+                     folder_name ==~ barcodePattern || 
+                     folder_name ==~ runFolderPattern
     
     // look one level up if current position is invalid, otherwise return current position
     if (invalidFolderName) {
-        return findValidParent(dir.Parent, invalidList, barcodeRegex, runFolderRegex)
+        return findValidParentDir(dir.Parent, invalidList, barcodePattern, runFolderPattern)
     }
     return dir
 }
 
-def getValidParent(dir,
-    invalidList=['fastq', 'pass', 'fastq_pass', 'fastq_fail', 'fail', 'home'],
-    barcodePattern= "",
-    runFolderPattern= ""
-    ) {
+
+def extractSampleInfo(dir, invalidList, barcodePattern, runFolderPattern) {
     /*
     get a sample and file id from a path
 
     dir: {String} the current directory to check
     invalidList: {List} a list of directory names to ignore
-    barcodePattern: {Pattern} a regex pattern to identify barcode folders, defaults to ONT barcode folders
-    runFolderPattern: {Pattern} a regex pattern to identify run folders, defaults to MINKNOW run folder pattern    
+    barcodePattern: {Pattern} a regex pattern to identify barcode folders
+    runFolderPattern: {Pattern} a regex pattern to identify run folders    
     
     Returns:
     sample_id
@@ -164,14 +259,12 @@ def getValidParent(dir,
     */
     
     def barcode = ""
-    def barcodeRegex = (barcodePattern == "") ? asPattern(getMinKnowBarcodeFolderPattern()) : asPattern(barcodePattern)
-    def runFolderRegex = (runFolderPattern == "") ? asPattern(getMinKnowAutoRunFolderPattern()) : asPattern(runFolderPattern)
 
-    if (dir.simpleName ==~ barcodeRegex) {
+    if (dir.simpleName ==~ barcodePattern) {
         barcode = dir.simpleName
     }
 
-    def validParent = findValidParent(dir, invalidList, barcodeRegex, runFolderRegex)
-    
+    def validParent = findValidParentDir(dir, invalidList, barcodePattern, runFolderPattern)
+
     return [barcode, validParent?.simpleName ?: ""]
 }

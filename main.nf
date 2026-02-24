@@ -8,12 +8,14 @@
 ----------------------------------------------------------------------------------------
 */
 
+nextflow.preview.recursion = true
+
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     IMPORT MODULES / SUBWORKFLOWS / FUNCTIONS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-include { ingressFastqFiles } from './modules/ingress'
+include { ingress_fastq_files } from './modules/ingress'
 // include { } from './modules/common'
 
 /*
@@ -22,8 +24,12 @@ include { ingressFastqFiles } from './modules/ingress'
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 workflow {
-    ingressFastqFiles(params.input_dir, params.read_pattern)
-    ingressFastqFiles.out.read_fastq.view()
+    def INPUT_DIR = params.input_dir
+
+    // Start ingress workflow
+    ingress_fastq_files(INPUT_DIR)
+    // ingressFastqFiles.out.read_fastq.view()
+    // ingressFastqFiles.out.done_files.view()
 }
 
 /*
