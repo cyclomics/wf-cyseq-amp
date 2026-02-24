@@ -26,6 +26,34 @@ workflow common_workflow {
     PROCESSES
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+process SplitReadFilesOnNumberOfReads {
+    input:
+        tuple val(sample_id), val(file_id), path(fq)
+
+    output:
+        tuple val(sample_id), val(file_id), path("split/${file_id}_*.fastq")
+
+    script:
+        """
+        seqkit split -j ${task.cpus} -e .gz -s $params.max_fastq_size --by-size-prefix ${file_id}_ -O split $fq
+        gunzip split/*.gz
+        """
+}
+
+process FilterShortReads {
+    input:
+        tuple val(sample_id), val(file_id), path(fq)
+
+    output:
+        tuple val(sample_id), val("${file_id}_filtered"), path("${file_id}_filtered.fastq")
+
+    script:
+        """
+        seqkit seq -m ${params.filtering.min_raw_length} $fq > "${fq.simpleName}_filtered.fastq"
+        """
+}
+
+
 process TestProcess {
     label 'standard'
     container params.containers.ubuntu

@@ -3,8 +3,8 @@
 ========================================================================================
     Workflow name
 ========================================================================================
-    Github: 
-    Website: 
+    Github: https://github.com/cyclomics/wf-cyclomicsseq-amp
+    Website: https://www.cyclomics.com/
 ----------------------------------------------------------------------------------------
 */
 
@@ -12,11 +12,12 @@ nextflow.preview.recursion = true
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    IMPORT MODULES / SUBWORKFLOWS / FUNCTIONS
+    IMPORT MODULES / PROCESSES / FUNCTIONS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 include { ingress_fastq_files } from './modules/ingress'
-// include { } from './modules/common'
+include { FilterShortReads } from './modules/common'
+include { generate_cycas_consensus } from './modules/consensus'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -28,8 +29,18 @@ workflow {
 
     // Start ingress workflow
     ingress_fastq_files(INPUT_DIR)
-    // ingressFastqFiles.out.read_fastq.view()
-    // ingressFastqFiles.out.done_files.view()
+    // ingress_fastq_files.out.view()
+
+    // 1. Filter & QC
+    FilterShortReads(ingress_fastq_files.out.read_fastq)
+    // FilterShortReads.out.view()
+
+    // 2. Consensus
+    generate_cycas_consensus(FilterShortReads.out)
+    // generate_cycas_consensus.out.view()
+
+    // 3. Alignment
+
 }
 
 /*
