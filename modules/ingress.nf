@@ -63,7 +63,7 @@ workflow ingress_fastq_files {
         // Merge channels and add sample ID tagging
         read_fastq = initial_fastq_files.concat(rt_fastq_files)
             .map { meta ->
-                def (barcode, sample_id) = getValidParent(meta[2].parent, invalid_parents, BARCODE_PATTERN, RUN_FOLDER_PATTERN)
+                def (barcode, sample_id) = extractSampleInfo(meta[2].parent, invalid_parents, BARCODE_PATTERN, RUN_FOLDER_PATTERN)
                 if (params.sample_id != "") sample_id = params.sample_id.toString()
                 sample_id = sample_id.replaceAll("\\s+", "_") + "_${RUN_UID}"
                 if (barcode != "") sample_id = "${sample_id}_${barcode}"
@@ -151,7 +151,7 @@ def generateUid(String alphabet, int n) {
     (1..n).collect { alphabet[ new java.util.Random().nextInt( alphabet.length() ) ] }.join()
 }
 
-def findValidParent(dir, invalidList, barcodePattern, runFolderPattern) {
+def findValidParentDir(dir, invalidList, barcodePattern, runFolderPattern) {
     if (dir == null) {
         return null
     }
@@ -161,20 +161,20 @@ def findValidParent(dir, invalidList, barcodePattern, runFolderPattern) {
                      dir.simpleName ==~ runFolderPattern
     
     if (shouldSkip && dir.Parent != null) {
-        return findValidParent(dir.Parent, invalidList, barcodePattern, runFolderPattern)
+        return findValidParentDir(dir.Parent, invalidList, barcodePattern, runFolderPattern)
     }
     
     return dir
 }
 
-def getValidParent(dir, invalidList, barcodePattern, runFolderPattern) {
+def extractSampleInfo(dir, invalidList, barcodePattern, runFolderPattern) {
     def barcode = ""
 
     if (dir.simpleName ==~ barcodePattern) {
         barcode = dir.simpleName
     }
 
-    def validParent = findValidParent(dir, invalidList, barcodePattern, runFolderPattern)
+    def validParent = findValidParentDir(dir, invalidList, barcodePattern, runFolderPattern)
     
     return [barcode, validParent?.simpleName ?: ""]
 }
