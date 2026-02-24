@@ -3,7 +3,7 @@
     WORKFLOWS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-workflow commonWorkflow {
+workflow common_workflow {
     channel.of(params).dump(tag: 'params')
 
     def reference_path = params.reference_genome ?: 'data/tiny_ref.fasta'
@@ -14,11 +14,11 @@ workflow commonWorkflow {
 
     reference_ch.dump(tag: 'reference_ch')
     reads_ch.dump(tag: 'reads_ch')
-    testProcess(reference_ch)
-    getFirstRead(reads_ch)
+    TestProcess(reference_ch)
+    GetFirstRead(reads_ch)
 
-    testProcess.out.view()
-    getFirstRead.out.view()
+    TestProcess.out.view()
+    GetFirstRead.out.view()
 }
 
 /*
@@ -26,7 +26,7 @@ workflow commonWorkflow {
     PROCESSES
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-process testProcess {
+process TestProcess {
     label 'standard'
     container params.containers.ubuntu
 
@@ -49,7 +49,7 @@ process testProcess {
         """
 }
 
-process getFirstRead {
+process GetFirstRead {
     cpus 1
     memory '2 GB'
     container params.containers.ubuntu
