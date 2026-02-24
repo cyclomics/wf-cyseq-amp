@@ -11,33 +11,37 @@
 */
 process testProcess {
     label 'standard'
-    
+    container params.containers.ubuntu
+
     input:
         path reference_genome
 
     output:
-        path reference_genome
+        stdout
 
     script:
+    // This is a test process to check if the reference genome can be read correctly.
+    // Normally you would not check params in a process, but this is just for demonstration purposes.
+    // As we also have a test on error handling, we want to make sure that the process fails if the reference genome cannot be read.
         """
-        echo $reference_genome
-        """
-
-    stub:
-        """
-        echo $reference_genome
+        if [[ ! -f $reference_genome ]]; then
+            echo "File does not exist: $reference_genome" >&2
+            exit 1
+        fi
+        head -n 1 $reference_genome
         """
 }
 
 process getFirstRead {
-    cpus 4
-    memory '6 GB'
+    cpus 1
+    memory '2 GB'
+    container params.containers.ubuntu
 
     input:
         path read_fastq
 
     output:
-        path read_fastq
+        path("*.fastq")
 
     script:
         """
@@ -55,3 +59,20 @@ process getFirstRead {
     WORKFLOWS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+workflow commonWorkflow {
+    Channel.of(params).dump(tag: 'params')
+
+    def reference_path = params.reference_genome ?: 'data/tiny_ref.fasta'
+    def reads_glob = params.input_dir ? "${params.input_dir}/${params.read_pattern}" : 'data/dummy.fastq'
+
+    def reference_ch = Channel.fromPath(reference_path, checkIfExists: true)
+    def reads_ch = Channel.fromPath(reads_glob, checkIfExists: true)
+
+    reference_ch.dump(tag: 'reference_ch')
+    reads_ch.dump(tag: 'reads_ch')
+    testProcess(reference_ch)
+    getFirstRead(reads_ch)
+
+    testProcess.out.view()
+    getFirstRead.out.view()
+}
