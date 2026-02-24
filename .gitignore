@@ -5,7 +5,7 @@ work/
 test_data/
 work/
 
-DONE.fastq.gz
+*DONE.*
 .nf-test*
 
 **.DS_store
