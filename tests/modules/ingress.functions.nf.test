@@ -1,0 +1,315 @@
+
+nextflow_function {
+    name "Test ingress module functions"
+    script "modules/ingress.nf"
+ 
+    test("Function generateUid: Basic Test") {
+        // given an alphabet of a single letter, the result is N times that letter
+        function "generateUid"
+        tag "unit-test"
+        tag "function"
+        when {
+            function {
+                """
+                input[0] = "A"
+                input[1] = 4
+                """
+            }
+        }
+        then {
+            assert function.success
+            assert function.result.size() == 4
+            assert function.result == "AAAA"
+        }
+    }
+
+    test("Function generateUid: Alphabet test") {
+        // given a slightly more complex alphabet, make sure the expected alphabet is used, and everything else is not in there
+        // TODO: this can theoretically fail now due to probability?
+        function "generateUid"
+        tag "unit-test"
+        tag "function"
+        when {
+            function {
+                """
+                input[0] = "AB7"
+                input[1] = 50
+                """
+            }
+        }
+        then {
+            assert function.success
+            assert function.result.size() == 50
+            assert function.result.contains("A")
+            assert function.result.contains("B")
+            assert function.result.contains("7")
+            assert !function.result.contains((('C'..'Z')+('a'..'z')+('123456890')).join())
+        }
+    }
+
+    test("Function getMinKnowBarcodeFolderPattern: Test") {
+        // This is a simple anonymous function 
+        function "getMinKnowBarcodeFolderPattern"
+        tag "unit-test"
+        tag "function"
+        when {
+            function {
+                // has no inputs
+            }
+        }
+        then {
+            assert function.success
+            assert 'barcode01' ==~ function.result
+            assert 'barcode18' ==~ function.result
+            assert 'barcode99' ==~ function.result
+            assert 'barcode257' ==~ function.result
+            assert 'unclassified' ==~ function.result
+            // also test some misses
+            assert !('barcode1234' ==~ function.result)
+            assert !('my_sample_name' ==~ function.result)
+        }
+    }
+    
+    test("Function getMinKnowAutoRunFolderPattern: Test") {
+        // This is a simple anonymous function 
+        function "getMinKnowAutoRunFolderPattern"
+        tag "unit-test"
+        tag "function"
+        when {
+            function {
+                // has no inputs
+            }
+        }
+        then {
+            assert function.success
+            assert '20240918_1535_P2S-01772-A_PAW58321_a3846868' ==~ function.result
+            assert '20240101_0000_runname' ==~ function.result
+            assert !('20240101_runname' ==~ function.result)
+        }
+    }
+
+    test("Function asPattern: Test") {
+        // asPattern converts string/Pattern inputs to Pattern objects for use with ==~ operator
+        // Since Pattern objects can't be serialized by nf-test, we just verify the function succeeds
+        function "asPattern"
+        tag "unit-test"
+        tag "function"
+
+        when {
+            function {
+                """
+                input[0] = "aStringWeWantToMatch\\\\d+MoreText"
+                """
+            }
+        }
+        then {
+            assert function.success
+        }
+    }
+
+
+    test("Function findValidParent: Simple Test  with traling slash") {
+        // first test of findValidParent 
+        function "findValidParent"
+        tag "unit-test"
+        tag "function"
+        when {
+            function {
+                """
+                input[0] = file('/somewhere/very/far/far/away/')
+                """      
+            }
+        }
+        then {
+            assert function.success
+            assert function.result == '/somewhere/very/far/far/away'
+        }
+    }
+
+    test("Function findValidParent: Simple Test without traling slash") {
+        // no trailing / in dir
+        function "findValidParent"
+        tag "unit-test"
+        tag "function"
+        when {
+            function {
+                """
+                input[0] = file('/somewhere/very/far/far/away')
+                """      
+            }
+        }
+        then {
+            assert function.success
+            assert function.result == '/somewhere/very/far/far/away'
+        }
+    }
+
+    test("Function findValidParent: Test with filter") {
+        // filter out a subfolder that is invalid by a given definition
+        function "findValidParent"
+        tag "unit-test"
+        tag "function"
+        when {
+            function {
+                """
+                input[0] = file('/somewhere/very/far/far/away/')
+                input[1] = ['away','miss']
+                """
+            }
+        }
+        then {
+            assert function.success
+            assert function.result == '/somewhere/very/far/far'
+        }
+    }
+
+    test("Function findValidParent: Real World Test") {
+        // filter out all the things we do not consider valid parent directories
+        function "findValidParent"
+        tag "unit-test"
+        tag "function"
+        when {
+            function {
+                """
+                input[0] = file('/data/CYC000409_gDNA_BBCS_RCA/CYC000409/20240918_1535_P2S-01772-A_PAW58321_a3846868/fastq_pass/barcode12')
+                input[1] = ['fastq_pass']
+                """      
+            }
+        }
+        then {
+            assert function.success
+            assert function.result == '/data/CYC000409_gDNA_BBCS_RCA/CYC000409'
+        }
+    }
+
+    test("Function findValidParent: Test completely invalid path") {
+        // filter out all the things we do not consider valid parent directories
+        function "findValidParent"
+        tag "unit-test"
+        tag "function"
+        when {
+            function {
+                """
+                input[0] = file('/somewhere/very/far/far/away/')
+                input[1] = ['somewhere','very', 'far', 'away']
+                """      
+            }
+        }
+        then {
+            assert function.success
+            assert function.result == '/'
+        }
+    }
+
+    test("Function getValidParent: Basic test") {
+
+        function "getValidParent"
+        tag "unit-test"
+        tag "function"
+        when {
+            function {
+                """
+                input[0] = file('/data/CYC000409_gDNA_BBCS_RCA/CYC000409/20240918_1535_P2S-01772-A_PAW58321_a3846868/fastq_pass/barcode12/')
+                """      
+            }
+        }
+        then {
+            assert function.success
+            assert function.result[0] == 'barcode12'
+            assert function.result[1] == 'CYC000409'
+        }
+    }
+
+    test("Function formatSampleId: Basic test with barcode and runUID") {
+        // Test basic formatting with barcode and runUID
+        function "formatSampleId"
+        tag "unit-test"
+        tag "function"
+        when {
+            params {
+                sample_id = ""
+            }
+            function {
+                """
+                input[0] = "MySample"
+                input[1] = "barcode12"
+                input[2] = "ABC1234"
+                """
+            }
+        }
+        then {
+            assert function.success
+            assert function.result == "MySample_ABC1234_barcode12"
+        }
+    }
+
+    test("Function formatSampleId: Test with whitespace replacement") {
+        // Test that whitespace is replaced with underscores
+        function "formatSampleId"
+        tag "unit-test"
+        tag "function"
+        when {
+            params {
+                sample_id = ""
+            }
+            function {
+                """
+                input[0] = "My Sample Name"
+                input[1] = ""
+                input[2] = "XYZ9999"
+                """
+            }
+        }
+        then {
+            assert function.success
+            assert function.result == "My_Sample_Name_XYZ9999"
+        }
+    }
+
+    test("Function formatSampleId: Test with params.sample_id override") {
+        // Test that params.sample_id overrides the input sample_ID
+        function "formatSampleId"
+        tag "unit-test"
+        tag "function"
+        when {
+            params {
+                sample_id = "OverriddenSample"
+            }
+            function {
+                """
+                input[0] = "OriginalSample"
+                input[1] = "barcode01"
+                input[2] = "DEF5555"
+                """
+            }
+        }
+        then {
+            assert function.success
+            assert function.result == "OverriddenSample_DEF5555_barcode01"
+        }
+    }
+
+    test("Function formatSampleId: Test without barcode") {
+        // Test formatting when no barcode is provided
+        function "formatSampleId"
+        tag "unit-test"
+        tag "function"
+        when {
+            params {
+                sample_id = ""
+            }
+            function {
+                """
+                input[0] = "MyData"
+                input[1] = ""
+                input[2] = "GHI7777"
+                """
+            }
+        }
+        then {
+            assert function.success
+            assert function.result == "MyData_GHI7777"
+        }
+    }
+
+}

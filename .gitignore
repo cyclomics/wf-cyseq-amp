@@ -2,3 +2,12 @@
 output/
 simulation/
 work/
+test_data/
+work/
+
+DONE.fastq.gz
+.nf-test*
+
+**.DS_store
+**.DS_Store
+**.ds_store
