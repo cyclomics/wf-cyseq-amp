@@ -49,7 +49,7 @@ process FilterShortReads {
 
     script:
         """
-        seqkit seq -m ${params.filtering.min_raw_length} $fq > "${fq.simpleName}_filtered.fastq"
+        seqkit seq -m ${params.min_raw_length} $fq > "${fq.simpleName}_filtered.fastq"
         """
 }
 

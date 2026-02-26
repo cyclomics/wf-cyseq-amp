@@ -26,6 +26,7 @@ include { generate_cycas_consensus } from './modules/consensus'
 */
 workflow {
     def INPUT_DIR = params.input_dir
+    def ch_reference = channel.fromPath(params.reference)
 
     // Start ingress workflow
     ingress_fastq_files(INPUT_DIR)
@@ -36,7 +37,7 @@ workflow {
     // FilterShortReads.out.view()
 
     // 2. Consensus
-    generate_cycas_consensus(FilterShortReads.out)
+    generate_cycas_consensus(FilterShortReads.out, ch_reference)
     // generate_cycas_consensus.out.view()
 
     // 3. Alignment

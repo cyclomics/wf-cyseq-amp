@@ -9,9 +9,10 @@ workflow generate_cycas_consensus {
         reference_genome
 
     main:
-        Minimap2Alignment(read_fastq, reference_genome)
-        IndexWithId(Minimap2Alignment.out)
-        FilterAlignments(IndexWithId.out)
+        IndexReference(reference_genome)
+        Minimap2Alignment(read_fastq, IndexReference.out)
+        SortIndexAlignments(Minimap2Alignment.out)
+        FilterAlignments(SortIndexAlignments.out)
         Cycas(FilterAlignments.out)
 
     emit:
@@ -26,15 +27,32 @@ workflow generate_cycas_consensus {
     PROCESSES
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+process IndexReference{
+    container params.containers.samtools
+    
+    input:
+        path(reference)
+    
+    output:
+        tuple path(reference), path("${reference}.fai")
+
+    script:
+        """
+        samtools faidx $reference
+        """
+}
+
 process Minimap2Alignment {
     container params.containers.minimap2
+    cpus 4
+    memory 20.GB
 
     input:
         tuple val(sample_id), val(file_id), path(fq)
-        path(reference_genome)
+        tuple path(reference), val(reference_idx)
     
     output:
-        tuple val(sample_id), val(file_id), path("${file_id}.bam") 
+        tuple val(sample_id), val(file_id), path("${file_id}.sam") 
 
     script:
         """
@@ -43,24 +61,24 @@ process Minimap2Alignment {
           -m ${params.minimap2.min_chain_score} \\
           -n ${params.minimap2.min_chain_count} \\
           -s ${params.minimap2.min_peak_aln_score} \\
-          $reference_genome \\
-          $fq | \\ 
-        samtools sort -o ${file_id}.bam -
+          $reference \\
+          $fq > ${file_id}.sam
         """
 }
 
-process IndexWithId {
+process SortIndexAlignments {
     container params.containers.samtools
 
     input:
-        tuple val(sample_id), val(file_id), path(bam)
+        tuple val(sample_id), val(file_id), path(sam)
 
     output:
-        tuple val(sample_id), val(file_id), path(bam), path("*.bai") 
+        tuple val(sample_id), val(file_id), path("${file_id}.bam"), path("${file_id}.bam.bai") 
 
     script:
         """
-        samtools index $bam
+        samtools sort -o ${file_id}.bam $sam
+        samtools index ${file_id}.bam
         """
 }
 
@@ -86,6 +104,8 @@ process FilterAlignments {
 
 process Cycas {
     publishDir "${params.output_dir}/consensus", mode: 'copy'
+    cpus 4
+    memory 10.GB
 
     container params.containers.cycas
 
