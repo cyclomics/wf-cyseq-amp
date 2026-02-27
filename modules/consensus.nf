@@ -1,3 +1,5 @@
+include { SortIndexAlignments } from './common'
+
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     WORKFLOWS
@@ -6,19 +8,18 @@
 workflow generate_cycas_consensus {
     take:
         read_fastq
-        reference_genome
+        reference
 
     main:
-        IndexReference(reference_genome)
-        Minimap2Alignment(read_fastq, IndexReference.out)
-        SortIndexAlignments(Minimap2Alignment.out)
+        Minimap2AlignConcatemers(read_fastq, reference)
+        SortIndexAlignments(Minimap2AlignConcatemers.out)
         FilterAlignments(SortIndexAlignments.out)
         Cycas(FilterAlignments.out)
 
     emit:
         fastq = Cycas.out.map { it -> tuple(it[0], it[1], it[2]) }
         json = Cycas.out.map { it -> tuple(it[0], it[1], it[3]) }
-        split_bam = Minimap2Alignment.out
+        split_bam = Minimap2AlignConcatemers.out
         split_bam_filtered = FilterAlignments.out.map { it -> tuple(it[0], it[1], it[2]) }
 }
 
@@ -27,22 +28,9 @@ workflow generate_cycas_consensus {
     PROCESSES
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-process IndexReference{
-    container params.containers.samtools
-    
-    input:
-        path(reference)
-    
-    output:
-        tuple path(reference), path("${reference}.fai")
 
-    script:
-        """
-        samtools faidx $reference
-        """
-}
 
-process Minimap2Alignment {
+process Minimap2AlignConcatemers {
     container params.containers.minimap2
     cpus 4
     memory 20.GB
@@ -66,21 +54,7 @@ process Minimap2Alignment {
         """
 }
 
-process SortIndexAlignments {
-    container params.containers.samtools
 
-    input:
-        tuple val(sample_id), val(file_id), path(sam)
-
-    output:
-        tuple val(sample_id), val(file_id), path("${file_id}.bam"), path("${file_id}.bam.bai") 
-
-    script:
-        """
-        samtools sort -o ${file_id}.bam $sam
-        samtools index ${file_id}.bam
-        """
-}
 
 process FilterAlignments {
     container params.containers.samtools

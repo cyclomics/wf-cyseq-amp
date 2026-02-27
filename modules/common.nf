@@ -27,6 +27,9 @@ workflow common_workflow {
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 process SplitReadFilesOnNumberOfReads {
+    container params.containers.seqkit
+    cpus 4
+
     input:
         tuple val(sample_id), val(file_id), path(fq)
 
@@ -41,6 +44,8 @@ process SplitReadFilesOnNumberOfReads {
 }
 
 process FilterShortReads {
+    container params.containers.seqkit
+
     input:
         tuple val(sample_id), val(file_id), path(fq)
 
@@ -50,6 +55,37 @@ process FilterShortReads {
     script:
         """
         seqkit seq -m ${params.min_raw_length} $fq > "${fq.simpleName}_filtered.fastq"
+        """
+}
+
+process IndexReference {
+    container params.containers.samtools
+    
+    input:
+        path(reference)
+    
+    output:
+        tuple path(reference), path("${reference}.fai")
+
+    script:
+        """
+        samtools faidx $reference
+        """
+}
+
+process SortIndexAlignments {
+    container params.containers.samtools
+
+    input:
+        tuple val(sample_id), val(file_id), path(sam)
+
+    output:
+        tuple val(sample_id), val(file_id), path("${file_id}.bam"), path("${file_id}.bam.bai") 
+
+    script:
+        """
+        samtools sort -o ${file_id}.bam $sam
+        samtools index ${file_id}.bam
         """
 }
 
