@@ -44,6 +44,7 @@ process SplitReadFilesOnNumberOfReads {
 }
 
 process FilterShortReads {
+    publishDir "${params.output_dir}/filter", mode: 'copy'
     container params.containers.seqkit
 
     input:
@@ -89,6 +90,29 @@ process SortIndexAlignments {
         """
 }
 
+process FindRegionsOfInterest{
+    input:
+        tuple val(sample_id), val(file_id), path(bam_in), path(bai_in)
+        val(regions)
+
+    output:
+        tuple val(sample_id), val(file_id), path("${sample_id}_roi.bed")
+
+    script:
+        if (regions == 'auto') {
+            """
+            samtools depth $bam_in \
+             | awk '\$3>${params.roi_detection.min_depth}' \
+             | awk '{print \$1"\t"\$2"\t"\$2 + 1}' \
+             | bedtools merge -d ${params.roi_detection.max_distance} -i /dev/stdin \
+             > ${sample_id}_roi.bed
+            """
+        } else {
+            """
+            cp $regions ${sample_id}_roi.bed
+            """
+        }
+}
 
 process TestProcess {
     label 'standard'

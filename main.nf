@@ -16,10 +16,10 @@ nextflow.preview.recursion = true
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 include { ingress_fastq_files } from './modules/ingress'
-include { FilterShortReads; IndexReference } from './modules/common'
+include { FilterShortReads; IndexReference; FindRegionsOfInterest } from './modules/common'
 include { generate_cycas_consensus } from './modules/consensus'
 include { align_consensus_reads } from './modules/alignment'
-// include { call_variants } from './modules/variants'
+include { call_variants } from './modules/variantcalling'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -34,29 +34,41 @@ workflow {
     assert params.minimap2?.mode in allowed_modes :
         "--minimap2.mode must be one of: ${allowed_modes.join(', ')}"
 
-    def INPUT_DIR = params.input_dir
-    def ch_reference = IndexReference(channel.fromPath(params.reference))
+    def read_pattern = params.input_dir.endsWith("/")
+            ? "${params.input_dir}${params.read_pattern}"
+            : "${params.input_dir}/${params.read_pattern}"
+        
+    def stop_pattern = params.input_dir.endsWith("/")
+        ? "${params.input_dir}${params.stop_pattern}"
+        : "${params.input_dir}/${params.stop_pattern}"
+
+    def ch_reference = IndexReference(channel.fromPath(params.reference)).collect()
     def minimap2_mode = params.minimap2.mode
 
+    if (params.regions != "auto") {
+        ch_regions = channel.value(file(params.regions))
+    } else {
+        log.info "Regions of interest will be detected automatically"
+        ch_regions = channel.value("auto")
+    }
+
     // Start ingress workflow
-    ingress_fastq_files(INPUT_DIR)
-    // ingress_fastq_files.out.view()
+    ingress_fastq_files(read_pattern, stop_pattern)
 
     // 1. Filter & QC
     FilterShortReads(ingress_fastq_files.out.read_fastq)
-    // FilterShortReads.out.view()
 
     // 2. Consensus
     generate_cycas_consensus(FilterShortReads.out, ch_reference)
     consensus_fastq = generate_cycas_consensus.out.fastq
     consensus_json = generate_cycas_consensus.out.json
-    // generate_cycas_consensus.out.view()
 
     // 3. Alignment
     align_consensus_reads(consensus_fastq, consensus_json, ch_reference, minimap2_mode)
 
     // 4. Variant calling
-    // call_variants(align_consensus_reads.out, ch_reference)
+    regions = FindRegionsOfInterest(align_consensus_reads.out, ch_regions)
+    call_variants(align_consensus_reads.out, regions, ch_reference)
 
 }
 

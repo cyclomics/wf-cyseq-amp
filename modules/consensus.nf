@@ -77,7 +77,7 @@ process FilterAlignments {
 }
 
 process Cycas {
-    publishDir "${params.output_dir}/consensus", mode: 'copy'
+    publishDir "${params.output_dir}/consensus_reads", mode: 'copy'
     cpus 4
     memory 10.GB
 
