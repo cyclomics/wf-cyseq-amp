@@ -1,8 +1,8 @@
 nextflow_process {
 
-    name "Test Process testProcess"
+    name "Test Process TestProcess"
     script "modules/common.nf"
-    process "testProcess"
+    process "TestProcess"
     
     test("Error on non existent reference") {
         tag "unit-test"

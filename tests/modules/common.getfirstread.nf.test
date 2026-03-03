@@ -1,8 +1,8 @@
 nextflow_process {
 
-    name "Test Process getFirstRead"
+    name "Test Process GetFirstRead"
     script "modules/common.nf"
-    process "getFirstRead"
+    process "GetFirstRead"
 
     test("Extract the first read from fastq file") {
         tag "unit-test"

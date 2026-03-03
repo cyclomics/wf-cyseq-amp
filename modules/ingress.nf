@@ -5,7 +5,8 @@
 */
 workflow ingress_fastq_files {
     take:
-        input_dir
+        read_pattern
+        stop_pattern
 
     main:
 
@@ -16,20 +17,14 @@ workflow ingress_fastq_files {
         def barcodePattern = asPattern(getMinKnowBarcodeFolderPattern())
         def runFolderPattern = asPattern(getMinKnowAutoRunFolderPattern())
 
-        def READ_PATTERN = input_dir.endsWith("/")
-            ? "${input_dir}${params.read_pattern}"
-            : "${input_dir}/${params.read_pattern}"
         
-        def STOP_PATTERN = input_dir.endsWith("/")
-            ? "${input_dir}${params.stop_pattern}"
-            : "${input_dir}/${params.stop_pattern}"
 
-        log.info "Looking for FASTQ files with pattern: ${READ_PATTERN}"
-        log.info "Stopping when files matching pattern appear: ${STOP_PATTERN}"
+        log.info "Looking for FASTQ files with pattern: ${read_pattern}"
+        log.info "Stopping when files matching pattern appear: ${stop_pattern}"
 
         // -------------------------------------------------------------------
         // Initial STOP file
-        initial_stop_files = channel.fromPath(STOP_PATTERN)
+        initial_stop_files = channel.fromPath(stop_pattern)
             .ifEmpty('empty')
             .map {it -> it != 'empty' ? it.simpleName : "empty" }
         
@@ -38,7 +33,7 @@ workflow ingress_fastq_files {
 
         // -------------------------------------------------------------------
         // Real-time STOP files
-        rt_stop_files = channel.watchPath(STOP_PATTERN, 'create,modify')
+        rt_stop_files = channel.watchPath(stop_pattern, 'create,modify')
             .until{  stop_file_found }
         
         CheckRealtimeIngress(rt_stop_files.last(), stop_file_found)
@@ -48,7 +43,7 @@ workflow ingress_fastq_files {
         // -------------------------------------------------------------------
         // Existing FASTQ files
         initial_fastq_files = params.process_existing_files ?
-            channel.fromPath(READ_PATTERN, checkIfExists: true) :
+            channel.fromPath(read_pattern, checkIfExists: true) :
             channel.empty()
 
         initial_fastq_files = initial_fastq_files
@@ -57,7 +52,7 @@ workflow ingress_fastq_files {
 
         // -------------------------------------------------------------------
         // Real-time FASTQ files (stop when DONE appears)
-        rt_fastq_files = channel.watchPath(READ_PATTERN, 'create,modify')
+        rt_fastq_files = channel.watchPath(read_pattern, 'create,modify')
             .until { file -> file.name ==~ 'DONE.*\\.fastq.gz' }
             .map { file -> tuple(file.parent.simpleName, file.simpleName, file) }
 

@@ -3,7 +3,7 @@
     WORKFLOWS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-workflow commonWorkflow {
+workflow common_workflow {
     channel.of(params).dump(tag: 'params')
 
     def reference_path = params.reference_genome ?: 'data/tiny_ref.fasta'
@@ -14,11 +14,11 @@ workflow commonWorkflow {
 
     reference_ch.dump(tag: 'reference_ch')
     reads_ch.dump(tag: 'reads_ch')
-    testProcess(reference_ch)
-    getFirstRead(reads_ch)
+    TestProcess(reference_ch)
+    GetFirstRead(reads_ch)
 
-    testProcess.out.view()
-    getFirstRead.out.view()
+    TestProcess.out.view()
+    GetFirstRead.out.view()
 }
 
 /*
@@ -26,7 +26,95 @@ workflow commonWorkflow {
     PROCESSES
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-process testProcess {
+process SplitReadFilesOnNumberOfReads {
+    container params.containers.seqkit
+    cpus 4
+
+    input:
+        tuple val(sample_id), val(file_id), path(fq)
+
+    output:
+        tuple val(sample_id), val(file_id), path("split/${file_id}_*.fastq")
+
+    script:
+        """
+        seqkit split -j ${task.cpus} -e .gz -s $params.max_fastq_size --by-size-prefix ${file_id}_ -O split $fq
+        gunzip split/*.gz
+        """
+}
+
+process FilterShortReads {
+    publishDir "${params.output_dir}/filter", mode: 'copy'
+    container params.containers.seqkit
+
+    input:
+        tuple val(sample_id), val(file_id), path(fq)
+
+    output:
+        tuple val(sample_id), val("${file_id}_filtered"), path("${file_id}_filtered.fastq")
+
+    script:
+        """
+        seqkit seq -m ${params.min_raw_length} $fq > "${fq.simpleName}_filtered.fastq"
+        """
+}
+
+process IndexReference {
+    container params.containers.samtools
+    
+    input:
+        path(reference)
+    
+    output:
+        tuple path(reference), path("${reference}.fai")
+
+    script:
+        """
+        samtools faidx $reference
+        """
+}
+
+process SortIndexAlignments {
+    container params.containers.samtools
+
+    input:
+        tuple val(sample_id), val(file_id), path(sam)
+
+    output:
+        tuple val(sample_id), val(file_id), path("${file_id}.bam"), path("${file_id}.bam.bai") 
+
+    script:
+        """
+        samtools sort -o ${file_id}.bam $sam
+        samtools index ${file_id}.bam
+        """
+}
+
+process FindRegionsOfInterest{
+    input:
+        tuple val(sample_id), val(file_id), path(bam_in), path(bai_in)
+        val(regions)
+
+    output:
+        tuple val(sample_id), val(file_id), path("${sample_id}_roi.bed")
+
+    script:
+        if (regions == 'auto') {
+            """
+            samtools depth $bam_in \
+             | awk '\$3>${params.roi_detection.min_depth}' \
+             | awk '{print \$1"\t"\$2"\t"\$2 + 1}' \
+             | bedtools merge -d ${params.roi_detection.max_distance} -i /dev/stdin \
+             > ${sample_id}_roi.bed
+            """
+        } else {
+            """
+            cp $regions ${sample_id}_roi.bed
+            """
+        }
+}
+
+process TestProcess {
     label 'standard'
     container params.containers.ubuntu
 
@@ -49,7 +137,7 @@ process testProcess {
         """
 }
 
-process getFirstRead {
+process GetFirstRead {
     cpus 1
     memory '2 GB'
     container params.containers.ubuntu
