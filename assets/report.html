@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>wf-cyclomicsseq-amp report</title>
+
+    <link rel="stylesheet"
+          href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+</head>
+
+<body>
+<div class="container mt-4">
+    <h2>Result dashboard</h2>
+    <p id="generation_time">Waiting for data...</p>
+
+    <div class="row" id="cards"></div>
+
+    <hr>
+
+    <div id="plots"></div>
+</div>
+
+<script id="embedded-data" type="application/json">
+{}
+</script>
+
+<script>
+
+function renderDashboard(data) {
+
+    document.getElementById("generation_time").innerText =
+        "Last updated: " + data.generation_time;
+
+    const cardsContainer = document.getElementById("cards");
+    cardsContainer.innerHTML = "";
+
+    data.cards.forEach(card => {
+        cardsContainer.innerHTML += `
+        <div class="col-md-3 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h4>${card.value}</h4>
+                    <p>${card.name}</p>
+                </div>
+            </div>
+        </div>`;
+    });
+
+    const plotsContainer = document.getElementById("plots");
+    plotsContainer.innerHTML = "";
+
+    data.plots.forEach(plot => {
+
+        const divId = "plot-" + plot.name.replace(/\s+/g, "_");
+
+        plotsContainer.innerHTML += `
+            <div class="mb-5">
+                <h4>${plot.name}</h4>
+                <div id="${divId}" style="height:500px;"></div>
+            </div>
+        `;
+
+        Plotly.newPlot(divId, plot.data, plot.layout);
+    });
+}
+
+function loadEmbeddedData() {
+
+    const embedded = document.getElementById("embedded-data").textContent;
+
+    if (!embedded || embedded.trim().length === 0) {
+        return;
+    }
+
+    const data = JSON.parse(embedded);
+
+    renderDashboard(data);
+
+    // only reload if pipeline still running
+    if (!data.final) {
+        setTimeout(() => location.reload(), 5000);
+    }
+}
+
+loadEmbeddedData()
+
+</script>
+</body>
+</html>
