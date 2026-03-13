@@ -16,10 +16,17 @@ nextflow.preview.recursion = true
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 include { ingress_fastq_files } from './modules/ingress'
-include { FilterShortReads; IndexReference; FindRegionsOfInterest } from './modules/common'
+include {
+    FilterShortReads;
+    IndexReference;
+    FindRegionsOfInterest;
+    CountNumberOfReads;
+    UpdateTotalReads;
+    } from './modules/common'
 include { generate_cycas_consensus } from './modules/consensus'
 include { align_consensus_reads } from './modules/alignment'
 include { call_variants } from './modules/variantcalling'
+include { BuildReportData; FinalizeReport } from './modules/report'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -54,9 +61,15 @@ workflow {
 
     // Start ingress workflow
     ingress_fastq_files(read_pattern, stop_pattern)
+    raw_fastq = ingress_fastq_files.out.read_fastq
+
+    raw_fastq_json = CountNumberOfReads(raw_fastq, 'raw')
+
+    total_reads = UpdateTotalReads(raw_fastq_json, file("${params.output_dir}/report/counts/number_of_reads_running.json"))
+
 
     // 1. Filter & QC
-    FilterShortReads(ingress_fastq_files.out.read_fastq)
+    FilterShortReads(raw_fastq)
 
     // 2. Consensus
     generate_cycas_consensus(FilterShortReads.out, ch_reference)
@@ -70,6 +83,13 @@ workflow {
     regions = FindRegionsOfInterest(align_consensus_reads.out, ch_regions)
     call_variants(align_consensus_reads.out, regions, ch_reference)
 
+
+    report_files = BuildReportData(total_reads)
+
+    FinalizeReport(
+        report_files.report_html.last(),
+        report_files.report_json.last()
+    )
 }
 
 /*
