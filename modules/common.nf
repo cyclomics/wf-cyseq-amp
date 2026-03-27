@@ -44,14 +44,13 @@ process SplitReadFilesOnNumberOfReads {
 }
 
 process FilterShortReads {
-    publishDir "${params.output_dir}/filter", mode: 'copy'
     container params.containers.seqkit
 
     input:
         tuple val(sample_id), val(file_id), path(fq)
 
     output:
-        tuple val(sample_id), val("${file_id}_filtered"), path("${file_id}_filtered.fastq")
+        tuple val(sample_id), val("${file_id}"), path("${file_id}_filtered.fastq")
 
     script:
         """
@@ -90,35 +89,10 @@ process SortIndexAlignments {
         """
 }
 
-process FindRegionsOfInterest{
-    container params.containers.alnutils
-    
-    input:
-        tuple val(sample_id), val(file_id), path(bam_in), path(bai_in)
-        val(regions)
-
-    output:
-        tuple val(sample_id), val(file_id), path("${sample_id}_roi.bed")
-
-    script:
-        if (regions == 'auto') {
-            """
-            samtools depth $bam_in \
-             | awk '\$3>${params.roi_detection.min_depth}' \
-             | awk '{print \$1"\t"\$2"\t"\$2 + 1}' \
-             | bedtools merge -d ${params.roi_detection.max_distance} -i /dev/stdin \
-             > ${sample_id}_roi.bed
-            """
-        } else {
-            """
-            cp $regions ${sample_id}_roi.bed
-            """
-        }
-}
 
 process CountNumberOfReads {
     container params.containers.alnutils
-    publishDir "${params.output_dir}/report/raw_counts", mode: 'copy'
+    publishDir "${params.output_dir}/${sample_id}/report/raw_counts", mode: 'copy'
     tag "${sample_id}_${file_id}_${type}"
 
     input:
@@ -126,29 +100,29 @@ process CountNumberOfReads {
         val(type)
 
     output:
-        tuple val(type), val(sample_id), path("number_of_reads_${type}_${sample_id}_${file_id}.json")
+        tuple val(sample_id), val(file_id), path("number_of_reads_${type}_${sample_id}_${file_id}.json")
 
     script:
-    """
-    set -euo pipefail
+        """
+        set -euo pipefail
 
-    if [[ "${fq}" == *.gz ]]; then
-        lines=\$(zcat ${fq} | wc -l)
-    else
-        lines=\$(wc -l < ${fq})
-    fi
+        if [[ "${fq}" == *.gz ]]; then
+            lines=\$(zcat ${fq} | wc -l)
+        else
+            lines=\$(wc -l < ${fq})
+        fi
 
-    reads=\$((lines / 4))
+        reads=\$((lines / 4))
 
-    cat << EOF > number_of_reads_${type}_${sample_id}_${file_id}.json
+        cat << EOF > number_of_reads_${type}_${sample_id}_${file_id}.json
 {
-  "sample_id": "${sample_id}",
-  "file_id": "${file_id}",
-  "type": "${type}",
-  "reads": \$reads
+"sample_id": "${sample_id}",
+"file_id": "${file_id}",
+"type": "${type}",
+"reads": \$reads
 }
 EOF
-    """
+        """
 }
 
 process UpdateTotalReads {
@@ -164,13 +138,12 @@ process UpdateTotalReads {
         path("number_of_reads_running.json")
 
     script:
-    """
-    sum_reads.py \
-        --type "${type}" \
-        --sample_id "${sample_id}" \
-        --json_file "${json_file}" \
-        --published_file "${final_totals_file}"
-    """
+        """
+        sum_reads.py \
+            --sample_id "${sample_id}" \
+            --json_file "${json_file}" \
+            --published_file "${final_totals_file}"
+        """
 }
 
 process TestProcess {

@@ -1,37 +1,96 @@
 #!/usr/bin/env python
+"""
+Accumulates read counts and outputs a ready-to-use Plotly YML.
+
+Output schema:
+    name: Reads per sample
+    data:
+        type: bar
+        x: [sample_1, sample_2, ...]
+        y: [100, 200, ...]
+    layout:
+        title: Reads per sample
+        xaxis:
+            title: Sample
+        yaxis:
+            title: Read count
+"""
+
 import json
+import yaml
 import os
 import argparse
 
-parser = argparse.ArgumentParser(description="Update running totals of reads")
-parser.add_argument("--type", required=True)
-parser.add_argument("--sample_id", required=True)
-parser.add_argument("--json_file", required=True)
-parser.add_argument("--published_file", required=False)
-args = parser.parse_args()
+def load_new_reads(json_file: str) -> tuple[str, int]:
+    """Read type and read count from input JSON."""
+    with open(json_file) as f:
+        data = json.load(f)
+    return data["type"], data["reads"]
 
-totals_file = "number_of_reads_running.json"
 
-# read new reads
-with open(args.json_file) as f:
-    new_data = json.load(f)
-new_reads = new_data['reads']
-
-# start from published totals if it exists
-totals = {}
-if args.published_file:
+def load_existing_totals(published_file: str | None) -> dict[str, int]:
+    """
+    Load accumulated totals from existing Plotly YML.
+    Returns empty dict if no published file exists yet.
+    """
+    if not published_file:
+        return {}
     try:
-        with open(args.published_file) as f:
-            totals = json.load(f)
+        with open(published_file) as f:
+            existing = yaml.safe_load(f) or {}
+        x = existing.get("data", {}).get("x", [])
+        y = existing.get("data", {}).get("y", [])
+        return dict(zip(x, y))
     except FileNotFoundError:
-        pass  # first run, no published file yet
+        return {}
 
-# update totals
-key = f"{args.type}__{args.sample_id}"
-totals[key] = totals.get(key, 0) + new_reads
 
-# write updated totals
-tmp_file = totals_file + ".tmp"
-with open(tmp_file, "w") as f:
-    json.dump(totals, f, indent=2)
-os.replace(tmp_file, totals_file)
+def update_totals(totals: dict[str, int], read_type: str, new_reads: int) -> dict[str, int]:
+    """Add new reads to the running totals."""
+    key = f"{read_type}"
+    totals[key] = totals.get(key, 0) + new_reads
+    return totals
+
+
+def build_plot_yaml(totals: dict[str, int]) -> dict:
+    """Build a ready-to-use Plotly YML from accumulated totals."""
+    return {
+        "name": "Raw reads",
+        "data": {
+            "type": "bar",
+            "x": list(totals.keys()),
+            "y": list(totals.values()),
+        },
+        "layout": {
+            "title": "Number of raw reads",
+            "xaxis": {"title": "Sample"},
+            "yaxis": {"title": "Read count"},
+        },
+    }
+
+
+def write_yaml(plot: dict, output_file: str) -> None:
+    """Atomically write YAML to avoid partial reads."""
+    tmp_file = output_file + ".tmp"
+    with open(tmp_file, "w") as f:
+        yaml.dump(plot, f, default_flow_style=False, sort_keys=False)
+    os.replace(tmp_file, output_file)
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--json_file", required=True)
+    parser.add_argument("--published_file", required=False)
+    args = parser.parse_args()
+
+    output_file = args.published_file
+
+    read_type, new_reads = load_new_reads(args.json_file)
+    totals = load_existing_totals(args.published_file)
+    totals = update_totals(totals, read_type, new_reads)
+    plot = build_plot_yaml(totals)
+    write_yaml(plot, output_file)
+
+
+if __name__ == "__main__":
+    main()
