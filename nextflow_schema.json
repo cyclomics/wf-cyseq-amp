@@ -1,0 +1,123 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "https://raw.githubusercontent.com/cyclomics/wf-cyclomicsseq-amp/main/nextflow_schema.json",
+    "title": "cyclomics/wf-cyclomicsseq-amp",
+    "description": "Create high quality alignment data with variant identification for CyclomicsSeq reads.",
+    "type": "object",
+    "definitions": {
+        "input": {
+            "title": "Input Options",
+            "type": "object",
+            "fa_icon": "fas fa-arrow-right",
+            "description": "Parameters for finding and handling input data for analysis.",
+            "properties": {
+                "sample_name": {
+                    "title": "Sample name (Optional)",
+                    "type": "string",
+                    "default": "",
+                    "description": "Override the sample name used in the pipeline.",
+                    "help_text": "This option will override automated sample name detection and use the provided value instead."
+                },
+                "input_dir": {
+                    "title": "Input read directory",
+                    "type": "string",
+                    "format": "path",
+                    "default": "",
+                    "description": "Folder containing reads in fastq or fastq.gz format, usually the fastq_pass folder made by MinKnow.",
+                    "help_text": "An example whould be /data/sequencing/experiment_name/sample_name/20230213_0900_MN12345_FAA12345_1e411152/fastq_pass \n This folder contains a folder called fastq_pass and a sequencing summary."
+                },
+                "reference": {
+                    "title": "Reference genome FASTA file",
+                    "type": "string",
+                    "format": "file-path",
+                    "default": "",
+                    "description": "Reference genome FASTA.",
+                    "help_text": "Reference genome to be used for consensus, alignment and variant calling.\nWe suggest GRCh38.p14, since this has been tested to work with the variant effect prediction API. Please see the README for instructions to obtain this reference genome."
+                },
+                "regions": {
+                    "title": "Regions of interest BED file",
+                    "type": "string",
+                    "format": "file-path",
+                    "default": "auto",
+                    "description": "Region of interest, either `auto` or a path to a file in BED format corresponding to the reference used.",
+                    "help_text": "When provided, only locations in the BED file will be examined in the variant identification process. The `auto` strategy automatically selects loci based on read depth."
+                },
+                "target_depth": {
+                    "title": "Target read depth per amplicon",
+                    "type": "integer",
+                    "default": null,
+                    "description": "The desired amplicon depth, which will be used to mark the point at which all amplicons reach this value.",
+                    "help_text": "This option only adjusts the amplicon read depth plot in the report."
+                },
+                "min_raw_length": {
+                    "title": "Minimum raw read length",
+                    "type": "integer",
+                    "default": 500,
+                    "description": "Minimum length of raw reads to be considered for analysis.",
+                    "help_text": "This option will filter out reads that are shorter than the specified length."
+                }
+            },
+            "required": ["input_dir", "reference"]
+        },
+
+        "output": {
+            "title": "Output Options",
+            "type": "object",
+            "fa_icon": "fas fa-arrow-left",
+            "description": "Parameters for saving and naming workflow outputs",
+            "properties": {
+                "output_dir": {
+                    "type": "string",
+                    "default": "output",
+                    "format": "directory-path",
+                    "description": "Output directory for all workflow results."
+                }
+            },
+            "required": ["output_dir"]
+        },
+        "advanced": {
+            "properties": {
+                "split_fastq_by_size": {
+                    "title": "Split FASTQ by size",
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Split larger FASTQ files into smaller ones."
+                },
+                "max_fastq_size": {
+                    "title": "Maximum number of reads per FASTQ file",
+                    "type": "integer",
+                    "default": 40000,
+                    "description": "Maximum number of reads per FASTQ files in the analysis, only used when `split_fastq_by_size` is selected."
+                },
+                "include_fastq_fail": {
+                    "title": "Include fastq_fail",
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Include fastq_fail folder in the analysis.",
+                    "help_text": "This option will include the data in fastq_fail or fail folders in the analysis."
+                },
+                "roi_detection.min_depth": {
+                    "title": "Minimum region of interest depth",
+                    "type": "integer",
+                    "description": "Minimum depth to detect a region of interest.",
+                    "help_text": "Set the minimum depth required to detect a region of interest. Only valid if region file is 'auto'.",
+                    "default": 5000
+                },
+                "roi_detection.max_distance": {
+                    "title": "Maximum distance between regions of interest",
+                    "type": "integer",
+                    "description": "Maximum distance between regions of interest.",
+                    "help_text": "Maximum allowed distance between detected regions for them to be merged. Only valid if region file is 'auto'.",
+                    "default": 25
+                },
+                "read_pattern": {
+                    "title": "Input read pattern",
+                    "type": "string",
+                    "description": "Regular expression for fastq files used in the analysis.",
+                    "help_text": "By default the regex looks for the folder pass and fastq_pass. pass is used when rebasecalling data. fastq_pass is created normally by MinKnow.\n You can limit the amount of data by altering this value e.g. by changing it to \n {pass,fastq_pass}/**{1,2}.{fq,fastq,fq.gz,fastq.gz} \n will only take in fastq files ending in 1 and 2.",
+                    "default": "**.{fq,fastq,fq.gz,fastq.gz}"
+                }
+            }
+        }
+    }
+}

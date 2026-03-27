@@ -24,7 +24,7 @@ workflow call_variants {
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 process CallVariantsLofreq {
-    publishDir "${params.output_dir}/variants", mode: 'copy'
+    publishDir { "${params.output_dir}/${sample_id}/variants" }, mode: 'copy'
 
     container params.containers.lofreq
     memory 20.GB

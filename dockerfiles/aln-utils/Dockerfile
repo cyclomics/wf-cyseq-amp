@@ -48,6 +48,7 @@ RUN wget https://github.com/arq5x/bedtools2/releases/download/v2.31.1/bedtools-2
 RUN python3 -m pip install --no-cache-dir --break-system-packages \
     pandas \
     pysam==0.23.3 \
-    tqdm==4.67.3
+    tqdm==4.67.3 \
+    pyyaml==6.0.3
 
 WORKDIR /opt
