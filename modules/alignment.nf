@@ -90,7 +90,7 @@ process AnnotateBamYTags {
 }
 
 process MergeBamFiles {
-    publishDir "${params.output_dir}/${sample_id}/consensus_alignments", mode: 'copy'
+    publishDir { "${params.output_dir}/${sample_id}/consensus_alignments" }, mode: 'copy'
     container params.containers.samtools
 
     input:

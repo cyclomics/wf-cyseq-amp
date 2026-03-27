@@ -92,7 +92,7 @@ process SortIndexAlignments {
 
 process CountNumberOfReads {
     container params.containers.alnutils
-    publishDir "${params.output_dir}/${sample_id}/report/raw_counts", mode: 'copy'
+    publishDir { "${params.output_dir}/${sample_id}/report/raw_counts" }, mode: 'copy'
     tag "${sample_id}_${file_id}_${type}"
 
     input:

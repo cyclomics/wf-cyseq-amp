@@ -56,7 +56,7 @@ workflow report_realtime {
 process UpdateRunningReads {
     container params.containers.alnutils
     maxForks 1
-    publishDir "${params.output_dir}/${sample_id}/report/counts", mode: 'copy', overwrite: true
+    publishDir { "${params.output_dir}/${sample_id}/report/counts" }, mode: 'copy', overwrite: true
 
     input:
         tuple val(sample_id), val(file_id), path(json_file), path(published_file)
@@ -75,7 +75,7 @@ process UpdateRunningReads {
 process UpdateRunningDepth {
     container params.containers.alnutils
     maxForks 1
-    publishDir "${params.output_dir}/${sample_id}/report/depth", mode: 'copy', overwrite: true
+    publishDir { "${params.output_dir}/${sample_id}/report/depth" }, mode: 'copy', overwrite: true
 
     input:
         tuple val(sample_id), val(file_id), path(depth_yml), path(published_file)
