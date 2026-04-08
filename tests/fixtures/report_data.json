@@ -1,0 +1,29 @@
+{
+  "generation_time": "2024-01-01 12:00:00",
+  "cards": [
+    {
+      "name": "raw__sample_1",
+      "value": 4000
+    }
+  ],
+  "plots": [
+    {
+      "name": "Raw reads",
+      "data": [
+        {
+          "type": "bar",
+          "x": [
+            "raw__sample_1"
+          ],
+          "y": [
+            4000
+          ]
+        }
+      ],
+      "layout": {
+        "title": "Raw reads"
+      }
+    }
+  ],
+  "final": false
+}

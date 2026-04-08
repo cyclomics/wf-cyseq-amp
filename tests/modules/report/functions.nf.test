@@ -1,0 +1,112 @@
+nextflow_function {
+
+    name "Test report path helper functions"
+    script "modules/report.nf"
+
+    // reportsDir
+    test("reportsDir returns correct base path") {
+        tag "report_functions_1"
+        function "reportsDir"
+
+        when {
+            params {
+                output_dir = "/data/output"
+            }
+            function {
+                """
+                input[0] = "sample_1"
+                """
+            }
+        }
+
+        then {
+            assert function.result == "/data/output/sample_1/report"
+        }
+    }
+
+    // rawReadsYml
+    test("rawReadsYml returns correct path under counts/") {
+        tag "report_functions_2"
+        function "rawReadsYml"
+
+        when {
+            params {
+                output_dir = "/data/output"
+            }
+            function  { 
+                """
+                input[0] = "sample_1"
+                """
+            }
+        }
+
+        then {
+            assert function.result.toString() == "/data/output/sample_1/report/counts/number_of_reads_running.yml"
+        }
+    }
+
+    // ampDepthYml
+    test("ampDepthYml returns correct path under depth/") {
+        tag "report_functions_3"
+        function "ampDepthYml"
+
+        when {
+            params {
+                output_dir = "/data/output"
+            }
+            function {
+                """
+                input[0] = "sample_1"
+                """
+            }
+        }
+
+        then {
+            assert function.result.toString() == "/data/output/sample_1/report/depth/amplicon_depth_running.yml"
+        }
+    }
+
+    // Consistency: rawReadsYml and ampDepthYml share the same base
+    test("rawReadsYml and ampDepthYml share the same reportsDir base") {
+        tag "report_functions_4"
+        function "reportsDir"
+
+        when {
+            params {
+                output_dir = "/data/output"
+            }
+            function {
+                """
+                input[0] = "sample_1"
+                """
+            }
+        }
+
+        then {
+            def base = function.result
+            assert "/data/output/sample_1/report/counts/number_of_reads_running.yml".startsWith(base)
+            assert "/data/output/sample_1/report/depth/amplicon_depth_running.yml".startsWith(base)
+        }
+    }
+
+    // Different output_dir values
+    test("functions respect custom output_dir") {
+        tag "report_functions_5"
+        function "rawReadsYml"
+
+        when {
+            params {
+                output_dir = "/custom/path/results"
+            }
+            function  { 
+                """
+                input[0] = "sample_1"
+                """
+            }
+        }
+
+        then {
+            assert function.result == "/custom/path/results/sample_1/report/counts/number_of_reads_running.yml"
+        }
+    }
+}
