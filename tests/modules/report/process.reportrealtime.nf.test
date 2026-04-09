@@ -6,6 +6,7 @@ nextflow_process {
     
     // With amplicon depth
     test("Generates HTML and JSON with reads and depth") {
+        tag "unit-test"
 
         when {
             params {
@@ -49,6 +50,7 @@ nextflow_process {
 
     // Without amplicon depth (regions == auto)
     test("Generates HTML and JSON without depth when depth_yml is /dev/null") {
+        tag "unit-test"
 
         when {
             params {
@@ -77,6 +79,7 @@ nextflow_process {
 
     // Output content: cards are derived from reads YML
     test("Cards match x/y values from reads yml") {
+        tag "unit-test"
 
         when {
             params {
@@ -105,6 +108,7 @@ nextflow_process {
 
     // Output content: sample_id in header
     test("sample_id is embedded in report data") {
+        tag "unit-test"
 
         when {
             params {
@@ -133,6 +137,7 @@ nextflow_process {
     // Edge case: empty reads yml
     // TODO: should return 0 or N/A
     test("Empty reads YML produces empty cards and plot") {
+        tag "unit-test"
 
         when {
             params {

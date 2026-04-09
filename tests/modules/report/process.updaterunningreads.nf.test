@@ -6,6 +6,7 @@ nextflow_process {
 
     // First run, no prior published file
     test("First file, no prior accumulation") {
+        tag "unit-test"
 
         when {
             process {
@@ -40,6 +41,7 @@ nextflow_process {
 
     // Second file, accumulates on top of prior run
     test("Second file, accumulates on prior published YML") {
+        tag "unit-test"
 
         when {
             process {
@@ -93,6 +95,7 @@ nextflow_process {
 
     // Multiple samples accumulate independently
     test("Two different sample_ids produce separate outputs") {
+        tag "unit-test"
 
         when {
             process {

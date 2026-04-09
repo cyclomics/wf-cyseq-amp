@@ -6,6 +6,7 @@ nextflow_function {
     // reportsDir
     test("reportsDir returns correct base path") {
         tag "report_functions_1"
+        tag "unit-test"
         function "reportsDir"
 
         when {
@@ -27,6 +28,7 @@ nextflow_function {
     // rawReadsYml
     test("rawReadsYml returns correct path under counts/") {
         tag "report_functions_2"
+        tag "unit-test"
         function "rawReadsYml"
 
         when {
@@ -48,6 +50,7 @@ nextflow_function {
     // ampDepthYml
     test("ampDepthYml returns correct path under depth/") {
         tag "report_functions_3"
+        tag "unit-test"
         function "ampDepthYml"
 
         when {
@@ -69,6 +72,7 @@ nextflow_function {
     // Consistency: rawReadsYml and ampDepthYml share the same base
     test("rawReadsYml and ampDepthYml share the same reportsDir base") {
         tag "report_functions_4"
+        tag "unit-test"
         function "reportsDir"
 
         when {
@@ -92,6 +96,7 @@ nextflow_function {
     // Different output_dir values
     test("Functions respect custom output_dir") {
         tag "report_functions_5"
+        tag "unit-test"
         function "rawReadsYml"
 
         when {

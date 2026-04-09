@@ -6,6 +6,7 @@ nextflow_process {
     
     // First run, no prior published file
     test("First file, no prior accumulation") {
+        tag "unit-test"
 
         when {
             params {
@@ -37,6 +38,7 @@ nextflow_process {
 
     // Second file, sums on top of prior run
     test("Second file, accumulates sum-of-medians") {
+        tag "unit-test"
 
         when {
             params {
@@ -67,6 +69,7 @@ nextflow_process {
 
     // target_depth adds to the layout
     test("target_depth adds horizontal line shape and changes bar color accordingly") {
+        tag "unit-test"
 
         when {
             params {
@@ -105,6 +108,7 @@ nextflow_process {
 
     // Amplicons with zero depth
     test("Handles zero depth amplicons") {
+        tag "unit-test"
 
         when {
             params {
