@@ -4,7 +4,7 @@ nextflow_process {
     script "modules/report.nf"
     process "ReportRealtime"
     
-    // Happy path: with amplicon depth
+    // With amplicon depth
     test("Generates HTML and JSON with reads and depth") {
 
         when {
@@ -47,8 +47,8 @@ nextflow_process {
         }
     }
 
-    // Happy path: without amplicon depth (regions == auto)
-    test("generates html and json without depth when depth_yml is /dev/null") {
+    // Without amplicon depth (regions == auto)
+    test("Generates HTML and JSON without depth when depth_yml is /dev/null") {
 
         when {
             params {
@@ -76,7 +76,7 @@ nextflow_process {
     }
 
     // Output content: cards are derived from reads YML
-    test("cards match x/y values from reads yml") {
+    test("Cards match x/y values from reads yml") {
 
         when {
             params {
@@ -132,7 +132,7 @@ nextflow_process {
 
     // Edge case: empty reads yml
     // TODO: should return 0 or N/A
-    test("empty reads yml produces empty cards and plot") {
+    test("Empty reads YML produces empty cards and plot") {
 
         when {
             params {

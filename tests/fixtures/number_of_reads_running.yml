@@ -2,7 +2,7 @@ name: Raw reads
 data:
   type: bar
   x:
-  - raw__sample_1
+  - raw
   y:
   - 4000
 layout:

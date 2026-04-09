@@ -4,8 +4,8 @@ nextflow_process {
     script "modules/report.nf"
     process "FinalizeReport"
     
-    // Sets final=true in embedded JSON
-    test("sets final=true in output html") {
+    // Sets final=true
+    test("Sets final=true in output HTML") {
 
         when {
             process {
@@ -31,7 +31,7 @@ nextflow_process {
     }
 
     // Output content: all report data is preserved
-    test("Preserves cards and plots from input json") {
+    test("Preserves cards and plots from input JSON") {
 
         when {
             process {

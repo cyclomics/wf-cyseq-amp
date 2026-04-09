@@ -4,8 +4,8 @@ nextflow_workflow {
     script "modules/report.nf"
     workflow "report_realtime"
 
-    // Happy path: with BED file (regions != auto)
-    test("produces report with reads and depth when regions provided") {
+    // With BED file (regions != auto)
+    test("Produces report with reads and depth when regions provided") {
         tag "report_realtime_wf_1"
 
         when {
@@ -46,8 +46,8 @@ nextflow_workflow {
         }
     }
 
-    // Happy path: without BED file (regions == auto)
-    test("produces report with reads only when regions is auto") {
+    // Without BED file (regions == auto)
+    test("Produces report with reads only when regions is auto") {
         tag "report_realtime_wf_2"
 
         when {
@@ -80,7 +80,7 @@ nextflow_workflow {
     }
 
     // Real-time behaviour: emits per file_id, not just at end
-    test("emits one report per file_id pair, not just final") {
+    test("Emits one report per file_id pair, not just final") {
         tag "report_realtime_wf_3"
 
         when {
@@ -115,8 +115,8 @@ nextflow_workflow {
         }
     }
 
-    // Accumulation correctness: final report has cumulative counts
-    test("final report accumulates all reads correctly") {
+    // Accumulation: final report has cumulative counts
+    test("Final report accumulates all reads correctly") {
         tag "report_realtime_wf_4"
 
         when {
@@ -157,7 +157,7 @@ nextflow_workflow {
     }
 
     // Multi-sample: each sample gets its own report
-    test("two samples produce independent reports") {
+    test("Two samples produce independent reports") {
         tag "report_realtime_wf_5"
         
         when {
