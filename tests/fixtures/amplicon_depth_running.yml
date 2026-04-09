@@ -1,0 +1,22 @@
+name: Depth per amplicon
+data:
+  type: bar
+  x:
+  - AMP1
+  - AMP2
+  - AMP3
+  y:
+  - 500.0
+  - 400.0
+  - 600.0
+layout:
+  title: Median amplicon depth
+  xaxis:
+    title: Amplicon
+    tickangle: -45
+  yaxis:
+    title: Summed median depth
+  plot_bgcolor: white
+  paper_bgcolor: white
+  width: 500
+  height: 400

@@ -1,0 +1,145 @@
+nextflow_process {
+
+    name "Test UpdateRunningDepth"
+    script "modules/report.nf"
+    process "UpdateRunningDepth"
+    
+    // First run, no prior published file
+    test("First file, no prior accumulation") {
+        tag "unit-test"
+
+        when {
+            params {
+                target_depth = null
+            }
+            process {
+                """
+                input[0] = Channel.of([
+                    "sample_1",
+                    "file_1",
+                    file("${projectDir}/tests/fixtures/amplicon_depth.yml"),
+                    file("amplicon_depth_running.yml")
+                ])
+                """
+            }
+        }
+
+        then {
+            assert process.success
+
+            def yml = path(process.out[0][0][2]).yaml
+            assert yml.name == "Depth per amplicon"
+            assert yml.data.x == ["AMP1", "AMP2", "AMP3"]
+            assert yml.data.y == [500.0, 400.0, 600.0]
+            // No shapes when target_depth is null
+            assert !yml.layout.containsKey("shapes")
+        }
+    }
+
+    // Second file, sums on top of prior run
+    test("Second file, accumulates sum-of-medians") {
+        tag "unit-test"
+
+        when {
+            params {
+                target_depth = null
+            }
+            process {
+                """
+                input[0] = Channel.of([
+                    "sample_1",
+                    "file_2",
+                    file("${projectDir}/tests/fixtures/amplicon_depth_2.yml"),
+                    file("${projectDir}/tests/fixtures/amplicon_depth_running.yml")
+                ])
+                """
+            }
+        }
+
+        then {
+            assert process.success
+
+            def yml = path(process.out[0][0][2]).yaml
+            // 500+500=1000, 400+200=600, 600+900=1500
+            assert yml.data.y[0] == 1000.0
+            assert yml.data.y[1] == 600.0
+            assert yml.data.y[2] == 1500.0
+        }
+    }
+
+    // target_depth adds to the layout
+    test("target_depth adds horizontal line shape and changes bar color accordingly") {
+        tag "unit-test"
+
+        when {
+            params {
+                target_depth = 1000
+            }
+            process {
+                """
+                input[0] = Channel.of([
+                    "sample_1",
+                    "file_1",
+                    file("${projectDir}/tests/fixtures/amplicon_depth_2.yml"),
+                    file("${projectDir}/tests/fixtures/amplicon_depth_running.yml")
+                ])
+                """
+            }
+        }
+
+        then {
+            assert process.success
+
+            def yml = path(process.out[0][0][2]).yaml
+            
+            // target_depth adds horizontal line 
+            assert yml.layout.containsKey("shapes")
+            assert yml.layout.shapes.size() == 1
+            assert yml.layout.shapes[0].y0 == 1000
+            assert yml.layout.shapes[0].y1 == 1000
+            assert yml.layout.shapes[0].type == "line"
+
+            // Bars above target_depth are blue, below are grey
+            assert yml.data.containsKey("marker")
+            assert yml.data.marker.containsKey("color")
+            assert yml.data.marker.color == ["blue", "grey", "blue"]
+        }
+    }
+
+    // Amplicons with zero depth
+    test("Handles zero depth amplicons") {
+        tag "unit-test"
+
+        when {
+            params {
+                target_depth = null
+            }
+            process {
+                """
+                def zeroDepth = file("${workDir}/zero_depth.yml")
+                zeroDepth.text = '''
+name: Depth per amplicon
+data:
+  type: bar
+  x: [AMP1, AMP2]
+  y: [0.0, 0.0]
+'''
+                input[0] = Channel.of([
+                    "sample_1",
+                    "file_1",
+                    zeroDepth,
+                    file("amplicon_depth_running.yml")
+                ])
+                """
+            }
+        }
+
+        then {
+            assert process.success
+
+            def yml = path(process.out[0][0][2]).yaml
+            assert yml.data.y == [0.0, 0.0]
+        }
+    }
+}
+

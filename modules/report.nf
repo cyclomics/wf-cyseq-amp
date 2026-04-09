@@ -11,28 +11,30 @@ workflow report_realtime {
 
     main:
         // Accumulate raw read counts
-        running_reads = raw_fastq_json.map { sample_id, file_id, reads_json ->
-            tuple(
-                sample_id,
-                file_id,
-                reads_json,
-                file("${params.output_dir}/${sample_id}/report/counts/number_of_reads_running.yml")
-            )
-        } | UpdateRunningReads
+        running_reads = raw_fastq_json
+            .map { sample_id, file_id, reads_json ->
+                tuple(sample_id, file_id, reads_json, rawReadsYml(sample_id))
+            }
+            | UpdateRunningReads
+            | map { sample_id, file_id, _file ->
+                tuple(sample_id, file_id, rawReadsYml(sample_id))
+            }
 
         if (params.regions != 'auto') {
             // Accumulate amplicon depth
-            running_depth = depth_table.map { sample_id, file_id, depth_yml ->
-                tuple(
-                    sample_id,
-                    file_id,
-                    depth_yml,
-                    file("${params.output_dir}/${sample_id}/report/depth/amplicon_depth_running.yml")
-                )
-            } | UpdateRunningDepth
+            running_depth = depth_table
+                .map { sample_id, file_id, depth_yml ->
+                    tuple(sample_id, file_id, depth_yml, ampDepthYml(sample_id))
+                }
+                | UpdateRunningDepth
+                | map { sample_id, file_id, _file ->
+                    tuple(sample_id, file_id, ampDepthYml(sample_id))
+                }
+
             // Emit eagerly as soon as a matching pair is available
             // This is very important to make sure it emits real-time
             paired = running_reads.combine(running_depth, by: [0, 1])
+
         } else {
             // If BED file is not provided, return null
             paired = running_reads.map { sample_id, file_id, counts_yml ->
@@ -40,8 +42,8 @@ workflow report_realtime {
             }
         }
 
-        ReportRealtimeStats(paired)
-        realtime_report = ReportRealtimeStats.out.realtime_report
+        ReportRealtime(paired)
+        realtime_report = ReportRealtime.out.realtime_report
 
     emit:
         realtime_report
@@ -93,7 +95,7 @@ process UpdateRunningDepth {
         """
 }
 
-process ReportRealtimeStats {
+process ReportRealtime {
     container params.containers.alnutils
     publishDir "${params.output_dir}", mode: 'copy'
 
@@ -106,7 +108,7 @@ process ReportRealtimeStats {
     script:
         def amplicon_arg = (depth_yml.name != 'null') ? "--amplicon_depth_yml ${depth_yml}" : ''
         """
-        report_realtime_stats.py \
+        report_realtime.py \
             --counts_yml ${counts_yml} \
             --template ${params.report_template} \
             --output_html report_${sample_id}.html \
@@ -140,3 +142,15 @@ process FinalizeReport {
     FUNCTIONS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+
+def reportsDir(sample_id) {
+    "${params.output_dir}/${sample_id}/report"
+}
+
+def rawReadsYml(sample_id) {
+    file("${reportsDir(sample_id)}/counts/number_of_reads_running.yml")
+}
+
+def ampDepthYml(sample_id) {
+    file("${reportsDir(sample_id)}/depth/amplicon_depth_running.yml")
+}

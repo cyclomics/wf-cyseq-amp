@@ -1,0 +1,13 @@
+name: Raw reads
+data:
+  type: bar
+  x:
+  - raw
+  y:
+  - 4000
+layout:
+  title: Raw reads
+  xaxis:
+    title: Sample
+  yaxis:
+    title: Read count

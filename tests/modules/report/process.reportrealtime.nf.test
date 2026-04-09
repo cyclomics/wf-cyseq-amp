@@ -1,0 +1,178 @@
+nextflow_process {
+
+    name "Test ReportRealtime"
+    script "modules/report.nf"
+    process "ReportRealtime"
+    
+    // With amplicon depth
+    test("Generates HTML and JSON with reads and depth") {
+        tag "unit-test"
+
+        when {
+            params {
+                report_template = "${projectDir}/tests/fixtures/report.html"
+            }
+            process {
+                """
+                input[0] = Channel.of([
+                    "sample_1",
+                    "file_1",
+                    file("${projectDir}/tests/fixtures/number_of_reads_running.yml"),
+                    file("${projectDir}/tests/fixtures/amplicon_depth_running.yml")
+                ])
+                """
+            }
+        }
+
+        then {
+            assert process.success
+
+            // Both outputs are emitted
+            assert path(process.out.realtime_report[0][1]).fileName.toString() == "report_sample_1.html"
+            assert path(process.out.realtime_report[0][2]).fileName.toString() == "report_sample_1.json"
+
+            // JSON has correct structure
+            def json = path(process.out.realtime_report[0][2]).json
+            assert json.final == false
+            assert json.cards.size() > 0
+            assert json.plots.size() == 2
+
+            def plotNames = json.plots.collect { it.name }
+            assert plotNames.contains("Raw reads")
+            assert plotNames.contains("Depth per amplicon")
+
+            // HTML has embedded data injected
+            def html = path(process.out.realtime_report[0][1]).text
+            assert html.contains('"final": false')
+            assert html.contains("sample_1")
+        }
+    }
+
+    // Without amplicon depth (regions == auto)
+    test("Generates HTML and JSON without depth when depth_yml is /dev/null") {
+        tag "unit-test"
+
+        when {
+            params {
+                report_template = "${projectDir}/tests/fixtures/report.html"
+            }
+            process {
+                """
+                input[0] = Channel.of([
+                    "sample_1",
+                    "file_1",
+                    file("${projectDir}/tests/fixtures/number_of_reads_running.yml"),
+                    file("/dev/null")
+                ])
+                """
+            }
+        }
+
+        then {
+            assert process.success
+
+            def json = path(process.out.realtime_report[0][2]).json
+            assert json.plots.size() == 1
+            assert json.plots[0].name == "Raw reads"
+        }
+    }
+
+    // Output content: cards are derived from reads YML
+    test("Cards match x/y values from reads yml") {
+        tag "unit-test"
+
+        when {
+            params {
+                report_template = "${projectDir}/tests/fixtures/report.html"
+            }
+            process {
+                """
+                input[0] = Channel.of([
+                    "sample_1",
+                    "file_1",
+                    file("${projectDir}/tests/fixtures/number_of_reads_running.yml"),
+                    file("/dev/null")
+                ])
+                """
+            }
+        }
+
+        then {
+            assert process.success
+
+            def json = path(process.out.realtime_report[0][2]).json
+            assert json.cards[0].name == "Raw reads"
+            assert json.cards[0].value[0] == 4000
+        }
+    }
+
+    // Output content: sample_id in header
+    test("sample_id is embedded in report data") {
+        tag "unit-test"
+
+        when {
+            params {
+                report_template = "${projectDir}/tests/fixtures/report.html"
+            }
+            process {
+                """
+                input[0] = Channel.of([
+                    "my_sample",
+                    "file_1",
+                    file("${projectDir}/tests/fixtures/number_of_reads_running.yml"),
+                    file("/dev/null")
+                ])
+                """
+            }
+        }
+
+        then {
+            assert process.success
+
+            def json = path(process.out.realtime_report[0][2]).json
+            assert json.sample_id == "my_sample"
+        }
+    }
+
+    // Edge case: empty reads yml
+    // TODO: should return 0 or N/A
+    test("Empty reads YML produces empty cards and plot") {
+        tag "unit-test"
+
+        when {
+            params {
+                report_template = "${projectDir}/tests/fixtures/report.html"
+            }
+            process {
+                """
+                def emptyYml = file("${workDir}/empty_reads.yml")
+                emptyYml.text = '''
+name: Raw reads
+data:
+  type: bar
+  x: []
+  y: []
+layout:
+  title: Raw reads
+'''
+                input[0] = Channel.of([
+                    "sample_1",
+                    "file_1",
+                    emptyYml,
+                    file("/dev/null")
+                ])
+                """
+            }
+        }
+
+        then {
+            assert process.success
+
+            def json = path(process.out.realtime_report[0][2]).json
+            assert json.cards.value[0] == []
+            assert json.plots[0].data[0].x == []
+        }
+    }
+}
+
+

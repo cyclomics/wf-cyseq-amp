@@ -1,0 +1,80 @@
+nextflow_process {
+
+    name "Test FinalizeReport"
+    script "modules/report.nf"
+    process "FinalizeReport"
+    
+    // Sets final=true
+    test("Sets final=true in output HTML") {
+        tag "unit-test"
+
+        when {
+            process {
+                """
+                input[0] = Channel.of([
+                    "sample_1",
+                    file("${projectDir}/tests/fixtures/report_intermediate.html"),
+                    file("${projectDir}/tests/fixtures/report_data.json")
+                ])
+                """
+            }
+        }
+
+        then {
+            assert process.success
+
+            def html = path(process.out[0][0]).text
+            // Embedded JSON must have final: true
+            assert html.contains('"final": true')
+            // Must not still have final: false
+            assert !html.contains('"final": false')
+        }
+    }
+
+    // Output content: all report data is preserved
+    test("Preserves cards and plots from input JSON") {
+        tag "unit-test"
+
+        when {
+            process {
+                """
+                input[0] = Channel.of([
+                    "sample_1",
+                    file("${projectDir}/tests/fixtures/report_intermediate.html"),
+                    file("${projectDir}/tests/fixtures/report_data.json")
+                ])
+                """
+            }
+        }
+
+        then {
+            assert process.success
+
+            def html = path(process.out[0][0]).text
+            assert html.contains("raw__sample_1")
+            assert html.contains("Raw reads")
+        }
+    }
+
+    // Output filename matches sample_id
+    test("Output report filename contains sample_id") {
+        tag "unit-test"
+
+        when {
+            process {
+                """
+                input[0] = Channel.of([
+                    "my_sample",
+                    file("${projectDir}/tests/fixtures/report_intermediate.html"),
+                    file("${projectDir}/tests/fixtures/report_data.json")
+                ])
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert path(process.out[0][0]).fileName.toString() == "report_my_sample.html"
+        }
+    }
+}
