@@ -13,10 +13,10 @@ workflow call_variants {
     main:
         CallVariantsLofreq(reference, reads_aligned.combine(positions, by: [0, 1]))
         AnnotateVariants(CallVariantsLofreq.out)
-        PasteVariantTable(AnnotateVariants.out)
+        WriteVariantTable(AnnotateVariants.out)
     emit:
         variants = AnnotateVariants.out
-        variant_table = PasteVariantTable.out
+        variant_table = WriteVariantTable.out
 }
 
 
@@ -78,7 +78,7 @@ process AnnotateVariants {
         """
 }
 
-process PasteVariantTable {
+process WriteVariantTable {
     publishDir "${params.output_dir}/QC", mode: 'copy'
     label 'many_low_cpu_high_mem'
 

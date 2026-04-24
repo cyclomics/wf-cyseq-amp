@@ -1,0 +1,39 @@
+nextflow_process {
+
+    name "Test WriteVariantTable"
+    script "modules/variantcalling.nf"
+    process "WriteVariantTable"
+    config "tests/nextflow.config"
+
+    // We don't test exact variant annotation content here,
+    // as this behavior is dependent on an API response from Ensembl VEP,
+    // which is outside the scope of our codebase.
+
+    test("Variant table contains expected annotation fields") {
+        tag "writevarianttable"
+        tag "unit-test"
+        
+        when {
+            process {
+                """
+                input[0] = Channel.of([
+                    "sample_1",
+                    "file_1",
+                    file("${projectDir}/tests/fixtures/variants.annotated.vcf")
+                ])
+                """
+            }
+        }
+
+        then {
+            assert process.success
+
+            def table = path(process.out[0][0][1]).json
+            assert table.'variant-table'.name == 'variant-table'
+            assert table.'variant-table'.data.size() == 3
+            assert table.'variant-table'.data[0].size() == 7
+            assert table.'variant-table'.columns == ['Genomic change', 'Codon change', 'Amino acid change', 'VAF (%)', 'Coverage', 'Symbol', 'Type']
+            assert table.'variant-table'.data[0].keySet() as Set == table.'variant-table'.columns as Set
+        }
+    }
+}
