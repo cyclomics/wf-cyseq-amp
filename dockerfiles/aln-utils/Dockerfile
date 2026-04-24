@@ -49,6 +49,7 @@ RUN python3 -m pip install --no-cache-dir --break-system-packages \
     pandas \
     pysam==0.23.3 \
     tqdm==4.67.3 \
-    pyyaml==6.0.3
+    pyyaml==6.0.3 \
+    requests==2.33.1
 
 WORKDIR /opt

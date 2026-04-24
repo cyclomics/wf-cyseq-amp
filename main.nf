@@ -105,7 +105,9 @@ workflow {
     // REPORT: Final
     // TODO: This will also take the output of any post-merge analyses
     FinalizeReport(
-        report_realtime.out.realtime_report.last()
+        report_realtime.out.realtime_report.last().combine(
+            call_variants.out.variant_table, by: 0
+        )
     )
 }
 

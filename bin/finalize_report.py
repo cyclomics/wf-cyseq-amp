@@ -1,24 +1,38 @@
 #!/usr/bin/env python
 """
 Finalizes the report after collecting all upstream processes.
-
-TODO: New post-merge data will also be injected into the final report.
-
-The report is marked as final by setting final=True in the embedde
-JSON and writing the output HTML.
+Merges multiple JSON fragments into a single data structure and injects it into HTML.
 """
 
 import json
 import argparse
 import re
-
+from typing import List, Dict
 
 def load_report_data(json_file: str) -> dict:
     """Load report data from JSON file."""
     with open(json_file) as f:
-        data = json.load(f)
-    return data
+        return json.load(f)
 
+def merge_report_fragments(json_paths: List[str]) -> Dict:
+    merged_data = {"tabs": [], "cards": [], "plots": []}
+    
+    for path in json_paths:
+        data = load_report_data(path)
+        
+        # Check for the specific variant-table fragment
+        if "variant-table" in data:
+            merged_data["tabs"].append(data["variant-table"])
+        else:
+            # Standard merge for cards and plots
+            for key in ["cards", "plots"]:
+                if key in data:
+                    merged_data[key].extend(data[key])
+            for key in ["sample_id", "generation_time"]:
+                if key in data:
+                    merged_data[key] = data[key]
+    
+    return merged_data
 
 def inject_into_html(report_data: dict, html_file: str, output_file: str) -> None:
     """Inject finalized report_data as JSON into the HTML and write output."""
@@ -28,7 +42,7 @@ def inject_into_html(report_data: dict, html_file: str, output_file: str) -> Non
     with open(html_file) as f:
         html = f.read()
 
-    # Use lambda to avoid misinterpreting content as regex escape sequences
+    # Inject using the existing regex logic
     html = re.sub(
         r'<script id="embedded-data" type="application/json">.*?</script>',
         lambda _: f'<script id="embedded-data" type="application/json">{json_data}</script>',
@@ -39,17 +53,18 @@ def inject_into_html(report_data: dict, html_file: str, output_file: str) -> Non
     with open(output_file, "w") as f:
         f.write(html)
 
-
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--json", required=True)
+    parser.add_argument("--json", nargs='+', required=True, help="List of JSON fragments")
     parser.add_argument("--html", required=True)
     parser.add_argument("--output", required=True)
     args = parser.parse_args()
 
-    report_data = load_report_data(args.json)
-    inject_into_html(report_data, args.html, args.output)
-
+    # Merge all data
+    final_report_data = merge_report_fragments(args.json)
+    
+    # Inject into template
+    inject_into_html(final_report_data, args.html, args.output)
 
 if __name__ == "__main__":
     main()

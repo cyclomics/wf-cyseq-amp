@@ -1,0 +1,21 @@
+##fileformat=VCFv4.0
+##fileDate=20260424
+##source=lofreq call --call-indels -m 20
+##reference=GCA_000001405.15_GRCh38_no_alt_analysis_set.fna
+##INFO=<ID=DP,Number=1,Type=Integer,Description="Raw Depth">
+##INFO=<ID=AF,Number=1,Type=Float,Description="Allele Frequency">
+##INFO=<ID=SB,Number=1,Type=Integer,Description="Phred-scaled strand bias at this position">
+##INFO=<ID=DP4,Number=4,Type=Integer,Description="Counts for ref-forward bases, ref-reverse, alt-forward and alt-reverse bases">
+##INFO=<ID=INDEL,Number=0,Type=Flag,Description="Indicates that the variant is an INDEL.">
+##INFO=<ID=CONSVAR,Number=0,Type=Flag,Description="Indicates that the variant is a consensus variant (as opposed to a low frequency variant).">
+##INFO=<ID=HRUN,Number=1,Type=Integer,Description="Homopolymer length to the right of report indel position">
+##FILTER=<ID=min_snvqual_37,Description="Minimum SNV Quality (Phred) 37">
+##FILTER=<ID=min_indelqual_33,Description="Minimum Indel Quality (Phred) 33">
+##FILTER=<ID=min_dp_10,Description="Minimum Coverage 10">
+##FILTER=<ID=sb_fdr,Description="Strand-Bias Multiple Testing Correction: fdr corr. pvalue > 0.001000">
+##FILTER=<ID=min_snvqual_48,Description="Minimum SNV Quality (Phred) 48">
+##FILTER=<ID=min_indelqual_50,Description="Minimum Indel Quality (Phred) 50">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	SAMPLE1
+chr2	29209798	.	C	T	184	PASS	DP=3839;AF=0.008856;SB=0;DP4=3750,0,34,0;variant_class=SNV;consequence=missense_variant;cosmic=COSV66555567,COSV66558183;cosmic_legacy=COSM28056,COSM28060;gene=ALK;impact=MODERATE;biotype=protein_coding;amino_acids=R/Q;canonical=1;sift=deleterious(0);polyphen=probably_damaging(0.999);hgvsc=ENST00000389048.8:c.3824G>A;hgvsp=ENSP00000373700.3:p.Arg1275Gln		
+chr2	29220890	.	C	A	7433	PASS	DP=27999;AF=0.088253;SB=0;DP4=22582,0,2471,0;variant_class=SNV;consequence=intron_variant;cosmic=None;cosmic_legacy=None;gene=ALK;impact=MODIFIER;biotype=protein_coding;amino_acids=None;canonical=1;sift=None;polyphen=None;hgvsc=ENST00000389048.8:c.3516-55G>T;hgvsp=None		
+chr2	29222592	.	G	T	49314	PASS	DP=40830;AF=0.304506;SB=0;DP4=27041,0,12433,0;variant_class=SNV;consequence=synonymous_variant;cosmic=COSV66569704;cosmic_legacy=COSM5351767;gene=ALK;impact=LOW;biotype=protein_coding;amino_acids=G;canonical=1;sift=None;polyphen=None;hgvsc=ENST00000389048.8:c.3375C>A;hgvsp=ENSP00000373700.3:p.Gly1125=		

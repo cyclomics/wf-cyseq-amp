@@ -1,5 +1,5 @@
 .nextflow*
-output/
+output*
 simulation/
 work/
 test_data/

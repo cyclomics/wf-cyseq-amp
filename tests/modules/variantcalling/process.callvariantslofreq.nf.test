@@ -1,0 +1,70 @@
+nextflow_process {
+
+    name "Test CallVariantsLofreq"
+    script "modules/variantcalling.nf"
+    process "CallVariantsLofreq"
+    config "tests/nextflow.config"
+
+    // Output content: Empty BED
+    test("VCF output contains expected variants with empty BED") {
+        tag "callvariantslofreq"
+        tag "unit-test"
+        
+        when {
+            process {
+                """
+                input[0] = Channel.of([
+                    file("${projectDir}/tests/data/lambda/lambda_phage.fasta"),
+                    file("${projectDir}/tests/data/lambda/lambda_phage.fasta.fai")
+                ])
+                input[1] = Channel.of([
+                    "sample_1",
+                    "file_1",
+                    file("${projectDir}/tests/data/lambda/lambda_mut.bam"),
+                    file("${projectDir}/tests/data/lambda/lambda_mut.bam.bai"),
+                    file("${projectDir}/tests/fixtures/empty.bed")
+                ])
+                """
+            }
+        }
+
+        then {
+            assert process.success
+
+            def vcf = path(process.out[0][0][2]).text
+            assert vcf.contains("J02459.1\t3251\t.\tG\tC")
+            assert vcf.contains("J02459.1\t23\t.\tC\tT")
+        }
+    }
+
+    // Output content: Valid BED
+    test("VCF output contains expected variants in BED, but not outside defined loci") {
+        tag "callvariantslofreq"
+        
+        when {
+            process {
+                """
+                input[0] = Channel.of([
+                    file("${projectDir}/tests/data/lambda/lambda_phage.fasta"),
+                    file("${projectDir}/tests/data/lambda/lambda_phage.fasta.fai")
+                ])
+                input[1] = Channel.of([
+                    "sample_1",
+                    "file_1",
+                    file("${projectDir}/tests/data/lambda/lambda_mut.bam"),
+                    file("${projectDir}/tests/data/lambda/lambda_mut.bam.bai"),
+                    file("${projectDir}/tests/fixtures/small.bed")
+                ])
+                """
+            }
+        }
+
+        then {
+            assert process.success
+
+            def vcf = path(process.out[0][0][2]).text
+            assert vcf.contains("J02459.1\t3251\t.\tG\tC")
+            assert !vcf.contains("J02459.1\t23\t.\tC\tT")
+        }
+    }
+}

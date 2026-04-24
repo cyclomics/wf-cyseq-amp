@@ -1,0 +1,88 @@
+nextflow_workflow {
+
+    name "Test workflow: call_variants"
+    script "modules/variantcalling.nf"
+    workflow "call_variants"
+
+    // With empty BED file (no regions specified)
+    test("Produces correct variant channels") {
+        tag "call_variants_wf_1"
+        tag "workflow"
+        tag "integration-test"
+
+        when {
+            workflow {
+                """
+                ch_reads_aligned = Channel.of([
+                    "sample_1",
+                    "file_1",
+                    file("${projectDir}/tests/data/lambda/lambda_mut.bam"),
+                    file("${projectDir}/tests/data/lambda/lambda_mut.bam.bai"),
+                ])
+                ch_positions = Channel.of([
+                    "sample_1",
+                    "file_1",
+                    file("${projectDir}/tests/fixtures/empty.bed"),
+                ])
+                ch_reference = Channel.of([
+                    file("${projectDir}/tests/data/lambda/lambda_phage.fasta"),
+                    file("${projectDir}/tests/data/lambda/lambda_phage.fasta.fai")
+                ])
+
+                input[0] = ch_reads_aligned
+                input[1] = ch_positions
+                input[2] = ch_reference
+                """
+            }
+        }
+
+        then {
+            assert workflow.success
+            assert workflow.out.size() == 4
+            assert workflow.out.variants[0].size() == 3
+            assert workflow.out.variant_table[0].size() == 2
+        }
+    }
+
+    // Multiple samples
+    test("Handles multiple samples correctly") {
+        tag "call_variants_wf_2"
+        tag "workflow"
+        tag "integration-test"
+
+        when {
+            workflow {
+                """
+                ch_reads_aligned = Channel.of(
+                    ["sample_1", "file_1", file("${projectDir}/tests/data/lambda/lambda_mut.bam"), file("${projectDir}/tests/data/lambda/lambda_mut.bam.bai")],
+                    ["sample_2", "file_1", file("${projectDir}/tests/data/lambda/lambda_mut.bam"), file("${projectDir}/tests/data/lambda/lambda_mut.bam.bai")]
+                )
+                ch_positions = Channel.of(
+                    ["sample_1", "file_1", file("${projectDir}/tests/fixtures/empty.bed")],
+                    ["sample_2", "file_1", file("${projectDir}/tests/fixtures/empty.bed")]
+                )
+                ch_reference = Channel.of([
+                    file("${projectDir}/tests/data/lambda/lambda_phage.fasta"),
+                    file("${projectDir}/tests/data/lambda/lambda_phage.fasta.fai")
+                ])
+
+                input[0] = ch_reads_aligned
+                input[1] = ch_positions
+                input[2] = ch_reference.collect()
+                """
+            }
+        }
+
+        then {
+
+            assert workflow.success
+
+            def sampleIds = workflow.out.variant_table.collect { it[0] }
+            assert sampleIds.size() == 2
+            assert workflow.out.variants.size() == 2
+            assert workflow.out.variant_table.size() == 2
+        }
+    }
+    
+
+}
