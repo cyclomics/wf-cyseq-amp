@@ -80,7 +80,10 @@ process AnnotateVariants {
 
 process WriteVariantTable {
     publishDir "${params.output_dir}/QC", mode: 'copy'
-    label 'many_low_cpu_high_mem'
+    
+    container params.containers.alnutils
+    memory 4.GB
+    cpus 2
 
     input:
     tuple val(sample_id), val(file_id), path(vcf_file)
