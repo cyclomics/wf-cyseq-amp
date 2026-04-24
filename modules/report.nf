@@ -123,7 +123,7 @@ process FinalizeReport {
     publishDir "${params.output_dir}", mode: 'copy'
 
     input:
-        tuple val(sample_id), path(report_html), path(report_json)
+        tuple val(sample_id), path(report_html), path(report_json), path(variant_table)
 
     output:
         path("report_${sample_id}.html")
@@ -132,7 +132,7 @@ process FinalizeReport {
         """
         finalize_report.py \
             --html ${report_html} \
-            --json ${report_json} \
+            --json ${report_json} ${variant_table} \
             --output report_${sample_id}.html
         """
 }
