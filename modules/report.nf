@@ -7,6 +7,7 @@
 workflow report_realtime {
     take:
         raw_fastq_json   // [sample_id, file_id, reads_json]
+        consensus_folder // [sample_id, file_id, consensus_metrics_folder]
         depth_table      // [sample_id, file_id, depth_yml] or channel.empty()
 
     main:
@@ -19,9 +20,19 @@ workflow report_realtime {
             | map { sample_id, file_id, _file ->
                 tuple(sample_id, file_id, rawReadsYml(sample_id))
             }
+        
+        // Accumulate consensus metrics
+        running_consensus_metrics_folder = consensus_folder
+            .map { sample_id, file_id, consensus_metrics_folder ->
+                tuple(sample_id, file_id, consensus_metrics_folder, consensusMetricsFolder(sample_id))
+            }
+            | UpdateRunningConsensusMetrics
+            | map { sample_id, file_id, _file ->
+                tuple(sample_id, file_id, consensusMetricsFolder(sample_id))
+            }
 
+        // Accumulate amplicon depth
         if (params.regions != 'auto') {
-            // Accumulate amplicon depth
             running_depth = depth_table
                 .map { sample_id, file_id, depth_yml ->
                     tuple(sample_id, file_id, depth_yml, ampDepthYml(sample_id))
@@ -95,6 +106,26 @@ process UpdateRunningDepth {
         """
 }
 
+process UpdateRunningConsensusMetrics {
+    container params.containers.cyseqtools
+    maxForks 1
+    publishDir { "${params.output_dir}/${sample_id}/report" }, mode: 'copy', overwrite: true
+
+    input:
+        tuple val(sample_id), val(file_id), path(metrics_folder), path(published_folder)
+
+    output:
+        tuple val(sample_id), val(file_id), path("consensus_metrics")
+
+    script:
+        """
+        mv $published_folder prev_metrics
+        sum_consensus_metrics.py \
+            --metrics_folder $metrics_folder \
+            --published_folder $published_folder
+        """
+}
+
 process ReportRealtime {
     container params.containers.alnutils
     publishDir "${params.output_dir}", mode: 'copy'
@@ -153,4 +184,12 @@ def rawReadsYml(sample_id) {
 
 def ampDepthYml(sample_id) {
     file("${reportsDir(sample_id)}/depth/amplicon_depth_running.yml")
+}
+
+def consensusMetricsFolder(sample_id) {
+    files("${reportsDir(sample_id)}/consensus_metrics")
+}
+
+def consensusMetricsPrev(sample_id) {
+    files("${reportsDir(sample_id)}/prev/consensus_metrics")
 }

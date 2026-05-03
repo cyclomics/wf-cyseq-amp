@@ -1,4 +1,4 @@
-include { SortIndexAlignments } from './common'
+include { PosSortIndexAlignments } from './common'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -15,8 +15,8 @@ workflow align_consensus_reads {
 
     main:
         Minimap2AlignConsensus(consensus_reads_fastq, reference, mode)
-        SortIndexAlignments(Minimap2AlignConsensus.out)
-        metadata_pairs = SortIndexAlignments.out.combine(consensus_reads_json, by: [0, 1])
+        PosSortIndexAlignments(Minimap2AlignConsensus.out)
+        metadata_pairs = PosSortIndexAlignments.out.combine(consensus_reads_json, by: [0, 1])
         
         annotated_bam = AnnotateBamYTags(metadata_pairs)
 
