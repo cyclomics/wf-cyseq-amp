@@ -13,6 +13,7 @@ import shutil
 import argparse
 from pathlib import Path
 from cyseqtools.consensus.metrics.report import Report
+import yaml
 
 OUTPUT_FOLDER = Path("consensus_metrics")
 PREV_METRICS_FOLDER = Path("prev_metrics")
@@ -33,6 +34,11 @@ def write_folder_atomic(src_folder: Path, dst_folder: Path) -> None:
 
     # Atomic swap
     os.replace(tmp_folder, dst_folder)
+
+def write_yaml(plot: dict, output_file: str) -> None:
+    """Atomically write YAML to avoid partial reads."""
+    with open(output_file, "w", encoding='utf-8') as f:
+        yaml.dump(plot, f, default_flow_style=False, sort_keys=False)
 
 def load_and_merge_metrics(new_metrics_folder: Path, prev_metrics_folder: Path, output_folder: Path) -> None:
     """
@@ -74,14 +80,16 @@ def load_and_merge_metrics(new_metrics_folder: Path, prev_metrics_folder: Path, 
     print(f"DEBUG: Writing merged metrics to output_folder={output_folder}")
     report.save(output_folder)
 
+    os.mkdir("plots")
+    for plot in report.available_plots:
+        fig = report.plot(plot)
+        fig_json = fig.to_plotly_json()
+        fig_json['name'] = plot
+        write_yaml(fig_json, f"plots/{plot.replace("/", "_")}.yaml")
+
     print("DEBUG: Contents of output_folder after save:")
     for p in output_folder.iterdir():
         print("   -", p)
-
-    # Atomically push merged metrics to published folder
-    # print(f"DEBUG: Atomic replace: {output_folder} -> {prev_metrics_folder}")
-    # write_folder_atomic(output_folder, prev_metrics_folder)
-    # print("DEBUG: Atomic replace completed")
 
 
 def main():

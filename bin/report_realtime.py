@@ -9,6 +9,22 @@ import yaml
 import argparse
 import re
 from datetime import datetime
+from pathlib import Path
+import base64
+import numpy as np
+
+def load_all_yamls(folder: str) -> list[dict]:
+    """Load all YAML files in a folder."""
+    plots = []
+
+    for yml_file in sorted(Path(folder).glob("*.y*ml")):
+        with open(yml_file, encoding='utf-8') as f:
+            data = yaml.safe_load(f) or {}
+
+        data["_source"] = yml_file.name
+        plots.append(data)
+
+    return plots
 
 
 def load_plot_yaml(yml_file: str) -> dict:
@@ -30,12 +46,20 @@ def normalise_plot(plot: dict) -> dict:
     Normalise a Plotly YML into report format.
     Ensures data is always a list (consistent with Plotly multi-trace format).
     """
-    data = plot.get("data", {})
-    if isinstance(data, dict):
-        data = [data]
+    data_list = plot.get("data", [])
+    if isinstance(data_list, dict):
+        data_list = [data_list]
+        
+    for trace in data_list:
+        for axis in ['x', 'y']:
+            if isinstance(trace.get(axis), dict) and 'bdata' in trace[axis]:
+                # Decode base64 to numpy array, then to a standard Python list
+                binary_data = base64.b64decode(trace[axis]['bdata'])
+                trace[axis] = np.frombuffer(binary_data, dtype=trace[axis]['dtype']).tolist()
+    
     return {
         "name": plot.get("name", ""),
-        "data": data,
+        "data": data_list,
         "layout": plot.get("layout", {}),
     }
 
@@ -71,29 +95,40 @@ def inject_into_html(template_file: str, report_data: dict, output_file: str) ->
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--counts_yml", required=True)
     parser.add_argument("--template", required=True)
     parser.add_argument("--output_html", required=True)
     parser.add_argument("--output_json", required=True)
     parser.add_argument("--sample_id", required=False, default=None)
-    parser.add_argument("--amplicon_depth_yml", required=False, default=None)
     args = parser.parse_args()
 
-    reads_plot = load_plot_yaml(args.counts_yml)
-    cards = [derive_card(reads_plot)]
-    
-    plots = [normalise_plot(reads_plot)]
-    # plots = []
+    handlers = {
+        "Raw reads": {
+            "card": derive_card,
+            "plot": normalise_plot,
+        }
+    }
 
-    if args.amplicon_depth_yml:
-        depth_plot = load_plot_yaml(args.amplicon_depth_yml)
-        plots.append(normalise_plot(depth_plot))
+    all_plots = load_all_yamls(".")
+
+    cards = []
+    plots = []
+
+    for plot in all_plots:
+        plot_name = plot.get("name")
+        handler = handlers.get(plot_name) if isinstance(plot_name, str) else None
+
+        if handler:
+            cards.append(handler["card"](plot))
+            plots.append(handler["plot"](plot))
+            continue
+
+        plots.append(normalise_plot(plot))
 
     report_data = build_report_data(cards, plots)
     if args.sample_id:
         report_data["sample_id"] = args.sample_id
 
-    with open(args.output_json, "w") as f:
+    with open(args.output_json, "w", encoding='utf-8') as f:
         json.dump(report_data, f, indent=2)
 
     inject_into_html(args.template, report_data, args.output_html)

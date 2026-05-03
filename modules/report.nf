@@ -22,14 +22,15 @@ workflow report_realtime {
             }
         
         // Accumulate consensus metrics
-        running_consensus_metrics_folder = consensus_folder
+        running_consensus = consensus_folder
             .map { sample_id, file_id, consensus_metrics_folder ->
                 tuple(sample_id, file_id, consensus_metrics_folder, consensusMetricsFolder(sample_id))
             }
             | UpdateRunningConsensusMetrics
-            | map { sample_id, file_id, _file ->
-                tuple(sample_id, file_id, consensusMetricsFolder(sample_id))
+            | map { sample_id, file_id, _file, plots ->
+                tuple(sample_id, file_id, plots)
             }
+
 
         // Accumulate amplicon depth
         if (params.regions != 'auto') {
@@ -44,13 +45,18 @@ workflow report_realtime {
 
             // Emit eagerly as soon as a matching pair is available
             // This is very important to make sure it emits real-time
-            paired = running_reads.combine(running_depth, by: [0, 1])
+            paired = running_reads
+                .combine(running_depth, by: [0, 1])
+                .combine(running_consensus, by: [0, 1])
 
         } else {
-            // If BED file is not provided, return null
-            paired = running_reads.map { sample_id, file_id, counts_yml ->
-                tuple(sample_id, file_id, counts_yml, file('/dev/null'))
+            running_depth = running_reads.map { sample_id, file_id, _counts_yml ->
+                tuple(sample_id, file_id, file('/dev/null'))
             }
+
+            paired = running_reads
+                .combine(running_depth, by: [0, 1])
+                .combine(running_consensus, by: [0, 1])
         }
 
         ReportRealtime(paired)
@@ -115,7 +121,7 @@ process UpdateRunningConsensusMetrics {
         tuple val(sample_id), val(file_id), path(metrics_folder), path(published_folder)
 
     output:
-        tuple val(sample_id), val(file_id), path("consensus_metrics")
+        tuple val(sample_id), val(file_id), path("consensus_metrics"), path("plots/*.yaml")
 
     script:
         """
@@ -131,7 +137,7 @@ process ReportRealtime {
     publishDir "${params.output_dir}", mode: 'copy'
 
     input:
-        tuple val(sample_id), val(file_id), path(counts_yml), path(depth_yml)
+        tuple val(sample_id), val(file_id), path(counts_yml), path(depth_yml), path(consensus_yml)
 
     output:
         tuple val(sample_id), path("report_${sample_id}.html"), path("report_${sample_id}.json"), emit: realtime_report
@@ -140,12 +146,9 @@ process ReportRealtime {
         def amplicon_arg = (depth_yml.name != 'null') ? "--amplicon_depth_yml ${depth_yml}" : ''
         """
         report_realtime.py \
-            --counts_yml ${counts_yml} \
             --template ${params.report_template} \
             --output_html report_${sample_id}.html \
-            --output_json report_${sample_id}.json \
-            --sample_id ${sample_id} \
-            ${amplicon_arg}
+            --output_json report_${sample_id}.json
         """
 }
 
