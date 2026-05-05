@@ -27,8 +27,8 @@ workflow report_realtime {
                 tuple(sample_id, file_id, consensus_metrics_folder, consensusMetricsFolder(sample_id))
             }
             | UpdateRunningConsensusMetrics
-            | map { sample_id, file_id, _file, plots ->
-                tuple(sample_id, file_id, plots)
+            | map { sample_id, file_id, _dir, cards, plots ->
+                tuple(sample_id, file_id, cards, plots)
             }
 
 
@@ -45,8 +45,7 @@ workflow report_realtime {
 
             // Emit eagerly as soon as a matching pair is available
             // This is very important to make sure it emits real-time
-            paired = running_reads
-                .combine(running_depth, by: [0, 1])
+            paired = running_depth
                 .combine(running_consensus, by: [0, 1])
 
         } else {
@@ -54,11 +53,11 @@ workflow report_realtime {
                 tuple(sample_id, file_id, file('/dev/null'))
             }
 
-            paired = running_reads
-                .combine(running_depth, by: [0, 1])
+            paired = running_depth
                 .combine(running_consensus, by: [0, 1])
         }
 
+        // paired.view()
         ReportRealtime(paired)
         realtime_report = ReportRealtime.out.realtime_report
 
@@ -121,11 +120,11 @@ process UpdateRunningConsensusMetrics {
         tuple val(sample_id), val(file_id), path(metrics_folder), path(published_folder)
 
     output:
-        tuple val(sample_id), val(file_id), path("consensus_metrics"), path("plots/*.yaml")
+        tuple val(sample_id), val(file_id), path(".consensus_metrics"), path("cards/cards.yaml"), path("plots/*.yaml")
 
     script:
         """
-        mv $published_folder prev_metrics
+        mv $published_folder .prev_consensus_metrics
         sum_consensus_metrics.py \
             --metrics_folder $metrics_folder \
             --published_folder $published_folder
@@ -137,7 +136,7 @@ process ReportRealtime {
     publishDir "${params.output_dir}", mode: 'copy'
 
     input:
-        tuple val(sample_id), val(file_id), path(counts_yml), path(depth_yml), path(consensus_yml)
+        tuple val(sample_id), val(file_id), path(depth_yml), path(cards_yml), path(consensus_yml)
 
     output:
         tuple val(sample_id), path("report_${sample_id}.html"), path("report_${sample_id}.json"), emit: realtime_report
@@ -190,9 +189,5 @@ def ampDepthYml(sample_id) {
 }
 
 def consensusMetricsFolder(sample_id) {
-    files("${reportsDir(sample_id)}/consensus_metrics")
-}
-
-def consensusMetricsPrev(sample_id) {
-    files("${reportsDir(sample_id)}/prev/consensus_metrics")
+    files("${reportsDir(sample_id)}/.consensus_metrics")
 }

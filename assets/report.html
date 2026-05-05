@@ -367,22 +367,21 @@
 
     <!-- Main -->
     <main id="main">
-        <div id="generation-time">Waiting for data...</div>
-        <div id="cards-row"></div>
-
+        
         <!-- Analysis -->
         <div id="run-stats" class="section active">
-            <div class="section-title">Run Stats</div>
+            <div class="section-title">General run statistics</div>
+            <div id="cards-row"></div>
             <div id="plots-read-counts-sankey"></div>
         </div>
 
         <div id="amplicon-depth" class="section">
-            <div class="section-title">Amplicon Depth</div>
+            <div class="section-title">Depth per amplicon</div>
             <div id="plots-amplicon-depth"></div>
         </div>
 
         <div id="variants" class="section">
-            <div class="section-title">Variants</div>
+            <div class="section-title">Detected variants</div>
             <div id="variants-table-container" class="plot-card">
                 <div class="empty-state">
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -396,7 +395,7 @@
 
         <!-- QC -->
         <div id="consensus-reads" class="section">
-            <div class="section-title">Consensus Reads</div>
+            <div class="section-title">Consensus read yield</div>
             <div id="plots-consensus-length-histogram-all"></div>
             <div id="plots-consensus-length-histogram-outcome"></div>
             <div id="plots-consensus-length-histogram-type"></div>
@@ -404,21 +403,21 @@
         </div>
 
         <div id="num-repeats" class="section">
-            <div class="section-title">Number Repeats</div>
+            <div class="section-title">Number of concatemer repeats</div>
             <div id="plots-num-repeats-histogram-all"></div>
             <div id="plots-num-repeats-histogram-outcome"></div>
             <div id="plots-num-repeats-histogram-type"></div>
         </div>
 
         <div id="mapped-bases" class="section">
-            <div class="section-title">Mapped Bases</div>
+            <div class="section-title">Mapped bases</div>
             <div id="plots-mapped-bases-histogram-all"></div>
             <div id="plots-mapped-bases-histogram-outcome"></div>
             <div id="plots-mapped-bases-histogram-type"></div>
         </div>
 
         <div id="raw-length" class="section">
-            <div class="section-title">Raw Reads</div>
+            <div class="section-title">Raw read yield</div>
             <div id="plots-raw-length-histogram-all"></div>
             <div id="plots-raw-length-histogram-outcome"></div>
             <div id="plots-raw-length-histogram-type"></div>
@@ -490,9 +489,6 @@ function renderDashboard(data) {
         document.getElementById('header-sample').textContent = data.sample_id;
         document.title = `${data.sample_id} — CyclomicsSeq Report`;
     }
-
-    document.getElementById('generation-time').textContent =
-        'Last updated: ' + data.generation_time;
 
     // Status
     const dot = document.getElementById('status-dot');

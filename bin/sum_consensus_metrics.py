@@ -8,88 +8,102 @@ accumulated metrics, and writes the updated metrics back to the output folder.
 Uses the cyseqcon.metrics Report API to handle aggregation automatically.
 """
 
-import os
-import shutil
 import argparse
 from pathlib import Path
-from cyseqtools.consensus.metrics.report import Report
+from typing import Any, Mapping
+
 import yaml
+from cyseqtools.consensus.metrics.report import Report
 
-OUTPUT_FOLDER = Path("consensus_metrics")
-PREV_METRICS_FOLDER = Path("prev_metrics")
+PREV_METRICS_FOLDER = Path(".prev_consensus_metrics")
 
-def write_folder_atomic(src_folder: Path, dst_folder: Path) -> None:
-    """
-    Atomically replace a folder with a new folder.
-    """
 
-    tmp_folder = Path(str(dst_folder) + ".tmp")
+def _get_nested(mapping: Mapping[str, Any], *keys: str) -> Any:
+    """Safely retrieve a nested value from a mapping."""
+    current: Any = mapping
+    for key in keys:
+        if not isinstance(current, Mapping):
+            return None
+        current = current.get(key)
+        if current is None:
+            return None
+    return current
 
-    # Clean temp if exists
-    if tmp_folder.exists():
-        shutil.rmtree(tmp_folder)
 
-    # Copy new content into temp
-    shutil.copytree(src_folder, tmp_folder)
+def _write_yaml(data: dict, output_file: Path) -> None:
+    """Write metric data onto YAML file."""
+    with open(output_file, "w", encoding="utf-8") as f:
+        yaml.dump(data, f, default_flow_style=False, sort_keys=False)
 
-    # Atomic swap
-    os.replace(tmp_folder, dst_folder)
 
-def write_yaml(plot: dict, output_file: str) -> None:
-    """Atomically write YAML to avoid partial reads."""
-    with open(output_file, "w", encoding='utf-8') as f:
-        yaml.dump(plot, f, default_flow_style=False, sort_keys=False)
-
-def load_and_merge_metrics(new_metrics_folder: Path, prev_metrics_folder: Path, output_folder: Path) -> None:
+def load_and_merge_metrics(
+    new_metrics_folder: Path, prev_metrics_folder: Path, output_folder: Path
+) -> Report:
     """
     Load new metrics, merge with existing published metrics if present,
     and save the aggregated result.
     """
-    print("=== DEBUG: load_and_merge_metrics ===")
-    print(f"new_metrics_folder: {new_metrics_folder}  exists={new_metrics_folder.exists()}")
-    print(f"prev_metrics_folder:   {prev_metrics_folder}    exists={prev_metrics_folder.exists()}")
-    if prev_metrics_folder.exists():
-        print("prev_metrics_folder contents:")
-        for p in Path(prev_metrics_folder).iterdir():
-            print("   -", p)
-    else:
-        print("prev_metrics_folder does not exist")
-
-    print("======================================")
-
     report = Report()
 
     # Load existing accumulated metrics if they exist
     if prev_metrics_folder.exists() and any(Path(prev_metrics_folder).iterdir()):
-        print("DEBUG: Loading existing metrics from prev_metrics_folder")
         report.load_from_path(prev_metrics_folder)
-        print("DEBUG: Finished loading existing metrics")
-    else:
-        print("DEBUG: No existing metrics to load")
-
 
     # Merge new metrics
-    print("DEBUG: Loading new metrics from new_metrics_folder")
     report.load_from_path(new_metrics_folder)
-    print("DEBUG: Finished loading new metrics")
 
     # Write merged metrics to work folder
     if not output_folder.exists():
         output_folder.mkdir(parents=True, exist_ok=True)
 
-    print(f"DEBUG: Writing merged metrics to output_folder={output_folder}")
     report.save(output_folder)
 
-    os.mkdir("plots")
+    return report
+
+
+def save_metric_plots(report: Report) -> None:
+    """Loads the metric report, generates plot figures
+    and saves them to individual YAML files.
+    """
+
+    Path("plots").mkdir(exist_ok=True)
     for plot in report.available_plots:
         fig = report.plot(plot)
         fig_json = fig.to_plotly_json()
-        fig_json['name'] = plot
-        write_yaml(fig_json, f"plots/{plot.replace("/", "_")}.yaml")
+        fig_json["name"] = plot
+        _write_yaml(fig_json, Path(f"plots/{plot.replace('/', '_')}.yaml"))
 
-    print("DEBUG: Contents of output_folder after save:")
-    for p in output_folder.iterdir():
-        print("   -", p)
+
+def save_metric_cards(report: Report) -> None:
+    """Generate and save metric cards from a report.
+
+    Card 1: Number of raw reads
+    Card 2: Basepairs raw reads
+    Card 3: Mapped bases raw reads
+    Card 4: Number of valid consensus reads
+    Card 5: Basepairs valid consensus reads
+    """
+
+    Path("cards").mkdir(exist_ok=True)
+
+    metrics = report.metrics
+
+    read_counts = getattr(metrics.get("read_counts"), "data", {})
+    mapped_bases = getattr(metrics.get("mapped_bases"), "data", {})
+    consensus = getattr(metrics.get("consensus_length"), "data", {})
+
+    cards = {
+        "cards": {
+            "n_raw_reads": read_counts.get("run"),
+            "bp_total_raw": _get_nested(mapped_bases, "run", "sum"),
+            "n_mapped_raw": _get_nested(mapped_bases, "success", "grouped", "n"),
+            "bp_mapped_raw": _get_nested(mapped_bases, "success", "grouped", "sum"),
+            "n_consensus_reads": _get_nested(read_counts, "success", "grouped"),
+            "bp_consensus": _get_nested(consensus, "success", "grouped", "sum"),
+        }
+    }
+
+    _write_yaml(cards, Path("cards/cards.yaml"))
 
 
 def main():
@@ -98,19 +112,28 @@ def main():
         "--metrics_folder",
         type=Path,
         required=True,
-        help="Folder containing new metrics YML files from this file_id"
+        help="Folder containing new metrics YML files from this file_id",
     )
     parser.add_argument(
         "--published_folder",
         type=Path,
         required=True,
         default=None,
-        help="Folder containing previously accumulated metrics (if any)"
+        help="Folder containing previously accumulated metrics (if any)",
     )
 
     args = parser.parse_args()
 
-    load_and_merge_metrics(args.metrics_folder, PREV_METRICS_FOLDER, args.published_folder)
+    # Update live cyseqtools metrics
+    report = load_and_merge_metrics(
+        args.metrics_folder, PREV_METRICS_FOLDER, args.published_folder
+    )
+
+    # Save live metric figures
+    save_metric_plots(report)
+
+    # Save live card data
+    save_metric_cards(report)
 
 
 if __name__ == "__main__":
