@@ -74,7 +74,7 @@ process IndexReference {
 }
 
 process PosSortIndexAlignments {
-    publishDir { "${params.output_dir}/${sample_id}/concatemer_alignments" }, mode: 'copy'
+    publishDir { "${params.output_dir}/${sample_id}/consensus_alignments" }, mode: 'copy'
     container params.containers.samtools
 
     input:

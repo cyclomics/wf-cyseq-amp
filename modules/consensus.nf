@@ -15,10 +15,10 @@ workflow generate_cyseq_consensus {
         NameSortAlignments(Minimap2AlignConcatemers.out)
         // FilterAlignments(PosSortIndexAlignments.out)
         CyseqConsensus(NameSortAlignments.out, reference)
-        PosSortIndexAlignments(CyseqConsensus.out.map { it -> tuple(it[0], it[1], it[2])})
+        BamToFastq(CyseqConsensus.out.map { it -> tuple(it[0], it[1], it[2]) })
 
     emit:
-        bam = PosSortIndexAlignments.out
+        consensus_fastq = BamToFastq.out
         consensus_folder = CyseqConsensus.out.map { it -> tuple(it[0], it[1], it[3]) }
 }
 
@@ -28,6 +28,22 @@ workflow generate_cyseq_consensus {
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
+process BamToFastq {
+    container params.containers.samtools
+    cpus 4
+    memory 5.GB
+
+    input:
+        tuple val(sample_id), val(file_id), path(sam)
+
+    output:
+        tuple val(sample_id), val(file_id), path("${file_id}.fastq")
+
+    script:
+        """
+        samtools fastq -@ ${task.cpus} $sam > ${file_id}.fastq
+        """
+}
 
 process Minimap2AlignConcatemers {
     container params.containers.minimap2
@@ -98,8 +114,6 @@ process Cycas {
 }
 
 process CyseqConsensus {
-    publishDir { "${params.output_dir}/${sample_id}/consensus" }, mode: 'copy'
-
     cpus 1
     memory 20.GB
     maxForks 1

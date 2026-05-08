@@ -7,11 +7,11 @@
 workflow call_variants {
     take:
         reads_aligned
-        positions
+        regions
         reference
 
     main:
-        CallVariantsLofreq(reference, reads_aligned.combine(positions, by: [0, 1]))
+        CallVariantsLofreq(reference, reads_aligned, regions)
         AnnotateVariants(CallVariantsLofreq.out)
         WriteVariantTable(AnnotateVariants.out)
     emit:
@@ -34,7 +34,8 @@ process CallVariantsLofreq {
 
     input:
         tuple path(reference), val(reference_idx)
-        tuple val(sample_id), val(file_id), path(bam), path(bai), path(bed)
+        tuple val(sample_id), val(file_id), path(bam), path(bai)
+        path(bed)
 
     output:
         tuple val(sample_id), val(file_id), path("${file_id}.vcf")
@@ -43,17 +44,12 @@ process CallVariantsLofreq {
         """
         lofreq faidx ${reference}
 
-        BED_ARG=""
-        if [ -s "${bed}" ]; then
-            BED_ARG="-l ${bed}"
-        fi
-
         lofreq call-parallel \
             --pp-threads ${task.cpus} \
             --call-indels \
             -m 20 \
             -f ${reference} \
-            \${BED_ARG} \
+            -l ${bed} \
             -o ${file_id}.vcf \
             ${bam}
         """
