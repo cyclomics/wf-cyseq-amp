@@ -1,26 +1,25 @@
-include { SortIndexAlignments } from './common'
+include { NameSortAlignments; PosSortIndexAlignments } from './common'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     WORKFLOWS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-workflow generate_cycas_consensus {
+workflow generate_cyseq_consensus {
     take:
         read_fastq
         reference
 
     main:
         Minimap2AlignConcatemers(read_fastq, reference)
-        SortIndexAlignments(Minimap2AlignConcatemers.out)
-        FilterAlignments(SortIndexAlignments.out)
-        Cycas(FilterAlignments.out)
+        NameSortAlignments(Minimap2AlignConcatemers.out)
+        // FilterAlignments(PosSortIndexAlignments.out)
+        CyseqConsensus(NameSortAlignments.out, reference)
+        BamToFastq(CyseqConsensus.out.map { it -> tuple(it[0], it[1], it[2]) })
 
     emit:
-        fastq = Cycas.out.map { it -> tuple(it[0], it[1], it[2]) }
-        json = Cycas.out.map { it -> tuple(it[0], it[1], it[3]) }
-        split_bam = Minimap2AlignConcatemers.out
-        split_bam_filtered = FilterAlignments.out.map { it -> tuple(it[0], it[1], it[2]) }
+        consensus_fastq = BamToFastq.out
+        consensus_folder = CyseqConsensus.out.map { it -> tuple(it[0], it[1], it[3]) }
 }
 
 /*
@@ -29,11 +28,27 @@ workflow generate_cycas_consensus {
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
+process BamToFastq {
+    container params.containers.samtools
+    cpus 4
+    memory 5.GB
+
+    input:
+        tuple val(sample_id), val(file_id), path(sam)
+
+    output:
+        tuple val(sample_id), val(file_id), path("${file_id}.fastq")
+
+    script:
+        """
+        samtools fastq -@ ${task.cpus} $sam > ${file_id}.fastq
+        """
+}
 
 process Minimap2AlignConcatemers {
     container params.containers.minimap2
     cpus 4
-    memory 20.GB
+    memory 15.GB
 
     input:
         tuple val(sample_id), val(file_id), path(fq)
@@ -95,6 +110,30 @@ process Cycas {
           --output-fastq ${file_id}.consensus.fastq \\
           --output-json ${file_id}.metadata.json \\
           --calibration-model ${params.calibration_model}
+        """
+}
+
+process CyseqConsensus {
+    cpus 1
+    memory 20.GB
+    maxForks 1
+
+    container params.containers.cyseqtools
+
+    input:
+        tuple val(sample_id), val(file_id), path(bam)
+        tuple path(reference), val(reference_idx)
+
+    output:
+        tuple val(sample_id), val(file_id), path("${file_id}_consensus/consensus.sam"), path("${file_id}_consensus")
+
+    script:
+        """
+        cyseqtools consensus gw \\
+            -n ${task.cpus} \\
+            -i $bam \\
+            -r $reference \\
+            -o ${file_id}_consensus
         """
 }
 

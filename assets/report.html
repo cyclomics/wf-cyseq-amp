@@ -307,41 +307,81 @@
 
     <!-- Sidebar -->
     <nav id="sidebar">
+        <!-- Analysis -->
         <div class="sidebar-section-label">Analysis</div>
-        <button class="nav-btn active" onclick="showSection('amplicon-depth', this)" data-section="amplicon-depth">
+
+        <button class="nav-btn active" onclick="showSection('run-stats', this)" data-section="run-stats">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="12" width="4" height="9"/><rect x="9" y="8" width="4" height="13"/>
+                <rect x="15" y="4" width="4" height="17"/>
+            </svg>
+            Run Stats
+        </button>
+
+        <button class="nav-btn" onclick="showSection('amplicon-depth', this)" data-section="amplicon-depth">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <rect x="3" y="12" width="4" height="9"/><rect x="9" y="8" width="4" height="13"/>
                 <rect x="15" y="4" width="4" height="17"/>
             </svg>
             Amplicon Depth
         </button>
+
         <button class="nav-btn" onclick="showSection('variants', this)" data-section="variants">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2v-4M9 21H5a2 2 0 01-2-2v-4m0 0h18"/>
             </svg>
             Variants
         </button>
+
+        <!-- QC -->
         <div class="sidebar-section-label">QC</div>
-        <button class="nav-btn" onclick="showSection('qc', this)" data-section="qc">
+
+        <button class="nav-btn" onclick="showSection('consensus-reads', this)" data-section="consensus-reads">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
             </svg>
-            Read Counts
+            Consensus Reads
+        </button>
+
+        <button class="nav-btn" onclick="showSection('num-repeats', this)" data-section="num-repeats">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+            Number Repeats
+        </button>
+
+        <button class="nav-btn" onclick="showSection('mapped-bases', this)" data-section="mapped-bases">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+            Mapped Bases
+        </button>
+
+        <button class="nav-btn" onclick="showSection('raw-length', this)" data-section="raw-length">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+            Raw Reads
         </button>
     </nav>
 
     <!-- Main -->
     <main id="main">
-        <div id="generation-time">Waiting for data...</div>
-        <div id="cards-row"></div>
+        
+        <!-- Analysis -->
+        <div id="run-stats" class="section active">
+            <div class="section-title">General run statistics</div>
+            <div id="cards-row"></div>
+            <div id="plots-read-counts-sankey"></div>
+        </div>
 
-        <div id="amplicon-depth" class="section active">
-            <div class="section-title">Amplicon Depth</div>
+        <div id="amplicon-depth" class="section">
+            <div class="section-title">Depth per amplicon</div>
             <div id="plots-amplicon-depth"></div>
         </div>
 
         <div id="variants" class="section">
-            <div class="section-title">Variants</div>
+            <div class="section-title">Detected variants</div>
             <div id="variants-table-container" class="plot-card">
                 <div class="empty-state">
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -350,12 +390,40 @@
                     </svg>
                     <p>Variant data not yet available.</p>
                 </div>
+            </div>
         </div>
 
-        <div id="qc" class="section">
-            <div class="section-title">Read Counts</div>
-            <div id="plots-qc"></div>
+        <!-- QC -->
+        <div id="consensus-reads" class="section">
+            <div class="section-title">Consensus read yield</div>
+            <div id="plots-consensus-length-histogram-all"></div>
+            <div id="plots-consensus-length-histogram-outcome"></div>
+            <div id="plots-consensus-length-histogram-type"></div>
+            <div id="plots-consensus-length-sankey"></div>
         </div>
+
+        <div id="num-repeats" class="section">
+            <div class="section-title">Number of concatemer repeats</div>
+            <div id="plots-num-repeats-histogram-all"></div>
+            <div id="plots-num-repeats-histogram-outcome"></div>
+            <div id="plots-num-repeats-histogram-type"></div>
+        </div>
+
+        <div id="mapped-bases" class="section">
+            <div class="section-title">Mapped bases</div>
+            <div id="plots-mapped-bases-histogram-all"></div>
+            <div id="plots-mapped-bases-histogram-outcome"></div>
+            <div id="plots-mapped-bases-histogram-type"></div>
+        </div>
+
+        <div id="raw-length" class="section">
+            <div class="section-title">Raw read yield</div>
+            <div id="plots-raw-length-histogram-all"></div>
+            <div id="plots-raw-length-histogram-outcome"></div>
+            <div id="plots-raw-length-histogram-type"></div>
+            <div id="plots-raw-length-sankey"></div>
+        </div>
+
     </main>
 </div>
 
@@ -376,7 +444,22 @@ function showSection(sectionId, btn) {
 // Map plot names to section container IDs
 const PLOT_SECTION_MAP = {
     "Depth per amplicon": "plots-amplicon-depth",
-    "Reads per sample":   "plots-qc",
+    "Reads per sample": "plots-qc",
+    "read_counts/sankey": "plots-read-counts-sankey",
+    "raw_length/histogram_all": "plots-raw-length-histogram-all",
+    "raw_length/histogram_outcome": "plots-raw-length-histogram-outcome",
+    "raw_length/histogram_type": "plots-raw-length-histogram-type",
+    "raw_length/sankey": "plots-raw-length-sankey",
+    "num_repeats/histogram_all": "plots-num-repeats-histogram-all",
+    "num_repeats/histogram_outcome": "plots-num-repeats-histogram-outcome",
+    "num_repeats/histogram_type": "plots-num-repeats-histogram-type",
+    "mapped_bases/histogram_all": "plots-mapped-bases-histogram-all",
+    "mapped_bases/histogram_outcome": "plots-mapped-bases-histogram-outcome",
+    "mapped_bases/histogram_type": "plots-mapped-bases-histogram-type",
+    "consensus_length/histogram_all": "plots-consensus-length-histogram-all",
+    "consensus_length/histogram_outcome": "plots-consensus-length-histogram-outcome",
+    "consensus_length/histogram_type": "plots-consensus-length-histogram-type",
+    "consensus_length/sankey": "plots-consensus-length-sankey",
 };
 
 function renderPlot(plot, containerId) {
@@ -406,9 +489,6 @@ function renderDashboard(data) {
         document.getElementById('header-sample').textContent = data.sample_id;
         document.title = `${data.sample_id} — CyclomicsSeq Report`;
     }
-
-    document.getElementById('generation-time').textContent =
-        'Last updated: ' + data.generation_time;
 
     // Status
     const dot = document.getElementById('status-dot');
@@ -473,13 +553,23 @@ function renderDashboard(data) {
 // ── Boot ─────────────────────────────────────────────────────────
 function loadEmbeddedData() {
     const embedded = document.getElementById('embedded-data').textContent.trim();
-    if (!embedded || embedded === '{}') return;
+    if (!embedded || embedded === '{}') {
+        // If no data yet, try again in 10 seconds
+        setTimeout(() => location.reload(), 10000);
+        return;
+    }
 
     const data = JSON.parse(embedded);
     renderDashboard(data);
 
+    // If the analysis is NOT final, reload the page in 10 seconds to get the new file
     if (!data.final) {
-        setTimeout(() => location.reload(), 5000);
+        console.log("Analysis in progress... reloading in 10s");
+        setTimeout(() => {
+            location.reload();
+        }, 10000); 
+    } else {
+        console.log("Analysis complete. Polling stopped.");
     }
 }
 

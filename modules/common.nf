@@ -73,7 +73,8 @@ process IndexReference {
         """
 }
 
-process SortIndexAlignments {
+process PosSortIndexAlignments {
+    publishDir { "${params.output_dir}/${sample_id}/consensus_alignments" }, mode: 'copy'
     container params.containers.samtools
 
     input:
@@ -86,6 +87,22 @@ process SortIndexAlignments {
         """
         samtools sort -o ${file_id}.bam $sam
         samtools index ${file_id}.bam
+        """
+}
+
+process NameSortAlignments {
+    publishDir { "${params.output_dir}/${sample_id}/concatemer_alignments" }, mode: 'copy'
+    container params.containers.samtools
+
+    input:
+        tuple val(sample_id), val(file_id), path(sam)
+
+    output:
+        tuple val(sample_id), val(file_id), path("${file_id}.bam")
+
+    script:
+        """
+        samtools sort -n -o ${file_id}.bam $sam
         """
 }
 
@@ -143,6 +160,23 @@ process UpdateTotalReads {
             --sample_id "${sample_id}" \
             --json_file "${json_file}" \
             --published_file "${final_totals_file}"
+        """
+}
+
+process GetAmpliconDepth {
+    container params.containers.alnutils
+    
+    input:
+        tuple val(sample_id), val(file_id), path(bam), path(bai)
+        path(bed)
+
+    output:
+        tuple val(sample_id), val(file_id), path("${sample_id}_amplicon_depth.yml")
+
+    script:
+        """
+        samtools depth -a -J -b $bed $bam > ${sample_id}_depth.tsv
+        get_amplicon_depth.py ${sample_id}_depth.tsv $bed ${sample_id}_amplicon_depth.yml
         """
 }
 
