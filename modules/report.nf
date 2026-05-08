@@ -4,23 +4,12 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-workflow report_realtime {
+workflow report_live {
     take:
-        raw_fastq_json   // [sample_id, file_id, reads_json]
         consensus_folder // [sample_id, file_id, consensus_metrics_folder]
         depth_table      // [sample_id, file_id, depth_yml] or channel.empty()
 
     main:
-        // Accumulate raw read counts
-        running_reads = raw_fastq_json
-            .map { sample_id, file_id, reads_json ->
-                tuple(sample_id, file_id, reads_json, rawReadsYml(sample_id))
-            }
-            | UpdateRunningReads
-            | map { sample_id, file_id, _file ->
-                tuple(sample_id, file_id, rawReadsYml(sample_id))
-            }
-        
         // Accumulate consensus metrics
         running_consensus = consensus_folder
             .map { sample_id, file_id, consensus_metrics_folder ->
@@ -33,31 +22,21 @@ workflow report_realtime {
 
 
         // Accumulate amplicon depth
-        if (params.regions != 'auto') {
-            running_depth = depth_table
-                .map { sample_id, file_id, depth_yml ->
-                    tuple(sample_id, file_id, depth_yml, ampDepthYml(sample_id))
-                }
-                | UpdateRunningDepth
-                | map { sample_id, file_id, _file ->
-                    tuple(sample_id, file_id, ampDepthYml(sample_id))
-                }
-
-            // Emit eagerly as soon as a matching pair is available
-            // This is very important to make sure it emits real-time
-            paired = running_depth
-                .combine(running_consensus, by: [0, 1])
-
-        } else {
-            running_depth = running_reads.map { sample_id, file_id, _counts_yml ->
-                tuple(sample_id, file_id, file('/dev/null'))
+        running_depth = depth_table
+            .map { sample_id, file_id, depth_yml ->
+                tuple(sample_id, file_id, depth_yml, ampDepthYml(sample_id))
+            }
+            | UpdateRunningDepth
+            | map { sample_id, file_id, _file ->
+                tuple(sample_id, file_id, ampDepthYml(sample_id))
             }
 
-            paired = running_depth
-                .combine(running_consensus, by: [0, 1])
-        }
+        // Emit eagerly as soon as a matching pair is available
+        // This is very important to make sure it emits real-time
+        paired = running_depth
+            .combine(running_consensus, by: [0, 1])
 
-        // paired.view()
+
         ReportRealtime(paired)
         realtime_report = ReportRealtime.out.realtime_report
 
