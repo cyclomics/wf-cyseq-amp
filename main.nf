@@ -91,8 +91,6 @@ workflow {
     merged_bam = merge_consensus_alignments.out.merged_bam
     
     // 4. Variant calling
-    merged_bam.view()
-    ch_regions.view()
     call_variants(merged_bam, ch_regions, ch_reference)
 
     // REPORT: Final
