@@ -61,9 +61,6 @@ process Minimap2AlignConcatemers {
         """
         minimap2 -ax map-ont \\
           -t ${task.cpus} \\
-          -m ${params.minimap2.min_chain_score} \\
-          -n ${params.minimap2.min_chain_count} \\
-          -s ${params.minimap2.min_peak_aln_score} \\
           $reference \\
           $fq > ${file_id}.sam
         """
@@ -114,11 +111,10 @@ process Cycas {
 }
 
 process CyseqConsensus {
-    cpus 1
+    cpus 8 // cpus = n + 4
     memory 20.GB
-    maxForks 1
-
-    container params.containers.cyseqtools
+    
+    // container params.containers.cyseqtools
 
     input:
         tuple val(sample_id), val(file_id), path(bam)
@@ -130,7 +126,7 @@ process CyseqConsensus {
     script:
         """
         cyseqtools consensus gw \\
-            -n ${task.cpus} \\
+            -n 4 \\
             -i $bam \\
             -r $reference \\
             -o ${file_id}_consensus

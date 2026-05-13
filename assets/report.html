@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
+<link rel="stylesheet"
+      href="https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css">
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/colresizable/1.6.0/colResizable-1.6.min.js"></script>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CyclomicsSeq Report</title>
-    <link href="https://unpkg.com/gridjs/dist/theme/mermaid.min.css" rel="stylesheet" />
-    <script src="https://unpkg.com/gridjs/dist/gridjs.umd.js"></script>
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
@@ -284,6 +287,25 @@
             margin-bottom: 20px;
             font-family: var(--font-mono);
         }
+
+        /* ── Variant table ── */
+        #variant-table {
+            width: 100% !important;
+        }
+
+       #variant-table td:hover {
+            white-space: normal;
+            overflow: visible;
+            position: relative;
+            z-index: 50;
+            background: white;
+        }
+
+        /* optional: make checkbox column stable */
+        #variant-table th:first-child,
+        #variant-table td:first-child {
+            width: 40px;
+        }
     </style>
 </head>
 <body>
@@ -383,13 +405,20 @@
         <div id="variants" class="section">
             <div class="section-title">Detected variants</div>
             <div id="variants-table-container" class="plot-card">
-                <div class="empty-state">
+                <div style="overflow-x: auto;">
+                    <button id="select-all">Select All </button>
+                    <button id="show-selected">Show Selected</button>
+                    <button id="show-all">Show All</button>
+                    <button id="reset">Reset</button>
+                    <table id="variant-table" class="display"></table>
+                </div>
+                <!-- <div class="empty-state">
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                         <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
                         <line x1="12" y1="16" x2="12.01" y2="16"/>
                     </svg>
                     <p>Variant data not yet available.</p>
-                </div>
+                </div> -->
             </div>
         </div>
 
@@ -522,30 +551,331 @@ function renderDashboard(data) {
 
     // Variant Table
     if (data.tabs) {
-        const variantTab = data.tabs.find(t => t.name === "variant-table");
-        const container = document.getElementById('variants-table-container');
-        
-        if (variantTab && container) {
-            container.innerHTML = ""; // Clear loader
 
-            // Convert the string array of columns into the object format Grid.js needs for mapping
-            const columnConfigs = variantTab.columns.map(colName => ({
-                name: colName,
-                id: colName  // This tells Grid.js: "Look for this key in the data objects"
-            }));
+        const variantTab = data.tabs.find(t => t.name === 'variant-table');
 
-            new gridjs.Grid({
-                columns: columnConfigs,
+        if (variantTab && variantTab.data?.length > 0) {
+
+            const tableId = '#variant-table';
+            const columnTypes = variantTab.column_types || {};
+
+            // Destroy existing table if needed
+            if ($.fn.DataTable.isDataTable(tableId)) {
+                $(tableId).DataTable().destroy();
+            }
+
+            // Build header row
+            $(tableId).html(`
+                <thead>
+                    <tr>
+                        <th></th>
+                        ${variantTab.columns.map(col => `<th>${col}</th>`).join('')}
+                    </tr>
+                    <tr>
+                        <th></th>
+                        ${variantTab.columns.map(() => `
+                            <th></th>
+                        `).join('')}
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            `);
+
+            // Column filters
+            const numericFilters = {};
+
+            // Initialize DataTable
+            const selectedRows = new Set();
+            const table = $(tableId).DataTable({
+
                 data: variantTab.data,
-                search: true,
-                sort: true,
-                pagination: { limit: 15 },
-                resizable: true,
-                style: { table: { 'font-size': '12px' } },
-                language: {
-                    'noRecordsFound': 'No variants found in this VCF'
+
+                columns: [
+                    {
+                        data: null,
+                        orderable: false,
+                        searchable: false,
+                        width: '50px',
+
+                        render: function(data, type, row) {
+
+                            const rowId = JSON.stringify(row);
+
+                            const checked = selectedRows.has(rowId)
+                                ? 'checked'
+                                : '';
+
+                            return `
+                                <input type="checkbox"
+                                    class="row-select"
+                                    data-row-id='${rowId}'
+                                    ${checked}>
+                            `;
+                        }
+                    },
+
+                    ...variantTab.columns.map(col => ({
+                        data: col,
+                        defaultContent: '',
+
+                        render: function(data, type, row) {
+
+                            // Preserve raw numeric values for sorting/filtering
+                            if (type !== 'display') {
+                                return data;
+                            }
+
+                            return data ?? 'N/A';
+                        }
+                    }))
+                ],
+
+                columnDefs: [
+                    // { targets: 0, width: '20px' },
+                    { targets: '_all', className: 'dt-head-left' }
+                ],
+
+                pageLength: 50,
+                paging: true,
+
+                autoWidth: false,
+                scrollX: true,
+                scrollY: '600px',
+                scrollCollapse: true,
+
+                searching: true,
+                ordering: true,
+
+                fixedHeader: true,
+
+                
+
+                destroy: true,
+
+                dom: 'lfrtip'
+            });
+
+            table.columns.adjust().draw(false);
+
+            // Numeric filtering engine
+            $.fn.dataTable.ext.search.push(function(settings, data) {
+
+                for (const [colIndex, expr] of Object.entries(numericFilters)) {
+
+                    if (!expr) continue;
+
+                    const value = parseFloat(data[colIndex]);
+
+                    if (isNaN(value)) {
+                        return false;
+                    }
+
+                    const match = expr.match(/(<=|>=|<|>|==|=)?\s*(-?\d+(\.\d+)?)/);
+
+                    if (!match) continue;
+
+                    const op = match[1] || '=';
+                    const target = parseFloat(match[2]);
+
+                    switch (op) {
+                        case '>':
+                            if (!(value > target)) return false;
+                            break;
+
+                        case '<':
+                            if (!(value < target)) return false;
+                            break;
+
+                        case '>=':
+                            if (!(value >= target)) return false;
+                            break;
+
+                        case '<=':
+                            if (!(value <= target)) return false;
+                            break;
+
+                        case '=':
+                        case '==':
+                            if (!(value === target)) return false;
+                            break;
+                    }
                 }
-            }).render(container);
+
+                return true;
+            });
+
+            const normalize = (s) => (s || "").trim().toLowerCase();
+
+            // Build typed filters
+            console.log(columnTypes);
+            table.columns().every(function(index) {
+
+                // Skip checkbox column
+                if (index === 0) return;
+
+                const column = this;
+
+                // Column name from backend
+                const columnName = column.dataSrc();
+                
+                // Metadata from backend
+                const filterDef = columnTypes[column.dataSrc()] || {};
+
+                const filterType = filterDef.type || 'text';
+
+                const cell = $('.dataTables_scrollHead thead tr:eq(1) th')
+                    .eq(index);
+
+                // -----------------------------
+                // TEXT / REGEX FILTER
+                // -----------------------------
+                if (filterType === 'text') {
+
+                    const input = $(`
+                        <input type="text"
+                            placeholder="Regex/text"
+                            style="width:100%; box-sizing:border-box;">
+                    `);
+
+                    cell.html(input);
+
+                    input.on('keyup change clear', function() {
+
+                        const val = this.value;
+
+                        column.search(val, true, false).draw();
+                    });
+                }
+
+                // -----------------------------
+                // NUMERIC FILTER
+                // -----------------------------
+                else if (filterType === 'numeric') {
+
+                    const input = $(`
+                        <input type="text"
+                            placeholder=">5, <=10"
+                            style="width:100%; box-sizing:border-box;">
+                    `);
+
+                    cell.html(input);
+
+                    input.on('keyup change clear', function() {
+
+                        numericFilters[index] = this.value.trim();
+
+                        table.draw();
+                    });
+                }
+
+                // -----------------------------
+                // DROPDOWN FILTER
+                // -----------------------------
+                else if (filterType === 'dropdown') {
+
+                    const uniqueValues = new Set();
+
+                    column.data().each(function(d) {
+
+                        if (d !== null && d !== undefined && d !== '') {
+                            uniqueValues.add(d);
+                        }
+                    });
+
+                    const sortedValues = Array.from(uniqueValues).sort();
+
+                    const select = $(`
+                        <select style="width:100%">
+                            <option value="">All</option>
+                            ${sortedValues.map(v =>
+                                `<option value="${v}">${v}</option>`
+                            ).join('')}
+                        </select>
+                    `);
+
+                    cell.html(select);
+
+                    select.on('change', function() {
+
+                        const val = $.fn.dataTable.util.escapeRegex($(this).val());
+
+                        column
+                            .search(val ? '^' + val + '$' : '', true, false)
+                            .draw();
+                    });
+                }
+            });
+
+            // Handle row selection
+            $(tableId).on('change', '.row-select', function() {
+
+                const rowId = $(this).attr('data-row-id');
+
+                if ($(this).is(':checked')) {
+                    selectedRows.add(rowId);
+                } else {
+                    selectedRows.delete(rowId);
+                }
+            });
+
+            // Show Selected / Show All buttons / Select All
+            let selectedOnly = false;
+
+            $.fn.dataTable.ext.search.push(function(settings, searchData, index, rowData) {
+
+                if (!selectedOnly) {
+                    return true;
+                }
+
+                const rowId = JSON.stringify(rowData);
+                return selectedRows.has(rowId);
+            });
+
+            $('#show-selected').on('click', function() {
+                selectedOnly = true;
+                table.draw();
+            });
+
+            $('#show-all').on('click', function() {
+                selectedOnly = false;
+                table.draw();
+            });
+
+            $('#select-all').on('click', function () {
+                const checked = true;
+                selectedRows.clear();
+                variantTab.data.forEach(row => {
+                    selectedRows.add(JSON.stringify(row));
+                });
+                console.log('Selected rows:', selectedRows.size);
+                table.rows().invalidate().draw(false);
+            });
+
+            $('#reset').on('click', function () {
+                selectedRows.clear();
+                selectedOnly = false;
+                $('#select-all').prop('checked', false);
+                table.search('').columns().search('').draw();
+                table.rows().invalidate().draw(false);
+            });
+
+
+            // Fix hidden tab sizing
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+
+                btn.addEventListener('click', () => {
+
+                    if (btn.dataset.section === 'variants') {
+
+                        setTimeout(() => {
+                            table.columns.adjust().draw(false);
+                        }, 100);
+                    }
+                });
+            });
+
+        } else {
+            console.log("No variant data found.");
         }
     }
 }
