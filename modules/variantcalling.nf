@@ -47,7 +47,7 @@ process CallVariantsLofreq {
         lofreq call-parallel \
             --pp-threads ${task.cpus} \
             --call-indels \
-            -m 20 \
+            -m 20 -d 100000 \
             -f ${reference} \
             -l ${bed} \
             -o ${file_id}.vcf \
@@ -61,6 +61,7 @@ process AnnotateVariants {
     container params.containers.alnutils
     memory 4.GB
     cpus 2
+    maxForks 1
 
     input:
         tuple val(sample_id), val(file_id), path(vcf)
