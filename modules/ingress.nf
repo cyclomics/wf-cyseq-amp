@@ -3,7 +3,7 @@
     WORKFLOWS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-workflow ingress_fastq_files {
+workflow ingress {
     take:
         read_pattern
         stop_pattern
@@ -28,17 +28,17 @@ workflow ingress_fastq_files {
             .ifEmpty('empty')
             .map {it -> it != 'empty' ? it.simpleName : "empty" }
         
-        InitiateRealtimeIngress(initial_stop_files)
-        stop_file_found = InitiateRealtimeIngress.out.stop
+        InitiateIngress(initial_stop_files)
+        stop_file_found = InitiateIngress.out.stop
 
         // -------------------------------------------------------------------
         // Real-time STOP files
         rt_stop_files = channel.watchPath(stop_pattern, 'create,modify')
             .until{  stop_file_found }
         
-        CheckRealtimeIngress(rt_stop_files.last(), stop_file_found)
-        stop_file_found = CheckRealtimeIngress.out.stop
-        stop_files = CheckRealtimeIngress.out.stop_files
+        CheckIngress(rt_stop_files.last(), stop_file_found)
+        stop_file_found = CheckIngress.out.stop
+        stop_files = CheckIngress.out.stop_files
 
         // -------------------------------------------------------------------
         // Existing FASTQ files
@@ -93,7 +93,7 @@ workflow ingress_fastq_files {
     PROCESSES
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-process InitiateRealtimeIngress {
+process InitiateIngress {
     publishDir params.input_dir, pattern: "*DONE.*", mode: 'copy'
 
     input:
@@ -124,7 +124,7 @@ process InitiateRealtimeIngress {
 
 }
 
-process CheckRealtimeIngress {
+process CheckIngress {
     publishDir params.input_dir, pattern: "*DONE.*", mode: 'copy'
 
     input:

@@ -194,6 +194,7 @@
         }
 
         .stat-card {
+            position: relative;
             background: var(--card-bg);
             border: 1px solid var(--border);
             border-radius: 10px;
@@ -205,8 +206,57 @@
 
         .stat-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
 
+        .stat-card .card-info-icon {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 16px;
+            height: 16px;
+            color: var(--text-secondary);
+            cursor: help;
+            opacity: 0.5;
+            transition: opacity 0.15s;
+        }
+
+        .stat-card .card-info-icon:hover {
+            opacity: 1;
+        }
+
+        .stat-card .card-tooltip {
+            display: none;
+            position: absolute;
+            top: -8px;
+            right: 32px;
+            background: var(--text-primary);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            width: 100px;
+            white-space: normal;
+        }
+ 
+        .stat-card .card-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 12px;
+            right: -6px;
+            width: 0;
+            height: 0;
+            border-left: 6px solid var(--text-primary);
+            border-top: 4px solid transparent;
+            border-bottom: 4px solid transparent;
+        }
+ 
+        .stat-card .card-info-icon:hover + .card-tooltip {
+            display: block;
+        }
+
+
         .stat-card .card-value {
-            font-size: 26px;
+            font-size: 22px;
             font-weight: 600;
             color: var(--text-primary);
             font-family: var(--font-mono);
@@ -214,7 +264,7 @@
         }
 
         .stat-card .card-label {
-            font-size: 12px;
+            font-size: 10px;
             color: var(--text-secondary);
             margin-top: 4px;
             font-weight: 400;
@@ -536,6 +586,7 @@ function renderDashboard(data) {
     (data.cards || []).forEach(card => {
         cardsRow.innerHTML += `
             <div class="stat-card">
+                ${card.tooltip ? `<span class="card-info-icon">i</span><div class="card-tooltip">${card.tooltip}</div>` : ''}
                 <div class="card-value">${card.value.toLocaleString()}</div>
                 <div class="card-label">${card.name}</div>
             </div>`;

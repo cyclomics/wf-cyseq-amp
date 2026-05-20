@@ -15,14 +15,18 @@ from typing import Union
 import numpy as np
 import yaml
 
+
 CARD_NAMES = {
-    "n_raw_reads": "Raw reads",
-    "bp_total_raw": "Raw bases (bp)",
-    "n_mapped_raw": "Mapped raw reads",
-    "bp_mapped_raw": "Mapped bases (bp)",
-    "n_consensus_reads": "Consensus reads",
-    "bp_consensus": "Consensus bases (bp)",
+    "n_raw_reads": ("Raw reads", None, "Total number of raw reads in the run."),
+    "median_read_length_raw": ("Median raw read length", "bp", "Median length of all ingested raw reads."),
+    "median_repeats": ("Median number of repeats", None, "Median number of identified repeats per raw read. A repeat is the basic unit of a repeating concatemeric read, or typically corresponding to the insert."),
+    "n_mapped_raw": ("Mapped raw reads", None, "Number of raw reads successfully mapped to the reference"),
+    "median_mappability_raw": ("Median alignment completeness", "%", "Median percentage of bases mapped bases in a raw read, over the its total read length."),
+    "n_consensus_reads": ("Consensus reads", None, "Number of successful consensus reads generated."),
+    "median_read_length_consensus": ("Median consensus read length", "bp", "Median length of successful consensus readas."),
+    "on_target_rate": ("Consensus on-target rate", "%", "Percentage of successful consensus reads mapping on target."),
 }
+
 
 Number = Union[int, float, str]
 
@@ -42,10 +46,27 @@ def human_format(num: Number) -> str:
         num /= 1000.0
         magnitude += 1
 
-    formatted = f"{num:.3g}".rstrip("0").rstrip(".") or "0"
+    formatted = f"{num:.3g}"
+
+    if "." in formatted:
+        formatted = formatted.rstrip("0").rstrip(".")
 
     return f"{formatted}{suffixes[magnitude]}"
 
+def format_card(card: str, value: Number) -> dict | None:
+    """Convert a raw card entry into a report-ready dict."""
+
+    if card not in CARD_NAMES:
+        return None
+
+    label, unit, tooltip = CARD_NAMES[card]
+    formatted_value = human_format(value)
+
+    return {
+        "name": label,
+        "value": f"{formatted_value}{unit}" if unit else formatted_value,
+        "tooltip": tooltip,
+    }
 
 def load_all_yamls(folder: str) -> list[list[dict]]:
     """Load all YAML files in a folder."""
@@ -56,10 +77,11 @@ def load_all_yamls(folder: str) -> list[list[dict]]:
         with open(yml_file, encoding="utf-8") as f:
             data = yaml.safe_load(f) or {}
 
-        if "cards" in data.keys():
+        if "cards" in data:
             cards.extend(
-                {"name": CARD_NAMES[k], "value": human_format(v)}
-                for k, v in data["cards"].items()
+                card_dict
+                for card, value in data["cards"].items()
+                if (card_dict := format_card(card, value)) is not None
             )
             continue
 

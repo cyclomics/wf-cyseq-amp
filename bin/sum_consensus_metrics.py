@@ -78,10 +78,12 @@ def save_metric_cards(report: Report) -> None:
     """Generate and save metric cards from a report.
 
     Card 1: Number of raw reads
-    Card 2: Basepairs raw reads
-    Card 3: Mapped bases raw reads
-    Card 4: Number of valid consensus reads
-    Card 5: Basepairs valid consensus reads
+    Card 2: Median raw read length
+    Card 3: Median number of repeats
+    Card 3b: Mapped raw reads -- should be substituted by on-target rate
+    Card 4: Median mappability raw reads
+    Card 5: Number of valid consensus reads
+    Card 6: Median consensus read length
     """
 
     Path("cards").mkdir(exist_ok=True)
@@ -89,17 +91,20 @@ def save_metric_cards(report: Report) -> None:
     metrics = report.metrics
 
     read_counts = getattr(metrics.get("read_counts"), "data", {})
+    raw_length = getattr(metrics.get("raw_length"), "data", {})
+    num_repeats = getattr(metrics.get("num_repeats"), "data", {})
     mapped_bases = getattr(metrics.get("mapped_bases"), "data", {})
     consensus = getattr(metrics.get("consensus_length"), "data", {})
 
     cards = {
         "cards": {
             "n_raw_reads": read_counts.get("run"),
-            "bp_total_raw": _get_nested(mapped_bases, "run", "sum"),
+            "median_read_length_raw": _get_nested(raw_length, "run", "median"),
+            "median_repeats": _get_nested(num_repeats, "run", "median"),
             "n_mapped_raw": _get_nested(mapped_bases, "success", "grouped", "n"),
-            "bp_mapped_raw": _get_nested(mapped_bases, "success", "grouped", "sum"),
+            "median_mappability_raw": _get_nested(mapped_bases, "run", "median"),
             "n_consensus_reads": _get_nested(read_counts, "success", "grouped"),
-            "bp_consensus": _get_nested(consensus, "success", "grouped", "sum"),
+            "median_read_length_consensus": _get_nested(consensus, "success", "grouped", "median"),
         }
     }
 

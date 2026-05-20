@@ -5,7 +5,7 @@ include { NameSortAlignments; PosSortIndexAlignments } from './common'
     WORKFLOWS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-workflow generate_cyseq_consensus {
+workflow generate_consensus {
     take:
         read_fastq
         reference

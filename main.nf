@@ -15,17 +15,17 @@ nextflow.preview.recursion = true
     IMPORT MODULES / PROCESSES / FUNCTIONS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-include { ingress_fastq_files } from './modules/ingress'
+include { ingress } from './modules/ingress'
 include {
     FilterShortReads;
     IndexReference;
     CountNumberOfReads;
     GetAmpliconDepth;
     } from './modules/common'
-include { generate_cyseq_consensus } from './modules/consensus'
+include { generate_consensus } from './modules/consensus'
 include {
-    align_consensus_reads;
-    merge_consensus_alignments;
+    align_consensus;
+    merge_consensus;
     } from './modules/alignment'
 include { call_variants } from './modules/variantcalling'
 include {
@@ -60,24 +60,26 @@ workflow {
     def ch_regions = channel.value(file(params.regions)).collect()
 
     // Start ingress workflow
-    ingress_fastq_files(read_pattern, stop_pattern)
-    raw_fastq = ingress_fastq_files.out.read_fastq
+    ingress(read_pattern, stop_pattern)
+    raw_fastq = ingress.out.read_fastq
 
     // 1. Consensus
-    generate_cyseq_consensus(raw_fastq, ch_reference)
-    consensus_fastq = generate_cyseq_consensus.out.consensus_fastq
-    consensus_folder = generate_cyseq_consensus.out.consensus_folder
+    generate_consensus(raw_fastq, ch_reference)
+    consensus_fastq = generate_consensus.out.consensus_fastq
+    consensus_folder = generate_consensus.out.consensus_folder
 
     // 2. Alignment
     // samtools fastq to transform bam to sam, then minimap2
-    align_consensus_reads(consensus_fastq, ch_reference, ch_regions, minimap2_mode)
-    aligned_consensus_bam = align_consensus_reads.out.aligned_consensus_bam
-    depth_table = align_consensus_reads.out.depth_table
+    align_consensus(consensus_fastq, ch_reference, ch_regions, minimap2_mode)
+    aligned_consensus_bam = align_consensus.out.aligned_consensus_bam
+    depth_table = align_consensus.out.depth_table
+    on_target_rate = align_consensus.out.on_target_rate
 
     // REPORT: Live
     report_live(
         consensus_folder,
         depth_table,
+        on_target_rate
     )
 
     // We require that all previous processes finish before continuing analysis.
@@ -87,15 +89,15 @@ workflow {
             .groupTuple(by: 0)
             .map { it -> tuple(it[0], it[1], it[2]) }
 
-    merge_consensus_alignments(grouped_aligned_consensus_bam)
-    merged_bam = merge_consensus_alignments.out.merged_bam
+    merge_consensus(grouped_aligned_consensus_bam)
+    merged_bam = merge_consensus.out.merged_bam
     
     // 4. Variant calling
     call_variants(merged_bam, ch_regions, ch_reference)
 
     // REPORT: Final
     FinalizeReport(
-        report_live.out.realtime_report.last().combine(
+        report_live.out.live_report.last().combine(
             call_variants.out.variant_table, by: 0
         )
     )
