@@ -13,8 +13,8 @@ workflow align_consensus {
         mode
 
     main:
-        Minimap2AlignConsensus(consensus_reads, reference, mode)
-        PosSortIndexAlignments(Minimap2AlignConsensus.out)
+        Minimap2Align(consensus_reads, reference, mode)
+        PosSortIndexAlignments(Minimap2Align.out)
         aligned_consensus_bam = PosSortIndexAlignments.out
 
         depth_table = GetAmpliconDepth(aligned_consensus_bam, regions)
@@ -45,7 +45,7 @@ workflow merge_consensus {
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-process Minimap2AlignConsensus {
+process Minimap2Align {
     container params.containers.minimap2
     cpus 8
     memory 20.GB

@@ -80,10 +80,27 @@ workflow ingress {
             }
         }
         
-        read_fastq.dump(tag: "ingress-fastq")
+        if (params.split_fastq_by_size == true) {
+            log.info "Splitting FASTQ files into smaller chunks of size: ${params.split_size} bytes"
+
+            ingested_fastq = SplitFastq(read_fastq)
+                .flatMap { sample_id, file_id, file_list ->
+                    if (file_list instanceof List) {
+                        file_list.collect { file ->
+                            def new_file_id = file.getBaseName()
+                            return [sample_id, new_file_id, file]
+                        }
+                    } else {
+                        def new_file_id = file_list.getBaseName()
+                        return [[sample_id, new_file_id, file_list]]
+                    }
+                }
+        } else {
+            ingested_fastq = read_fastq
+        }
 
     emit:
-        read_fastq = read_fastq
+        ingested_fastq = ingested_fastq
         stop_files = stop_files
 }
 
@@ -152,6 +169,22 @@ process CheckIngress {
             """
         }
 }
+
+process SplitFastq {
+    publishDir "${params.output_dir}/split", mode: 'copy'
+    container params.containers.seqkit
+    
+    input:
+        tuple val(sample_id), val(file_id), path(fastq)
+
+    output:
+        tuple val(sample_id), val(file_id), path("split/${file_id}_*.fastq.gz")
+
+    script:
+        """
+        seqkit split -j ${task.cpus} -e .gz -s $params.max_fastq_size --by-size-prefix ${file_id}_ -O split $fastq
+        """
+}    
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -22,7 +22,7 @@ include {
     CountNumberOfReads;
     GetAmpliconDepth;
     } from './modules/common'
-include { generate_consensus } from './modules/consensus'
+include { make_consensus } from './modules/consensus'
 include {
     align_consensus;
     merge_consensus;
@@ -61,12 +61,12 @@ workflow {
 
     // Start ingress workflow
     ingress(read_pattern, stop_pattern)
-    raw_fastq = ingress.out.read_fastq
+    raw_fastq = ingress.out.ingested_fastq
 
     // 1. Consensus
-    generate_consensus(raw_fastq, ch_reference)
-    consensus_fastq = generate_consensus.out.consensus_fastq
-    consensus_folder = generate_consensus.out.consensus_folder
+    make_consensus(raw_fastq, ch_reference)
+    consensus_fastq = make_consensus.out.consensus_fastq
+    consensus_folder = make_consensus.out.consensus_folder
 
     // 2. Alignment
     // samtools fastq to transform bam to sam, then minimap2

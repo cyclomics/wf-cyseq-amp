@@ -1,24 +1,24 @@
 include { NameSortAlignments; PosSortIndexAlignments } from './common'
+include { Minimap2Align } from './alignment'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     WORKFLOWS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-workflow generate_consensus {
+workflow make_consensus {
     take:
         read_fastq
         reference
 
     main:
-        Minimap2AlignConcatemers(read_fastq, reference)
-        NameSortAlignments(Minimap2AlignConcatemers.out)
-        // FilterAlignments(PosSortIndexAlignments.out)
+        Minimap2Align(read_fastq, reference, "map-ont")
+        NameSortAlignments(Minimap2Align.out)
         CyseqConsensus(NameSortAlignments.out, reference)
-        BamToFastq(CyseqConsensus.out.map { it -> tuple(it[0], it[1], it[2]) })
+        SamToFastq(CyseqConsensus.out.map { it -> tuple(it[0], it[1], it[2]) })
 
     emit:
-        consensus_fastq = BamToFastq.out
+        consensus_fastq = SamToFastq.out
         consensus_folder = CyseqConsensus.out.map { it -> tuple(it[0], it[1], it[3]) }
 }
 
@@ -28,7 +28,7 @@ workflow generate_consensus {
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-process BamToFastq {
+process SamToFastq {
     container params.containers.samtools
     cpus 4
     memory 5.GB
@@ -44,29 +44,6 @@ process BamToFastq {
         samtools fastq -@ ${task.cpus} $sam > ${file_id}.fastq
         """
 }
-
-process Minimap2AlignConcatemers {
-    container params.containers.minimap2
-    cpus 4
-    memory 15.GB
-
-    input:
-        tuple val(sample_id), val(file_id), path(fq)
-        tuple path(reference), val(reference_idx)
-    
-    output:
-        tuple val(sample_id), val(file_id), path("${file_id}.sam") 
-
-    script:
-        """
-        minimap2 -ax map-ont \\
-          -t ${task.cpus} \\
-          $reference \\
-          $fq > ${file_id}.sam
-        """
-}
-
-
 
 process FilterAlignments {
     container params.containers.samtools
