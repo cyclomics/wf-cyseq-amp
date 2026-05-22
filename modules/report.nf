@@ -6,17 +6,17 @@
 
 workflow report_live {
     take:
-        consensus_folder // [sample_id, file_id, consensus_metrics_folder]
+        consensus_folder // [sample_id, file_id, read_metrics_folder]
         depth_table      // [sample_id, file_id, depth_yml]
         on_target_rate    // [sample_id, file_id, on_target_rate_yml]
 
     main:
         // Accumulate consensus metrics
         live_consensus = consensus_folder
-            .map { sample_id, file_id, consensus_metrics_folder ->
-                tuple(sample_id, file_id, consensus_metrics_folder, consensusMetricsFolder(sample_id))
+            .map { sample_id, file_id, read_metrics_folder ->
+                tuple(sample_id, file_id, read_metrics_folder, consensusMetricsFolder(sample_id))
             }
-            | StreamConsensusMetrics
+            | StreamReadMetrics
             | map { sample_id, file_id, _dir, cards, plots ->
                 tuple(sample_id, file_id, cards, plots)
             }
@@ -49,8 +49,8 @@ workflow report_live {
             .combine(live_consensus, by: [0, 1])
 
 
-        ReportLive(paired)
-        live_report = ReportLive.out.report
+        ReportStreamData(paired)
+        live_report = ReportStreamData.out.report
 
     emit:
         live_report
@@ -103,7 +103,7 @@ process StreamOnTargetRate {
         """
 }
 
-process StreamConsensusMetrics {
+process StreamReadMetrics {
     container params.containers.cyseqtools
     maxForks 1
     publishDir { "${params.output_dir}/${sample_id}/report" }, mode: 'copy', overwrite: true
@@ -112,18 +112,18 @@ process StreamConsensusMetrics {
         tuple val(sample_id), val(file_id), path(metrics_folder), path(published_folder)
 
     output:
-        tuple val(sample_id), val(file_id), path(".consensus_metrics"), path("cards/cards.yaml"), path("plots/*.yaml")
+        tuple val(sample_id), val(file_id), path(".read_metrics"), path("cards/cards.yaml"), path("plots/*.yaml")
 
     script:
         """
-        mv $published_folder .prev_consensus_metrics
-        sum_consensus_metrics.py \
+        mv $published_folder .prev_read_metrics
+        sum_read_metrics.py \
             --metrics_folder $metrics_folder \
             --published_folder $published_folder
         """
 }
 
-process ReportLive {
+process ReportStreamData {
     container params.containers.alnutils
     publishDir "${params.output_dir}", mode: 'copy'
 
@@ -184,5 +184,5 @@ def onTargetRateYml(sample_id) {
 }
 
 def consensusMetricsFolder(sample_id) {
-    files("${reportsDir(sample_id)}/.consensus_metrics")
+    files("${reportsDir(sample_id)}/.read_metrics")
 }
