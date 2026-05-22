@@ -65,28 +65,6 @@ process FilterAlignments {
         """
 }
 
-process Cycas {
-    cpus 4
-    memory 10.GB
-
-    container params.containers.cycas
-
-    input:
-        tuple val(sample_id), val(file_id), path(bam), path(bai)
-
-    output:
-        tuple val(sample_id), val(file_id), path("${file_id}.consensus.fastq"), path("${file_id}.metadata.json")
-
-    script:
-        """
-        python $params.cycas_location consensus \\
-          --input-bam $bam \\
-          --output-fastq ${file_id}.consensus.fastq \\
-          --output-json ${file_id}.metadata.json \\
-          --calibration-model ${params.calibration_model}
-        """
-}
-
 process CyseqConsensus {
     cpus 8 // cpus = n + 4
     memory 20.GB

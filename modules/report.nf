@@ -11,8 +11,8 @@ workflow report_live {
         on_target_rate    // [sample_id, file_id, on_target_rate_yml]
 
     main:
-        // Accumulate consensus metrics
-        live_consensus = consensus_folder
+        // Accumulate read metrics
+        live_read_metrics = consensus_folder
             .map { sample_id, file_id, read_metrics_folder ->
                 tuple(sample_id, file_id, read_metrics_folder, consensusMetricsFolder(sample_id))
             }
@@ -42,11 +42,10 @@ workflow report_live {
                 tuple(sample_id, file_id, onTargetRateYml(sample_id))
             }
 
-        // Emit eagerly as soon as a matching pair is available
-        // This is very important to make sure it emits real-time
+        // Emit eagerly as soon as matching streams are available
         paired = live_depth
             .combine(live_on_target, by: [0, 1])
-            .combine(live_consensus, by: [0, 1])
+            .combine(live_read_metrics, by: [0, 1])
 
 
         ReportStreamData(paired)
@@ -137,7 +136,6 @@ process ReportStreamData {
         tuple val(sample_id), path("report_${sample_id}.html"), path("report_${sample_id}.json"), emit: report
 
     script:
-        def amplicon_arg = (depth_yml.name != 'null') ? "--amplicon_depth_yml ${depth_yml}" : ''
         """
         report_live.py \
             --template ${params.report_template} \
