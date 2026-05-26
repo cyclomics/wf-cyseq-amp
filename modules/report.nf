@@ -6,42 +6,53 @@
 
 workflow report_live {
     take:
-        consensus_folder // [sample_id, file_id, consensus_metrics_folder]
-        depth_table      // [sample_id, file_id, depth_yml] or channel.empty()
+        consensus_folder // [sample_id, file_id, read_metrics_folder]
+        depth_table      // [sample_id, file_id, depth_yml]
+        on_target_rate    // [sample_id, file_id, on_target_rate_yml]
 
     main:
-        // Accumulate consensus metrics
-        running_consensus = consensus_folder
-            .map { sample_id, file_id, consensus_metrics_folder ->
-                tuple(sample_id, file_id, consensus_metrics_folder, consensusMetricsFolder(sample_id))
+        // Accumulate read metrics
+        live_read_metrics = consensus_folder
+            .map { sample_id, file_id, read_metrics_folder ->
+                tuple(sample_id, file_id, read_metrics_folder, consensusMetricsFolder(sample_id))
             }
-            | UpdateRunningConsensusMetrics
+            | StreamReadMetrics
             | map { sample_id, file_id, _dir, cards, plots ->
                 tuple(sample_id, file_id, cards, plots)
             }
 
 
         // Accumulate amplicon depth
-        running_depth = depth_table
+        live_depth = depth_table
             .map { sample_id, file_id, depth_yml ->
                 tuple(sample_id, file_id, depth_yml, ampDepthYml(sample_id))
             }
-            | UpdateRunningDepth
+            | StreamDepth
             | map { sample_id, file_id, _file ->
                 tuple(sample_id, file_id, ampDepthYml(sample_id))
             }
+        
+        // Accumulate on-target rate
+        live_on_target = on_target_rate
+            .map { sample_id, file_id, on_target_rate_yml ->
+                tuple(sample_id, file_id, on_target_rate_yml, onTargetRateYml(sample_id))
+            }
+            | StreamOnTargetRate
+            | map { sample_id, file_id, _file ->
+                tuple(sample_id, file_id, onTargetRateYml(sample_id))
+            }
 
-        // Emit eagerly as soon as a matching pair is available
-        // This is very important to make sure it emits real-time
-        paired = running_depth
-            .combine(running_consensus, by: [0, 1])
+        // Emit eagerly as soon as matching streams are available
+        paired = live_depth
+            .combine(live_on_target, by: [0, 1])
+            .combine(live_read_metrics, by: [0, 1])
 
 
-        ReportRealtime(paired)
-        realtime_report = ReportRealtime.out.realtime_report
+        ReportStreamData(paired)
+        live_report = ReportStreamData.out.report
 
     emit:
-        realtime_report
+        live_report
 }
 
 /*
@@ -50,26 +61,7 @@ workflow report_live {
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-process UpdateRunningReads {
-    container params.containers.alnutils
-    maxForks 1
-    publishDir { "${params.output_dir}/${sample_id}/report/counts" }, mode: 'copy', overwrite: true
-
-    input:
-        tuple val(sample_id), val(file_id), path(json_file), path(published_file)
-
-    output:
-        tuple val(sample_id), val(file_id), path("number_of_reads_running.yml")
-
-    script:
-        """
-        sum_reads.py \
-            --json_file "${json_file}" \
-            --published_file "${published_file}"
-        """
-}
-
-process UpdateRunningDepth {
+process StreamDepth {
     container params.containers.alnutils
     maxForks 1
     publishDir { "${params.output_dir}/${sample_id}/report/depth" }, mode: 'copy', overwrite: true
@@ -78,7 +70,7 @@ process UpdateRunningDepth {
         tuple val(sample_id), val(file_id), path(depth_yml), path(published_file)
 
     output:
-        tuple val(sample_id), val(file_id), path("amplicon_depth_running.yml")
+        tuple val(sample_id), val(file_id), path("amplicon_depth_live.yml")
 
     script:
         def target_depth_arg = params.target_depth != null ? "--target_depth ${params.target_depth}" : ''
@@ -90,7 +82,27 @@ process UpdateRunningDepth {
         """
 }
 
-process UpdateRunningConsensusMetrics {
+process StreamOnTargetRate {
+    container params.containers.alnutils
+    maxForks 1
+    publishDir { "${params.output_dir}/${sample_id}/report/depth" }, mode: 'copy', overwrite: true
+
+    input:
+        tuple val(sample_id), val(file_id), path(on_target_rate_yml), path(published_file)
+
+    output:
+        tuple val(sample_id), val(file_id), path("on_target_rate_live.yml")
+
+    script:
+        """
+        sum_on_target_rate.sh \
+            ${on_target_rate_yml} \
+            ${published_file} \
+            on_target_rate_live.yml
+        """
+}
+
+process StreamReadMetrics {
     container params.containers.cyseqtools
     maxForks 1
     publishDir { "${params.output_dir}/${sample_id}/report" }, mode: 'copy', overwrite: true
@@ -99,31 +111,33 @@ process UpdateRunningConsensusMetrics {
         tuple val(sample_id), val(file_id), path(metrics_folder), path(published_folder)
 
     output:
-        tuple val(sample_id), val(file_id), path(".consensus_metrics"), path("cards/cards.yaml"), path("plots/*.yaml")
+        tuple val(sample_id), val(file_id), path(".read_metrics"), path("cards/cards.yaml"), path("plots/*.yaml")
 
     script:
         """
-        mv $published_folder .prev_consensus_metrics
-        sum_consensus_metrics.py \
+        mv $published_folder .prev_read_metrics
+        sum_read_metrics.py \
             --metrics_folder $metrics_folder \
             --published_folder $published_folder
         """
 }
 
-process ReportRealtime {
+process ReportStreamData {
     container params.containers.alnutils
     publishDir "${params.output_dir}", mode: 'copy'
 
     input:
-        tuple val(sample_id), val(file_id), path(depth_yml), path(cards_yml), path(consensus_yml)
+        tuple val(sample_id), val(file_id),
+              path(depth_yml),
+              path(on_target_rate_yml),
+              path(consensus_cards_yml), path(consensus_yml)
 
     output:
-        tuple val(sample_id), path("report_${sample_id}.html"), path("report_${sample_id}.json"), emit: realtime_report
+        tuple val(sample_id), path("report_${sample_id}.html"), path("report_${sample_id}.json"), emit: report
 
     script:
-        def amplicon_arg = (depth_yml.name != 'null') ? "--amplicon_depth_yml ${depth_yml}" : ''
         """
-        report_realtime.py \
+        report_live.py \
             --template ${params.report_template} \
             --output_html report_${sample_id}.html \
             --output_json report_${sample_id}.json
@@ -159,14 +173,14 @@ def reportsDir(sample_id) {
     "${params.output_dir}/${sample_id}/report"
 }
 
-def rawReadsYml(sample_id) {
-    file("${reportsDir(sample_id)}/counts/number_of_reads_running.yml")
+def ampDepthYml(sample_id) {
+    file("${reportsDir(sample_id)}/depth/amplicon_depth_live.yml")
 }
 
-def ampDepthYml(sample_id) {
-    file("${reportsDir(sample_id)}/depth/amplicon_depth_running.yml")
+def onTargetRateYml(sample_id) {
+    file("${reportsDir(sample_id)}/depth/on_target_rate_live.yml")
 }
 
 def consensusMetricsFolder(sample_id) {
-    files("${reportsDir(sample_id)}/.consensus_metrics")
+    files("${reportsDir(sample_id)}/.read_metrics")
 }

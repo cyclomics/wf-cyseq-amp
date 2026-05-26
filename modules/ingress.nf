@@ -3,7 +3,7 @@
     WORKFLOWS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-workflow ingress_fastq_files {
+workflow ingress {
     take:
         read_pattern
         stop_pattern
@@ -28,17 +28,17 @@ workflow ingress_fastq_files {
             .ifEmpty('empty')
             .map {it -> it != 'empty' ? it.simpleName : "empty" }
         
-        InitiateRealtimeIngress(initial_stop_files)
-        stop_file_found = InitiateRealtimeIngress.out.stop
+        InitiateIngress(initial_stop_files)
+        stop_file_found = InitiateIngress.out.stop
 
         // -------------------------------------------------------------------
         // Real-time STOP files
         rt_stop_files = channel.watchPath(stop_pattern, 'create,modify')
             .until{  stop_file_found }
         
-        CheckRealtimeIngress(rt_stop_files.last(), stop_file_found)
-        stop_file_found = CheckRealtimeIngress.out.stop
-        stop_files = CheckRealtimeIngress.out.stop_files
+        CheckIngress(rt_stop_files.last(), stop_file_found)
+        stop_file_found = CheckIngress.out.stop
+        stop_files = CheckIngress.out.stop_files
 
         // -------------------------------------------------------------------
         // Existing FASTQ files
@@ -80,11 +80,28 @@ workflow ingress_fastq_files {
             }
         }
         
-        read_fastq.dump(tag: "ingress-fastq")
+        if (params.split_fastq_by_size == true) {
+            log.info "Splitting FASTQ files into smaller chunks of size: ${params.split_size} bytes"
+
+            ingested_fastq = SplitFastq(read_fastq)
+                .flatMap { sample_id, file_id, file_list ->
+                    if (file_list instanceof List) {
+                        file_list.collect { file ->
+                            def new_file_id = file.name.replaceFirst(/\.(fastq|fq)(\.gz)?$/, '')
+                            return [sample_id, new_file_id, file]
+                        }
+                    } else {
+                        def new_file_id = file_list.name.replaceFirst(/\.(fastq|fq)(\.gz)?$/, '')
+                        return [[sample_id, new_file_id, file_list]]
+                    }
+                }
+        } else {
+            ingested_fastq = read_fastq
+        }
 
     emit:
-        read_fastq = read_fastq
-        stop_files = stop_files
+        ingested_fastq
+        stop_files
 }
 
 
@@ -93,7 +110,7 @@ workflow ingress_fastq_files {
     PROCESSES
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-process InitiateRealtimeIngress {
+process InitiateIngress {
     publishDir params.input_dir, pattern: "*DONE.*", mode: 'copy'
 
     input:
@@ -124,7 +141,7 @@ process InitiateRealtimeIngress {
 
 }
 
-process CheckRealtimeIngress {
+process CheckIngress {
     publishDir params.input_dir, pattern: "*DONE.*", mode: 'copy'
 
     input:
@@ -152,6 +169,21 @@ process CheckRealtimeIngress {
             """
         }
 }
+
+process SplitFastq {
+    container params.containers.seqkit
+    
+    input:
+        tuple val(sample_id), val(file_id), path(fastq)
+
+    output:
+        tuple val(sample_id), val(file_id), path("split/${file_id}_*.fastq.gz")
+
+    script:
+        """
+        seqkit split -j ${task.cpus} -e .gz -s $params.max_fastq_size --by-size-prefix ${file_id}_ -O split $fastq
+        """
+}    
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

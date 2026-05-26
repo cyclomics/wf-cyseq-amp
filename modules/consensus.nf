@@ -1,24 +1,24 @@
 include { NameSortAlignments; PosSortIndexAlignments } from './common'
+include { Minimap2Align } from './alignment'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     WORKFLOWS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-workflow generate_cyseq_consensus {
+workflow make_consensus {
     take:
         read_fastq
         reference
 
     main:
-        Minimap2AlignConcatemers(read_fastq, reference)
-        NameSortAlignments(Minimap2AlignConcatemers.out)
-        // FilterAlignments(PosSortIndexAlignments.out)
+        Minimap2Align(read_fastq, reference, "map-ont")
+        NameSortAlignments(Minimap2Align.out)
         CyseqConsensus(NameSortAlignments.out, reference)
-        BamToFastq(CyseqConsensus.out.map { it -> tuple(it[0], it[1], it[2]) })
+        SamToFastq(CyseqConsensus.out.map { it -> tuple(it[0], it[1], it[2]) })
 
     emit:
-        consensus_fastq = BamToFastq.out
+        consensus_fastq = SamToFastq.out
         consensus_folder = CyseqConsensus.out.map { it -> tuple(it[0], it[1], it[3]) }
 }
 
@@ -28,7 +28,7 @@ workflow generate_cyseq_consensus {
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-process BamToFastq {
+process SamToFastq {
     container params.containers.samtools
     cpus 4
     memory 5.GB
@@ -44,32 +44,6 @@ process BamToFastq {
         samtools fastq -@ ${task.cpus} $sam > ${file_id}.fastq
         """
 }
-
-process Minimap2AlignConcatemers {
-    container params.containers.minimap2
-    cpus 4
-    memory 15.GB
-
-    input:
-        tuple val(sample_id), val(file_id), path(fq)
-        tuple path(reference), val(reference_idx)
-    
-    output:
-        tuple val(sample_id), val(file_id), path("${file_id}.sam") 
-
-    script:
-        """
-        minimap2 -ax map-ont \\
-          -t ${task.cpus} \\
-          -m ${params.minimap2.min_chain_score} \\
-          -n ${params.minimap2.min_chain_count} \\
-          -s ${params.minimap2.min_peak_aln_score} \\
-          $reference \\
-          $fq > ${file_id}.sam
-        """
-}
-
-
 
 process FilterAlignments {
     container params.containers.samtools
@@ -91,34 +65,11 @@ process FilterAlignments {
         """
 }
 
-process Cycas {
-    cpus 4
-    memory 10.GB
-
-    container params.containers.cycas
-
-    input:
-        tuple val(sample_id), val(file_id), path(bam), path(bai)
-
-    output:
-        tuple val(sample_id), val(file_id), path("${file_id}.consensus.fastq"), path("${file_id}.metadata.json")
-
-    script:
-        """
-        python $params.cycas_location consensus \\
-          --input-bam $bam \\
-          --output-fastq ${file_id}.consensus.fastq \\
-          --output-json ${file_id}.metadata.json \\
-          --calibration-model ${params.calibration_model}
-        """
-}
-
 process CyseqConsensus {
-    cpus 1
+    cpus 8 // cpus = n + 4
     memory 20.GB
-    maxForks 1
-
-    container params.containers.cyseqtools
+    
+    // container params.containers.cyseqtools
 
     input:
         tuple val(sample_id), val(file_id), path(bam)
@@ -130,7 +81,7 @@ process CyseqConsensus {
     script:
         """
         cyseqtools consensus gw \\
-            -n ${task.cpus} \\
+            -n 4 \\
             -i $bam \\
             -r $reference \\
             -o ${file_id}_consensus

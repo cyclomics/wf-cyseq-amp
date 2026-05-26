@@ -2,12 +2,12 @@
 output*
 simulation/
 work/
-test_data/
-work/
+venv/
 
 *DONE.*
 .nf-test*
 .vscode
+.logs
 
 **.DS_store
 **.DS_Store

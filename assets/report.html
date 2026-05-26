@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
+<link rel="stylesheet"
+      href="https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css">
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/colresizable/1.6.0/colResizable-1.6.min.js"></script>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CyclomicsSeq Report</title>
-    <link href="https://unpkg.com/gridjs/dist/theme/mermaid.min.css" rel="stylesheet" />
-    <script src="https://unpkg.com/gridjs/dist/gridjs.umd.js"></script>
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
@@ -191,6 +194,7 @@
         }
 
         .stat-card {
+            position: relative;
             background: var(--card-bg);
             border: 1px solid var(--border);
             border-radius: 10px;
@@ -202,8 +206,76 @@
 
         .stat-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
 
+        .stat-card .info-container {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 18px;
+            height: 18px;
+        }
+
+        .stat-card .card-info-icon {
+            display: block;
+            width: 18px;
+            height: 18px;
+            line-height: 18px;
+            text-align: center;
+            font-family: sans-serif;
+            font-size: 11px;
+            font-weight: bold;
+            color: #6b7280;
+            border: 1px solid #6b7280;
+            border-radius: 50%;
+            opacity: 0.5;
+            transition: opacity 0.15s;
+        }
+
+        .stat-card .card-info-icon:hover {
+            opacity: 1;
+            color: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .stat-card .card-tooltip {
+            display: none;
+            position: absolute;
+
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            margin-bottom: 8px;
+
+            background: var(--sidebar-bg);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            width: 180px;
+            white-space: normal;
+        }
+ 
+        .stat-card .card-tooltip::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-top: 6px solid var(--sidebar-bg);
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+        }
+ 
+        .stat-card .card-info-icon:hover + .card-tooltip {
+            display: block;
+        }
+
+
         .stat-card .card-value {
-            font-size: 26px;
+            font-size: 22px;
             font-weight: 600;
             color: var(--text-primary);
             font-family: var(--font-mono);
@@ -211,7 +283,7 @@
         }
 
         .stat-card .card-label {
-            font-size: 12px;
+            font-size: 10px;
             color: var(--text-secondary);
             margin-top: 4px;
             font-weight: 400;
@@ -232,33 +304,60 @@
             to   { opacity: 1; transform: translateY(0); }
         }
 
+        /* ── Section Title Help Button & Box ── */
         .section-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 20px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid var(--border);
-            letter-spacing: -0.02em;
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
-        .plot-card {
-            background: var(--card-bg);
+        .section-help-btn {
+            display: inline-block;
+            width: 22px;
+            height: 22px;
+            line-height: 20px;
+            text-align: center;
+            background: transparent;
             border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 20px 24px;
-            box-shadow: var(--shadow-card);
-            margin-bottom: 20px;
-            min-width: 600px;
+            color: var(--text-secondary);
+            border-radius: 50%;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            padding: 0;
+            user-select: none;
         }
 
-        .plot-card h5 {
+        .section-help-btn:hover,
+        .section-help-btn.active {
+            color: var(--accent);
+            border-color: var(--accent);
+            background: rgba(79, 142, 247, 0.1);
+        }
+
+        /* Full width block that sits below title and forces layout content down */
+        .section-help-box {
+            display: none;
+            width: 100%;
+            background: var(--card-bg);
+            color: var(--text-primary);
+            padding: 14px 18px;
+            border-radius: 0px;
             font-size: 13px;
-            font-weight: 500;
-            color: var(--text-secondary);
-            margin-bottom: 14px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+            line-height: 1.6;
+            border-left: 4px solid var(--accent);
+            border-top: 1px solid var(--border);
+            border-right: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            margin-top: 12px;
+            animation: fadeIn 0.15s ease;
+            min-width: 400px;
+            max-width: 100%;
+        }
+
+        .section-help-box.open {
+            display: block;
         }
 
         .empty-state {
@@ -283,6 +382,92 @@
             color: var(--text-secondary);
             margin-bottom: 20px;
             font-family: var(--font-mono);
+        }
+
+        /* ── Plots ── */
+        /* Container bar for sub-section plot buttons */
+        .plot-tabs {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* Tab button styling matching your overall theme */
+        .plot-tab-btn {
+            padding: 6px 14px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            margin-top: 20px;
+        }
+
+        .plot-tab-btn:hover {
+            background: var(--bg);
+            color: var(--text-primary);
+        }
+
+        /* Active tab presentation rule */
+        .plot-tab-btn.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        /* HIDE all plot cards by default inside dynamic sub-views */
+        .plot-container > .plot-card {
+            display: none;
+        }
+
+        /* Only show the currently chosen graph card */
+        .plot-container > .plot-card.active {
+            display: block;
+            animation: fadeIn 0.2s ease; /* reuses your predefined animation style */
+        }
+
+        .plot-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px 24px;
+            box-shadow: var(--shadow-card);
+            margin-top: 20px;
+            margin-bottom: 20px;
+            min-width: 400px;
+            max-width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .plot-card h5 {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* ── Variant table ── */
+        #variant-table {
+            width: 100% !important;
+        }
+
+       #variant-table td:hover {
+            white-space: normal;
+            overflow: visible;
+            position: relative;
+            z-index: 50;
+            background: white;
+        }
+
+        /* optional: make checkbox column stable */
+        #variant-table th:first-child,
+        #variant-table td:first-child {
+            width: 40px;
         }
     </style>
 </head>
@@ -370,58 +555,149 @@
         
         <!-- Analysis -->
         <div id="run-stats" class="section active">
-            <div class="section-title">General run statistics</div>
+            <div class="section-title">
+                <button class="section-help-btn" data-target="help-run-stats">?</button>
+                General run statistics
+            </div>
+            <div id="help-run-stats" class="section-help-box">
+                This section provides an overview of the sequencing run, including the number of reads generated, total bases sequenced, and other key metrics.
+                <br/>The Sankey plot shows the flow of sequenced reads through consensus generation. It displays reads that pass or fail consenus. Reads that pass consensus are further categorized by their type (1D, 2D or 3D). Reads that fail consensus are further categorized by their reason for failure.
+            </div>
             <div id="cards-row"></div>
             <div id="plots-read-counts-sankey"></div>
         </div>
 
         <div id="amplicon-depth" class="section">
-            <div class="section-title">Depth per amplicon</div>
+            <div class="section-title">
+                <button class="section-help-btn" data-target="help-amplicon-depth">?</button>
+                Depth per amplicon
+            </div>
+            <div id="help-amplicon-depth" class="section-help-box">
+                This section shows the median depth of coverage for each amplicon. For each amplicon, read depth is determined at each position, and the median depth across the locus is calculated.
+                <br/>If a target depth is specified, it is shown as a dashed line. Amplicons that meet the target are colored blue.
+            </div>
             <div id="plots-amplicon-depth"></div>
         </div>
 
         <div id="variants" class="section">
-            <div class="section-title">Detected variants</div>
+            <div class="section-title">
+                <button class="section-help-btn" data-target="help-variants">?</button>
+                Detected variants
+            </div>
+            <div id="help-variants" class="section-help-box">
+                This section lists the variants detected in the sample. Variants are identified by comparing the consensus sequences to the reference genome. The table includes information about each variant, such as its genomic position, codon and amino acid changes, type (e.g., SNV, indel), and allele frequency.
+                <br/>Use the buttons above the table to select which variants to display.
+            </div>
             <div id="variants-table-container" class="plot-card">
-                <div class="empty-state">
+                <div style="overflow-x: auto;">
+                    <button id="select-all">Select All </button>
+                    <button id="show-selected">Show Selected</button>
+                    <button id="show-all">Show All</button>
+                    <button id="reset">Reset</button>
+                    <table id="variant-table" class="display"></table>
+                </div>
+                <!-- <div class="empty-state">
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                         <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
                         <line x1="12" y1="16" x2="12.01" y2="16"/>
                     </svg>
                     <p>Variant data not yet available.</p>
-                </div>
+                </div> -->
             </div>
         </div>
 
         <!-- QC -->
         <div id="consensus-reads" class="section">
-            <div class="section-title">Consensus read yield</div>
-            <div id="plots-consensus-length-histogram-all"></div>
-            <div id="plots-consensus-length-histogram-outcome"></div>
-            <div id="plots-consensus-length-histogram-type"></div>
-            <div id="plots-consensus-length-sankey"></div>
+            <div class="section-title">
+                <button class="section-help-btn" data-target="help-consensus-reads">?</button>
+                Consensus read yield
+            </div>
+            <div id="help-consensus-reads" class="section-help-box">
+                This section shows the yield of consensus read bases and consensus read lengths generated.
+                <br/>The Sankey plot shows the proportion of consensus bases by read type (1D, 2D, 3D) after successful consensus. When consensus fails, the underlying reason is displayed.
+                <br/>Histograms show the distribution of consensus read lengths in three ways: (i) stratified by read type, (ii) stratified by consensus outcome, and (iii) all reads unstratified.
+            </div>
+
+            <div class="plot-tabs">
+                <button class="plot-tab-btn active" onclick="switchPlot(this, 'plots-consensus-length-sankey')">Sankey</button>
+                <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-consensus-length-histogram-type')">By Type</button>
+                <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-consensus-length-histogram-outcome')">By Outcome</button>
+                <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-consensus-length-histogram-all')">All Reads</button>
+            </div>
+            <div class="plot-container">
+                <div id="plots-consensus-length-sankey" class="plot-card active"></div>
+                <div id="plots-consensus-length-histogram-type" class="plot-card"></div>
+                <div id="plots-consensus-length-histogram-outcome" class="plot-card"></div>
+                <div id="plots-consensus-length-histogram-all" class="plot-card"></div>
+            </div>
         </div>
 
         <div id="num-repeats" class="section">
-            <div class="section-title">Number of concatemer repeats</div>
-            <div id="plots-num-repeats-histogram-all"></div>
-            <div id="plots-num-repeats-histogram-outcome"></div>
-            <div id="plots-num-repeats-histogram-type"></div>
+            <div class="section-title">
+                <button class="section-help-btn" data-target="help-num-repeats">?</button>
+                Number of concatemer repeats
+            </div>
+            <div id="help-num-repeats" class="section-help-box">
+                This section shows the number of repeats in each processed read. A repeat is defined as the base subunit of a concatemeric read, typically corresponding to the original insert.
+                <br/>Histograms show the distribution of the number of repeats in three ways: (i) stratified by read type, (ii) stratified by consensus outcome, and (iii) all reads unstratified.
+            </div>
+
+            <div class="plot-tabs">
+                <button class="plot-tab-btn active" onclick="switchPlot(this, 'plots-num-repeats-histogram-type')">By Type</button>
+                <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-num-repeats-histogram-outcome')">By Outcome</button>
+                <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-num-repeats-histogram-all')">All Reads</button>
+            </div>
+            <div class="plot-container">
+                <div id="plots-num-repeats-histogram-type" class="plot-card active"></div>
+                <div id="plots-num-repeats-histogram-outcome" class="plot-card"></div>
+                <div id="plots-num-repeats-histogram-all" class="plot-card"></div>
+            </div>
         </div>
 
         <div id="mapped-bases" class="section">
-            <div class="section-title">Mapped bases</div>
-            <div id="plots-mapped-bases-histogram-all"></div>
-            <div id="plots-mapped-bases-histogram-outcome"></div>
-            <div id="plots-mapped-bases-histogram-type"></div>
+            <div class="section-title">
+                <button class="section-help-btn" data-target="help-mapped-bases">?</button>
+                Mapped bases
+            </div>
+            <div id="help-mapped-bases" class="section-help-box">
+                This section shows the fraction of mapped bases per read. That is, for each read, the number of bases that successfully mapped to the reference, over the total read length.
+                <br/>Histograms show the distribution of mapped fractions in three ways: (i) stratified by read type, (ii) stratified by consensus outcome, and (iii) all reads unstratified.
+            </div>
+            <div class="plot-tabs">
+                <button class="plot-tab-btn active" onclick="switchPlot(this, 'plots-mapped-bases-histogram-type')">By Type</button>
+                <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-mapped-bases-histogram-outcome')">By Outcome</button>
+                <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-mapped-bases-histogram-all')">All Reads</button>
+            </div>
+            <div class="plot-container">
+                <div id="plots-mapped-bases-histogram-type" class="plot-card active"></div>
+                <div id="plots-mapped-bases-histogram-outcome" class="plot-card"></div>
+                <div id="plots-mapped-bases-histogram-all" class="plot-card"></div>
+            </div>
         </div>
 
         <div id="raw-length" class="section">
-            <div class="section-title">Raw read yield</div>
-            <div id="plots-raw-length-histogram-all"></div>
-            <div id="plots-raw-length-histogram-outcome"></div>
-            <div id="plots-raw-length-histogram-type"></div>
-            <div id="plots-raw-length-sankey"></div>
+            <div class="section-title">
+                <button class="section-help-btn" data-target="help-raw-length">?</button>
+                Raw read yield
+            </div>
+            <div id="help-raw-length" class="section-help-box">
+                This section shows the yield of raw read bases and raw read lengths analysed.
+                <br/>The Sankey plot shows the proportion of raw bases by read type (1D, 2D, 3D) after successful consensus. When consensus fails, the underlying reason is displayed.
+                <br/>Histograms show the distribution of raw read lengths in three ways: (i) stratified by read type, (ii) stratified by consensus outcome, and (iii) all reads unstratified.
+            </div>
+            <div class="plot-tabs">
+                <button class="plot-tab-btn active" onclick="switchPlot(this, 'plots-raw-length-sankey')">Sankey</button>
+                <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-raw-length-histogram-type')">By Type</button>
+                <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-raw-length-histogram-outcome')">By Outcome</button>
+                <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-raw-length-histogram-all')">All Reads</button>
+                
+            </div>
+            <div class="plot-container">
+                <div id="plots-raw-length-sankey" class="plot-card active"></div>
+                <div id="plots-raw-length-histogram-type" class="plot-card"></div>
+                <div id="plots-raw-length-histogram-outcome" class="plot-card"></div>
+                <div id="plots-raw-length-histogram-all" class="plot-card"></div>
+            </div>
         </div>
 
     </main>
@@ -461,6 +737,28 @@ const PLOT_SECTION_MAP = {
     "consensus_length/histogram_type": "plots-consensus-length-histogram-type",
     "consensus_length/sankey": "plots-consensus-length-sankey",
 };
+
+function switchPlot(buttonElement, targetPlotId) {
+    // 1. Get the parent section wrapper context
+    const section = buttonElement.closest('.section');
+    
+    // 2. Remove active formatting states from alternative tabs in this section
+    section.querySelectorAll('.plot-tab-btn').forEach(btn => btn.classList.remove('active'));
+    section.querySelectorAll('.plot-card').forEach(card => card.classList.remove('active'));
+    
+    // 3. Apply active state indicators to the selected node
+    buttonElement.classList.add('active');
+    const targetCard = document.getElementById(targetPlotId);
+    targetCard.classList.add('active');
+    
+    // 4. Force Plotly to recalculate width coordinates immediately upon appearance
+    if (window.Plotly) {
+        const plotlyGraph = targetCard.querySelector('.js-plotly-plot');
+        if (plotlyGraph) {
+            Plotly.Plots.resize(plotlyGraph);
+        }
+    }
+}
 
 function renderPlot(plot, containerId) {
     const container = document.getElementById(containerId);
@@ -507,6 +805,11 @@ function renderDashboard(data) {
     (data.cards || []).forEach(card => {
         cardsRow.innerHTML += `
             <div class="stat-card">
+                ${card.tooltip ? `
+                <div class="info-container">
+                    <span class="card-info-icon">i</span>
+                    <div class="card-tooltip">${card.tooltip}</div>
+                </div>` : ''}
                 <div class="card-value">${card.value.toLocaleString()}</div>
                 <div class="card-label">${card.name}</div>
             </div>`;
@@ -522,55 +825,372 @@ function renderDashboard(data) {
 
     // Variant Table
     if (data.tabs) {
-        const variantTab = data.tabs.find(t => t.name === "variant-table");
-        const container = document.getElementById('variants-table-container');
-        
-        if (variantTab && container) {
-            container.innerHTML = ""; // Clear loader
 
-            // Convert the string array of columns into the object format Grid.js needs for mapping
-            const columnConfigs = variantTab.columns.map(colName => ({
-                name: colName,
-                id: colName  // This tells Grid.js: "Look for this key in the data objects"
-            }));
+        const variantTab = data.tabs.find(t => t.name === 'variant-table');
 
-            new gridjs.Grid({
-                columns: columnConfigs,
+        if (variantTab && variantTab.data?.length > 0) {
+
+            const tableId = '#variant-table';
+            const columnTypes = variantTab.column_types || {};
+
+            // Destroy existing table if needed
+            if ($.fn.DataTable.isDataTable(tableId)) {
+                $(tableId).DataTable().destroy();
+            }
+
+            // Build header row
+            $(tableId).html(`
+                <thead>
+                    <tr>
+                        <th></th>
+                        ${variantTab.columns.map(col => `<th>${col}</th>`).join('')}
+                    </tr>
+                    <tr>
+                        <th></th>
+                        ${variantTab.columns.map(() => `
+                            <th></th>
+                        `).join('')}
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            `);
+
+            // Column filters
+            const numericFilters = {};
+
+            // Initialize DataTable
+            const selectedRows = new Set();
+            const table = $(tableId).DataTable({
+
                 data: variantTab.data,
-                search: true,
-                sort: true,
-                pagination: { limit: 15 },
-                resizable: true,
-                style: { table: { 'font-size': '12px' } },
-                language: {
-                    'noRecordsFound': 'No variants found in this VCF'
+
+                columns: [
+                    {
+                        data: null,
+                        orderable: false,
+                        searchable: false,
+                        width: '50px',
+
+                        render: function(data, type, row) {
+
+                            const rowId = JSON.stringify(row);
+
+                            const checked = selectedRows.has(rowId)
+                                ? 'checked'
+                                : '';
+
+                            return `
+                                <input type="checkbox"
+                                    class="row-select"
+                                    data-row-id='${rowId}'
+                                    ${checked}>
+                            `;
+                        }
+                    },
+
+                    ...variantTab.columns.map(col => ({
+                        data: col,
+                        defaultContent: '',
+
+                        render: function(data, type, row) {
+
+                            // Preserve raw numeric values for sorting/filtering
+                            if (type !== 'display') {
+                                return data;
+                            }
+
+                            return data ?? 'N/A';
+                        }
+                    }))
+                ],
+
+                columnDefs: [
+                    // { targets: 0, width: '20px' },
+                    { targets: '_all', className: 'dt-head-left' }
+                ],
+
+                pageLength: 50,
+                paging: true,
+
+                autoWidth: false,
+                scrollX: true,
+                scrollY: '600px',
+                scrollCollapse: true,
+
+                searching: true,
+                ordering: true,
+
+                fixedHeader: true,
+
+                
+
+                destroy: true,
+
+                dom: 'lfrtip'
+            });
+
+            table.columns.adjust().draw(false);
+
+            // Numeric filtering engine
+            $.fn.dataTable.ext.search.push(function(settings, data) {
+
+                for (const [colIndex, expr] of Object.entries(numericFilters)) {
+
+                    if (!expr) continue;
+
+                    const value = parseFloat(data[colIndex]);
+
+                    if (isNaN(value)) {
+                        return false;
+                    }
+
+                    const match = expr.match(/(<=|>=|<|>|==|=)?\s*(-?\d+(\.\d+)?)/);
+
+                    if (!match) continue;
+
+                    const op = match[1] || '=';
+                    const target = parseFloat(match[2]);
+
+                    switch (op) {
+                        case '>':
+                            if (!(value > target)) return false;
+                            break;
+
+                        case '<':
+                            if (!(value < target)) return false;
+                            break;
+
+                        case '>=':
+                            if (!(value >= target)) return false;
+                            break;
+
+                        case '<=':
+                            if (!(value <= target)) return false;
+                            break;
+
+                        case '=':
+                        case '==':
+                            if (!(value === target)) return false;
+                            break;
+                    }
                 }
-            }).render(container);
+
+                return true;
+            });
+
+            const normalize = (s) => (s || "").trim().toLowerCase();
+
+            // Build typed filters
+            console.log(columnTypes);
+            table.columns().every(function(index) {
+
+                // Skip checkbox column
+                if (index === 0) return;
+
+                const column = this;
+
+                // Column name from backend
+                const columnName = column.dataSrc();
+                
+                // Metadata from backend
+                const filterDef = columnTypes[column.dataSrc()] || {};
+
+                const filterType = filterDef.type || 'text';
+
+                const cell = $('.dataTables_scrollHead thead tr:eq(1) th')
+                    .eq(index);
+
+                // -----------------------------
+                // TEXT / REGEX FILTER
+                // -----------------------------
+                if (filterType === 'text') {
+
+                    const input = $(`
+                        <input type="text"
+                            placeholder="Regex/text"
+                            style="width:100%; box-sizing:border-box;">
+                    `);
+
+                    cell.html(input);
+
+                    input.on('keyup change clear', function() {
+
+                        const val = this.value;
+
+                        column.search(val, true, false).draw();
+                    });
+                }
+
+                // -----------------------------
+                // NUMERIC FILTER
+                // -----------------------------
+                else if (filterType === 'numeric') {
+
+                    const input = $(`
+                        <input type="text"
+                            placeholder=">5, <=10"
+                            style="width:100%; box-sizing:border-box;">
+                    `);
+
+                    cell.html(input);
+
+                    input.on('keyup change clear', function() {
+
+                        numericFilters[index] = this.value.trim();
+
+                        table.draw();
+                    });
+                }
+
+                // -----------------------------
+                // DROPDOWN FILTER
+                // -----------------------------
+                else if (filterType === 'dropdown') {
+
+                    const uniqueValues = new Set();
+
+                    column.data().each(function(d) {
+
+                        if (d !== null && d !== undefined && d !== '') {
+                            uniqueValues.add(d);
+                        }
+                    });
+
+                    const sortedValues = Array.from(uniqueValues).sort();
+
+                    const select = $(`
+                        <select style="width:100%">
+                            <option value="">All</option>
+                            ${sortedValues.map(v =>
+                                `<option value="${v}">${v}</option>`
+                            ).join('')}
+                        </select>
+                    `);
+
+                    cell.html(select);
+
+                    select.on('change', function() {
+
+                        const val = $.fn.dataTable.util.escapeRegex($(this).val());
+
+                        column
+                            .search(val ? '^' + val + '$' : '', true, false)
+                            .draw();
+                    });
+                }
+            });
+
+            // Handle row selection
+            $(tableId).on('change', '.row-select', function() {
+
+                const rowId = $(this).attr('data-row-id');
+
+                if ($(this).is(':checked')) {
+                    selectedRows.add(rowId);
+                } else {
+                    selectedRows.delete(rowId);
+                }
+            });
+
+            // Show Selected / Show All buttons / Select All
+            let selectedOnly = false;
+
+            $.fn.dataTable.ext.search.push(function(settings, searchData, index, rowData) {
+
+                if (!selectedOnly) {
+                    return true;
+                }
+
+                const rowId = JSON.stringify(rowData);
+                return selectedRows.has(rowId);
+            });
+
+            $('#show-selected').on('click', function() {
+                selectedOnly = true;
+                table.draw();
+            });
+
+            $('#show-all').on('click', function() {
+                selectedOnly = false;
+                table.draw();
+            });
+
+            $('#select-all').on('click', function () {
+                const checked = true;
+                selectedRows.clear();
+                variantTab.data.forEach(row => {
+                    selectedRows.add(JSON.stringify(row));
+                });
+                console.log('Selected rows:', selectedRows.size);
+                table.rows().invalidate().draw(false);
+            });
+
+            $('#reset').on('click', function () {
+                selectedRows.clear();
+                selectedOnly = false;
+                $('#select-all').prop('checked', false);
+                table.search('').columns().search('').draw();
+                table.rows().invalidate().draw(false);
+            });
+
+
+            // Fix hidden tab sizing
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+
+                btn.addEventListener('click', () => {
+
+                    if (btn.dataset.section === 'variants') {
+
+                        setTimeout(() => {
+                            table.columns.adjust().draw(false);
+                        }, 100);
+                    }
+                });
+            });
+
+        } else {
+            console.log("No variant data found.");
         }
     }
 }
 
+// ── Section-title help button interactions ──
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.section-help-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const targetId = this.dataset.target;
+            const helpBox = document.getElementById(targetId);
+            
+            if (helpBox) {
+                this.classList.toggle('active');
+                helpBox.classList.toggle('open');
+            }
+        });
+    });
+});
+
 // ── Boot ─────────────────────────────────────────────────────────
 function loadEmbeddedData() {
     const embedded = document.getElementById('embedded-data').textContent.trim();
-    if (!embedded || embedded === '{}') {
-        // If no data yet, try again in 10 seconds
-        setTimeout(() => location.reload(), 10000);
-        return;
-    }
+    // if (!embedded || embedded === '{}') {
+    //     // If no data yet, try again in 10 seconds
+    //     setTimeout(() => location.reload(), 10000);
+    //     return;
+    // }
 
     const data = JSON.parse(embedded);
     renderDashboard(data);
 
     // If the analysis is NOT final, reload the page in 10 seconds to get the new file
-    if (!data.final) {
-        console.log("Analysis in progress... reloading in 10s");
-        setTimeout(() => {
-            location.reload();
-        }, 10000); 
-    } else {
-        console.log("Analysis complete. Polling stopped.");
-    }
+    // if (!data.final) {
+    //     console.log("Analysis in progress... reloading in 10s");
+    //     setTimeout(() => {
+    //         location.reload();
+    //     }, 10000); 
+    // } else {
+    //     console.log("Analysis complete. Polling stopped.");
+    // }
 }
 
 loadEmbeddedData();

@@ -5,7 +5,7 @@ include { PosSortIndexAlignments } from './common'
     WORKFLOWS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-workflow align_consensus_reads {
+workflow align_consensus {
     take:
         consensus_reads
         reference
@@ -13,20 +13,21 @@ workflow align_consensus_reads {
         mode
 
     main:
-        Minimap2AlignConsensus(consensus_reads, reference, mode)
-        PosSortIndexAlignments(Minimap2AlignConsensus.out)
+        Minimap2Align(consensus_reads, reference, mode)
+        PosSortIndexAlignments(Minimap2Align.out)
         aligned_consensus_bam = PosSortIndexAlignments.out
 
         depth_table = GetAmpliconDepth(aligned_consensus_bam, regions)
+        on_target_rate = GetOnTargetRate(aligned_consensus_bam, regions)
 
     emit:
         aligned_consensus_bam
         depth_table
-        
+        on_target_rate
 }
 
 
-workflow merge_consensus_alignments {
+workflow merge_consensus {
     take:
         annotated_bam_files
 
@@ -44,7 +45,7 @@ workflow merge_consensus_alignments {
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-process Minimap2AlignConsensus {
+process Minimap2Align {
     container params.containers.minimap2
     cpus 8
     memory 20.GB
@@ -97,31 +98,20 @@ process MergeBamFiles {
         """
 }
 
-// process FindRegionsOfInterest{
-//     container params.containers.alnutils
-    
-//     input:
-//         tuple val(sample_id), val(file_id), path(bam), path(bai)
-//         val(regions)
+process GetOnTargetRate {
+    container params.containers.alnutils
+    input:
+        tuple val(sample_id), val(file_id), path(bam), path(bai)
+        path(bed)
 
-//     output:
-//         tuple val(sample_id), val(file_id), path("${sample_id}_roi.bed")
+    output:
+        tuple val(sample_id), val(file_id), path("${sample_id}_on_target_rate.yml")
 
-//     script:
-//         if (regions == 'auto') {
-//             """
-//             samtools depth $bam \
-//              | awk '\$3>${params.roi_detection.min_depth}' \
-//              | awk '{print \$1"\t"\$2"\t"\$2 + 1}' \
-//              | bedtools merge -d ${params.roi_detection.max_distance} -i /dev/stdin \
-//              > ${sample_id}_roi.bed
-//             """
-//         } else {
-//             """
-//             cp $regions ${sample_id}_roi.bed
-//             """
-//         }
-// }
+    script:
+        """
+        get_on_target_rate.sh ${bam} ${bed} ${sample_id}_on_target_rate.yml
+        """
+}
 
 process GetAmpliconDepth {
     container params.containers.alnutils
