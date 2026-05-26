@@ -13,9 +13,10 @@ from pathlib import Path
 from typing import Any, Mapping
 
 import yaml
+from textwrap import wrap
 from cyseqtools.consensus.metrics.report import Report
 
-PREV_METRICS_FOLDER = Path(".prev_consensus_metrics")
+PREV_METRICS_FOLDER = Path(".prev_read_metrics")
 
 
 def _get_nested(mapping: Mapping[str, Any], *keys: str) -> Any:
@@ -69,6 +70,20 @@ def save_metric_plots(report: Report) -> None:
     Path("plots").mkdir(exist_ok=True)
     for plot in report.available_plots:
         fig = report.plot(plot)
+
+        # Update layout
+        for trace in fig.data:
+            if hasattr(trace, "name") and trace.name:
+                # Breaks text into an array of strings every 30 characters
+                trace.name = "<br>".join(wrap(trace.name, width=30))
+
+        fig.update_layout(
+            template="simple_white",
+            height=450,
+            autosize=True,
+            legend={"valign": 'top'}
+        )
+
         fig_json = fig.to_plotly_json()
         fig_json["name"] = plot
         _write_yaml(fig_json, Path(f"plots/{plot.replace('/', '_')}.yaml"))

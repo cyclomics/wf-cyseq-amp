@@ -74,7 +74,6 @@ process IndexReference {
 }
 
 process PosSortIndexAlignments {
-    publishDir { "${params.output_dir}/${sample_id}/consensus_alignments" }, mode: 'copy'
     container params.containers.samtools
 
     input:
@@ -106,62 +105,6 @@ process NameSortAlignments {
         """
 }
 
-
-process CountNumberOfReads {
-    container params.containers.alnutils
-    publishDir { "${params.output_dir}/${sample_id}/report/raw_counts" }, mode: 'copy'
-    tag "${sample_id}_${file_id}_${type}"
-
-    input:
-        tuple val(sample_id), val(file_id), path(fq)
-        val(type)
-
-    output:
-        tuple val(sample_id), val(file_id), path("number_of_reads_${type}_${sample_id}_${file_id}.json")
-
-    script:
-        """
-        set -euo pipefail
-
-        if [[ "${fq}" == *.gz ]]; then
-            lines=\$(zcat ${fq} | wc -l)
-        else
-            lines=\$(wc -l < ${fq})
-        fi
-
-        reads=\$((lines / 4))
-
-        cat << EOF > number_of_reads_${type}_${sample_id}_${file_id}.json
-{
-"sample_id": "${sample_id}",
-"file_id": "${file_id}",
-"type": "${type}",
-"reads": \$reads
-}
-EOF
-        """
-}
-
-process UpdateTotalReads {
-    container params.containers.alnutils
-    maxForks 1
-    publishDir "${params.output_dir}/report/counts", mode: 'copy'
-
-    input:
-        tuple val(type), val(sample_id), path(json_file)
-        path(final_totals_file)
-
-    output:
-        path("number_of_reads_running.json")
-
-    script:
-        """
-        sum_reads.py \
-            --sample_id "${sample_id}" \
-            --json_file "${json_file}" \
-            --published_file "${final_totals_file}"
-        """
-}
 
 process GetAmpliconDepth {
     container params.containers.alnutils

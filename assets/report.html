@@ -304,33 +304,60 @@
             to   { opacity: 1; transform: translateY(0); }
         }
 
+        /* ── Section Title Help Button & Box ── */
         .section-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 20px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid var(--border);
-            letter-spacing: -0.02em;
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
-        .plot-card {
-            background: var(--card-bg);
+        .section-help-btn {
+            display: inline-block;
+            width: 22px;
+            height: 22px;
+            line-height: 20px;
+            text-align: center;
+            background: transparent;
             border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 20px 24px;
-            box-shadow: var(--shadow-card);
-            margin-bottom: 20px;
-            min-width: 600px;
+            color: var(--text-secondary);
+            border-radius: 50%;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            padding: 0;
+            user-select: none;
         }
 
-        .plot-card h5 {
+        .section-help-btn:hover,
+        .section-help-btn.active {
+            color: var(--accent);
+            border-color: var(--accent);
+            background: rgba(79, 142, 247, 0.1);
+        }
+
+        /* Full width block that sits below title and forces layout content down */
+        .section-help-box {
+            display: none;
+            width: 100%;
+            background: var(--card-bg);
+            color: var(--text-primary);
+            padding: 14px 18px;
+            border-radius: 0px;
             font-size: 13px;
-            font-weight: 500;
-            color: var(--text-secondary);
-            margin-bottom: 14px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+            line-height: 1.6;
+            border-left: 4px solid var(--accent);
+            border-top: 1px solid var(--border);
+            border-right: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            margin-top: 12px;
+            animation: fadeIn 0.15s ease;
+            min-width: 400px;
+            max-width: 100%;
+        }
+
+        .section-help-box.open {
+            display: block;
         }
 
         .empty-state {
@@ -355,6 +382,73 @@
             color: var(--text-secondary);
             margin-bottom: 20px;
             font-family: var(--font-mono);
+        }
+
+        /* ── Plots ── */
+        /* Container bar for sub-section plot buttons */
+        .plot-tabs {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* Tab button styling matching your overall theme */
+        .plot-tab-btn {
+            padding: 6px 14px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            margin-top: 20px;
+        }
+
+        .plot-tab-btn:hover {
+            background: var(--bg);
+            color: var(--text-primary);
+        }
+
+        /* Active tab presentation rule */
+        .plot-tab-btn.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        /* HIDE all plot cards by default inside dynamic sub-views */
+        .plot-container > .plot-card {
+            display: none;
+        }
+
+        /* Only show the currently chosen graph card */
+        .plot-container > .plot-card.active {
+            display: block;
+            animation: fadeIn 0.2s ease; /* reuses your predefined animation style */
+        }
+
+        .plot-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px 24px;
+            box-shadow: var(--shadow-card);
+            margin-top: 20px;
+            margin-bottom: 20px;
+            min-width: 400px;
+            max-width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .plot-card h5 {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
         /* ── Variant table ── */
@@ -461,18 +555,39 @@
         
         <!-- Analysis -->
         <div id="run-stats" class="section active">
-            <div class="section-title">General run statistics</div>
+            <div class="section-title">
+                <button class="section-help-btn" data-target="help-run-stats">?</button>
+                General run statistics
+            </div>
+            <div id="help-run-stats" class="section-help-box">
+                This section provides an overview of the sequencing run, including the number of reads generated, total bases sequenced, and other key metrics.
+                <br/>The Sankey plot shows the flow of sequenced reads through consensus generation. It displays reads that pass or fail consenus. Reads that pass consensus are further categorized by their type (1D, 2D or 3D). Reads that fail consensus are further categorized by their reason for failure.
+            </div>
             <div id="cards-row"></div>
             <div id="plots-read-counts-sankey"></div>
         </div>
 
         <div id="amplicon-depth" class="section">
-            <div class="section-title">Depth per amplicon</div>
+            <div class="section-title">
+                <button class="section-help-btn" data-target="help-amplicon-depth">?</button>
+                Depth per amplicon
+            </div>
+            <div id="help-amplicon-depth" class="section-help-box">
+                This section shows the median depth of coverage for each amplicon. For each amplicon, read depth is determined at each position, and the median depth across the locus is calculated.
+                <br/>If a target depth is specified, it is shown as a dashed line. Amplicons that meet the target are colored blue.
+            </div>
             <div id="plots-amplicon-depth"></div>
         </div>
 
         <div id="variants" class="section">
-            <div class="section-title">Detected variants</div>
+            <div class="section-title">
+                <button class="section-help-btn" data-target="help-variants">?</button>
+                Detected variants
+            </div>
+            <div id="help-variants" class="section-help-box">
+                This section lists the variants detected in the sample. Variants are identified by comparing the consensus sequences to the reference genome. The table includes information about each variant, such as its genomic position, codon and amino acid changes, type (e.g., SNV, indel), and allele frequency.
+                <br/>Use the buttons above the table to select which variants to display.
+            </div>
             <div id="variants-table-container" class="plot-card">
                 <div style="overflow-x: auto;">
                     <button id="select-all">Select All </button>
@@ -493,33 +608,96 @@
 
         <!-- QC -->
         <div id="consensus-reads" class="section">
-            <div class="section-title">Consensus read yield</div>
-            <div id="plots-consensus-length-histogram-all"></div>
-            <div id="plots-consensus-length-histogram-outcome"></div>
-            <div id="plots-consensus-length-histogram-type"></div>
-            <div id="plots-consensus-length-sankey"></div>
+            <div class="section-title">
+                <button class="section-help-btn" data-target="help-consensus-reads">?</button>
+                Consensus read yield
+            </div>
+            <div id="help-consensus-reads" class="section-help-box">
+                This section shows the yield of consensus read bases and consensus read lengths generated.
+                <br/>The Sankey plot shows the proportion of consensus bases by read type (1D, 2D, 3D) after successful consensus. When consensus fails, the underlying reason is displayed.
+                <br/>Histograms show the distribution of consensus read lengths in three ways: (i) stratified by read type, (ii) stratified by consensus outcome, and (iii) all reads unstratified.
+            </div>
+
+            <div class="plot-tabs">
+                <button class="plot-tab-btn active" onclick="switchPlot(this, 'plots-consensus-length-sankey')">Sankey</button>
+                <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-consensus-length-histogram-type')">By Type</button>
+                <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-consensus-length-histogram-outcome')">By Outcome</button>
+                <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-consensus-length-histogram-all')">All Reads</button>
+            </div>
+            <div class="plot-container">
+                <div id="plots-consensus-length-sankey" class="plot-card active"></div>
+                <div id="plots-consensus-length-histogram-type" class="plot-card"></div>
+                <div id="plots-consensus-length-histogram-outcome" class="plot-card"></div>
+                <div id="plots-consensus-length-histogram-all" class="plot-card"></div>
+            </div>
         </div>
 
         <div id="num-repeats" class="section">
-            <div class="section-title">Number of concatemer repeats</div>
-            <div id="plots-num-repeats-histogram-all"></div>
-            <div id="plots-num-repeats-histogram-outcome"></div>
-            <div id="plots-num-repeats-histogram-type"></div>
+            <div class="section-title">
+                <button class="section-help-btn" data-target="help-num-repeats">?</button>
+                Number of concatemer repeats
+            </div>
+            <div id="help-num-repeats" class="section-help-box">
+                This section shows the number of repeats in each processed read. A repeat is defined as the base subunit of a concatemeric read, typically corresponding to the original insert.
+                <br/>Histograms show the distribution of the number of repeats in three ways: (i) stratified by read type, (ii) stratified by consensus outcome, and (iii) all reads unstratified.
+            </div>
+
+            <div class="plot-tabs">
+                <button class="plot-tab-btn active" onclick="switchPlot(this, 'plots-num-repeats-histogram-type')">By Type</button>
+                <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-num-repeats-histogram-outcome')">By Outcome</button>
+                <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-num-repeats-histogram-all')">All Reads</button>
+            </div>
+            <div class="plot-container">
+                <div id="plots-num-repeats-histogram-type" class="plot-card active"></div>
+                <div id="plots-num-repeats-histogram-outcome" class="plot-card"></div>
+                <div id="plots-num-repeats-histogram-all" class="plot-card"></div>
+            </div>
         </div>
 
         <div id="mapped-bases" class="section">
-            <div class="section-title">Mapped bases</div>
-            <div id="plots-mapped-bases-histogram-all"></div>
-            <div id="plots-mapped-bases-histogram-outcome"></div>
-            <div id="plots-mapped-bases-histogram-type"></div>
+            <div class="section-title">
+                <button class="section-help-btn" data-target="help-mapped-bases">?</button>
+                Mapped bases
+            </div>
+            <div id="help-mapped-bases" class="section-help-box">
+                This section shows the fraction of mapped bases per read. That is, for each read, the number of bases that successfully mapped to the reference, over the total read length.
+                <br/>Histograms show the distribution of mapped fractions in three ways: (i) stratified by read type, (ii) stratified by consensus outcome, and (iii) all reads unstratified.
+            </div>
+            <div class="plot-tabs">
+                <button class="plot-tab-btn active" onclick="switchPlot(this, 'plots-mapped-bases-histogram-type')">By Type</button>
+                <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-mapped-bases-histogram-outcome')">By Outcome</button>
+                <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-mapped-bases-histogram-all')">All Reads</button>
+            </div>
+            <div class="plot-container">
+                <div id="plots-mapped-bases-histogram-type" class="plot-card active"></div>
+                <div id="plots-mapped-bases-histogram-outcome" class="plot-card"></div>
+                <div id="plots-mapped-bases-histogram-all" class="plot-card"></div>
+            </div>
         </div>
 
         <div id="raw-length" class="section">
-            <div class="section-title">Raw read yield</div>
-            <div id="plots-raw-length-histogram-all"></div>
-            <div id="plots-raw-length-histogram-outcome"></div>
-            <div id="plots-raw-length-histogram-type"></div>
-            <div id="plots-raw-length-sankey"></div>
+            <div class="section-title">
+                <button class="section-help-btn" data-target="help-raw-length">?</button>
+                Raw read yield
+            </div>
+            <div id="help-raw-length" class="section-help-box">
+                This section shows the yield of raw read bases and raw read lengths analysed.
+                <br/>The Sankey plot shows the proportion of raw bases by read type (1D, 2D, 3D) after successful consensus. When consensus fails, the underlying reason is displayed.
+                <br/>Histograms show the distribution of raw read lengths in three ways: (i) stratified by read type, (ii) stratified by consensus outcome, and (iii) all reads unstratified.
+            </div>
+            <div class="plot-tabs">
+                <button class="plot-tab-btn active" onclick="switchPlot(this, 'plots-raw-length-sankey')">Sankey</button>
+                <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-raw-length-histogram-type')">By Type</button>
+                <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-raw-length-histogram-outcome')">By Outcome</button>
+                <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-raw-length-histogram-all')">All Reads</button>
+                
+            </div>
+            <div class="plot-container">
+                <div id="plots-raw-length-sankey" class="plot-card active"></div>
+                <div id="plots-raw-length-histogram-type" class="plot-card"></div>
+                <div id="plots-raw-length-histogram-outcome" class="plot-card"></div>
+                <div id="plots-raw-length-histogram-all" class="plot-card"></div>
+            </div>
         </div>
 
     </main>
@@ -559,6 +737,28 @@ const PLOT_SECTION_MAP = {
     "consensus_length/histogram_type": "plots-consensus-length-histogram-type",
     "consensus_length/sankey": "plots-consensus-length-sankey",
 };
+
+function switchPlot(buttonElement, targetPlotId) {
+    // 1. Get the parent section wrapper context
+    const section = buttonElement.closest('.section');
+    
+    // 2. Remove active formatting states from alternative tabs in this section
+    section.querySelectorAll('.plot-tab-btn').forEach(btn => btn.classList.remove('active'));
+    section.querySelectorAll('.plot-card').forEach(card => card.classList.remove('active'));
+    
+    // 3. Apply active state indicators to the selected node
+    buttonElement.classList.add('active');
+    const targetCard = document.getElementById(targetPlotId);
+    targetCard.classList.add('active');
+    
+    // 4. Force Plotly to recalculate width coordinates immediately upon appearance
+    if (window.Plotly) {
+        const plotlyGraph = targetCard.querySelector('.js-plotly-plot');
+        if (plotlyGraph) {
+            Plotly.Plots.resize(plotlyGraph);
+        }
+    }
+}
 
 function renderPlot(plot, containerId) {
     const container = document.getElementById(containerId);
@@ -954,27 +1154,43 @@ function renderDashboard(data) {
     }
 }
 
+// ── Section-title help button interactions ──
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.section-help-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const targetId = this.dataset.target;
+            const helpBox = document.getElementById(targetId);
+            
+            if (helpBox) {
+                this.classList.toggle('active');
+                helpBox.classList.toggle('open');
+            }
+        });
+    });
+});
+
 // ── Boot ─────────────────────────────────────────────────────────
 function loadEmbeddedData() {
     const embedded = document.getElementById('embedded-data').textContent.trim();
-    if (!embedded || embedded === '{}') {
-        // If no data yet, try again in 10 seconds
-        setTimeout(() => location.reload(), 10000);
-        return;
-    }
+    // if (!embedded || embedded === '{}') {
+    //     // If no data yet, try again in 10 seconds
+    //     setTimeout(() => location.reload(), 10000);
+    //     return;
+    // }
 
     const data = JSON.parse(embedded);
     renderDashboard(data);
 
     // If the analysis is NOT final, reload the page in 10 seconds to get the new file
-    if (!data.final) {
-        console.log("Analysis in progress... reloading in 10s");
-        setTimeout(() => {
-            location.reload();
-        }, 10000); 
-    } else {
-        console.log("Analysis complete. Polling stopped.");
-    }
+    // if (!data.final) {
+    //     console.log("Analysis in progress... reloading in 10s");
+    //     setTimeout(() => {
+    //         location.reload();
+    //     }, 10000); 
+    // } else {
+    //     console.log("Analysis complete. Polling stopped.");
+    // }
 }
 
 loadEmbeddedData();

@@ -87,11 +87,11 @@ workflow ingress {
                 .flatMap { sample_id, file_id, file_list ->
                     if (file_list instanceof List) {
                         file_list.collect { file ->
-                            def new_file_id = file.getBaseName()
+                            def new_file_id = file.name.replaceFirst(/\.(fastq|fq)(\.gz)?$/, '')
                             return [sample_id, new_file_id, file]
                         }
                     } else {
-                        def new_file_id = file_list.getBaseName()
+                        def new_file_id = file_list.name.replaceFirst(/\.(fastq|fq)(\.gz)?$/, '')
                         return [[sample_id, new_file_id, file_list]]
                     }
                 }
@@ -100,8 +100,8 @@ workflow ingress {
         }
 
     emit:
-        ingested_fastq = ingested_fastq
-        stop_files = stop_files
+        ingested_fastq
+        stop_files
 }
 
 
@@ -171,7 +171,6 @@ process CheckIngress {
 }
 
 process SplitFastq {
-    publishDir "${params.output_dir}/split", mode: 'copy'
     container params.containers.seqkit
     
     input:

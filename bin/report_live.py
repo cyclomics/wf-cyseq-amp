@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 Takes ready-to-use Plotly YMLs, derives cards from the reads YML,
-assembles report_data, and injects it as JSON into the HTML template.
+assembles report data, and injects it as JSON into the HTML template.
 """
 
 import argparse
@@ -18,13 +18,43 @@ import yaml
 
 CARD_NAMES = {
     "n_raw_reads": ("Raw reads", None, "Total number of raw reads in the run."),
-    "median_read_length_raw": ("Median raw read length", "bp", "Median length of all ingested raw reads."),
-    "median_repeats": ("Median number of repeats", None, "Median number of identified repeats per raw read. A repeat is the basic unit of a repeating concatemeric read, or typically corresponding to the insert."),
-    "n_mapped_raw": ("Mapped raw reads", None, "Number of raw reads successfully mapped to the reference"),
-    "median_mappability_raw": ("Median alignment completeness", "%", "Median percentage of bases mapped bases in a raw read, over the its total read length."),
-    "n_consensus_reads": ("Consensus reads", None, "Number of successful consensus reads generated."),
-    "median_read_length_consensus": ("Median consensus read length", "bp", "Median length of successful consensus readas."),
-    "on_target_rate": ("Consensus on-target rate", "%", "Percentage of successful consensus reads mapping on target."),
+    "median_read_length_raw": (
+        "Median raw read length",
+        "bp",
+        "Median length of all ingested raw reads.",
+    ),
+    "median_repeats": (
+        "Median number of repeats",
+        None,
+        "Median number of identified repeats per raw read. "
+        "A repeat is the basic unit of a concatemeric read, "
+        "typically corresponding to the insert.",
+    ),
+    "n_mapped_raw": (
+        "Mapped raw reads",
+        None,
+        "Number of raw reads successfully mapped to the reference",
+    ),
+    "median_mappability_raw": (
+        "Median alignment completeness",
+        "%",
+        "Median percentage of mapped bases in a raw read over the its total length.",
+    ),
+    "n_consensus_reads": (
+        "Consensus reads",
+        None,
+        "Number of consensus reads successfully generated.",
+    ),
+    "median_read_length_consensus": (
+        "Median consensus read length",
+        "bp",
+        "Median length of successful consensus reads.",
+    ),
+    "on_target_rate": (
+        "Consensus on-target rate",
+        "%",
+        "Percentage of successful consensus reads mapping to target loci.",
+    ),
 }
 
 
@@ -53,6 +83,7 @@ def human_format(num: Number) -> str:
 
     return f"{formatted}{suffixes[magnitude]}"
 
+
 def format_card(card: str, value: Number) -> dict | None:
     """Convert a raw card entry into a report-ready dict."""
 
@@ -67,6 +98,7 @@ def format_card(card: str, value: Number) -> dict | None:
         "value": f"{formatted_value}{unit}" if unit else formatted_value,
         "tooltip": tooltip,
     }
+
 
 def load_all_yamls(folder: str) -> list[list[dict]]:
     """Load all YAML files in a folder."""
@@ -101,7 +133,7 @@ def load_plot_yaml(yml_file: str) -> dict:
 def normalise_plot(plot: dict) -> dict:
     """
     Normalise a Plotly YML into report format.
-    Ensures data is always a list (consistent with Plotly multi-trace format).
+    Ensures data is always a list.
     """
     data_list = plot.get("data", [])
     if isinstance(data_list, dict):
@@ -135,12 +167,11 @@ def build_report_data(cards: list[dict], plots: list[dict]) -> dict:
 
 def inject_into_html(template_file: str, report_data: dict, output_file: str) -> None:
     """Inject report_data as JSON into the HTML template and write output."""
-    with open(template_file) as f:
+    with open(template_file, encoding="utf-8") as f:
         template = f.read()
 
     json_data = json.dumps(report_data)
 
-    # Use lambda to avoid misinterpreting content as regex escape sequences
     html = re.sub(
         r'<script id="embedded-data" type="application/json">.*?</script>',
         lambda _: (
@@ -150,7 +181,7 @@ def inject_into_html(template_file: str, report_data: dict, output_file: str) ->
         flags=re.S,
     )
 
-    with open(output_file, "w") as f:
+    with open(output_file, "w", encoding="utf-8") as f:
         f.write(html)
 
 

@@ -17,9 +17,7 @@ nextflow.preview.recursion = true
 */
 include { ingress } from './modules/ingress'
 include {
-    FilterShortReads;
     IndexReference;
-    CountNumberOfReads;
     GetAmpliconDepth;
     } from './modules/common'
 include { make_consensus } from './modules/consensus'
