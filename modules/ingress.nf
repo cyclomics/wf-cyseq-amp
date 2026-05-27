@@ -39,6 +39,7 @@ workflow ingress {
 
             // Just collect what's there
             read_fastq_raw = channel.fromPath(read_pattern)
+                .filter { f -> !(f.parent.simpleName in exclude_list) }
                 .map { f -> tuple(f.parent.simpleName, f.simpleName, f) }
 
         } else {
@@ -46,6 +47,7 @@ workflow ingress {
 
             // Existing FASTQ files
             initial_fastq_files = channel.fromPath(read_pattern)
+                .filter { f -> !(f.parent.simpleName in exclude_list) }
                 .map { f -> tuple(f.parent.simpleName, f.simpleName, f) }
 
             // Real-time watcher on the entire input_dir
@@ -55,6 +57,7 @@ workflow ingress {
             rt_fastq_files = channel.watchPath("${input_dir}/**", 'create,modify')
                 .until { f -> f.name ==~ stop_name_pattern }
                 .filter { f -> f.name ==~ fastq_extensions }
+                .filter { f -> !(f.parent.simpleName in exclude_list) }
                 .map { f -> tuple(f.parent.simpleName, f.simpleName, f) }
 
             read_fastq_raw = initial_fastq_files.concat(rt_fastq_files)
