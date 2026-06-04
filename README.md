@@ -2,66 +2,73 @@
 
 This workflow uses concatemeric CySeq reads as input to generate consensus reads in real-time, which will then be used to call variants over a reference.
 
-- [Dependencies](#dependencies)
-- [Expected use case](#expected-use-case)
-- [System requirements](#system-requirements)
-- [General usage](#general-usage)
-  - [Through EPI2ME](#through-epi2me)
-  - [Command line use for Linux](#command-line-use-for-linux)
+> <b>Expected use case:</b> <br>
+> This workflow is designed specifically for ONT long-read sequencing reads generated using a CySeq (S or L) protocol in association with a PCR amplification panel. It expects reads to pile up on known genomic loci. The workflow will generate consensus reads in those loci and use the consensus pileups to call variants within the loci.
 
-## Dependencies and requirements
+<details>
+  <summary><b>Table of contents</b></summary>
 
-Click for installation instructions:
+  - [Input requirements](#input-requirements)
+  - [System requirements](#system-requirements)
+  - [Software requirements](#software-requirements)
+  - [General usage](#general-usage)
+  - [Troubleshooting](#troubleshooting)
 
-- [Nextflow](#dependency-installation) (v23.04.2 or higher)
-- [Docker](#dependency-installation) or [Apptainer/Singularity](#dependency-installation)
+</details>
 
+## Input requirements
 
-## Expected use case
+The following inputs are mandatory:
 
-This workflow is designed specifically for ONT long-read sequencing reads generated using a CySeq (S or L) protocol in association with a PCR amplification panel. It expects reads to pile up on known genomic loci. The workflow will generate consensus reads in those loci and use the consensus pileups to call variants within the loci. As such, the following inputs are necessary:
+| Input | Format | Description |
+| ----- | ------ | ----------- |
+| Input data folder | Directory | A MinKnow sequencing output folder containing the `fastq_pass` subfolder, which may optionally contain `barcode` subfolders. This provided output folder is the same folder where MinKnow will write the sequencing summary file, which is necessary to flag the end of the real-time file ingestion. |
+| Reference genome | FASTA | FASTA human reference genome version GRCh38.p14, [ideally NCBI's major release for alignment pipelines provided here](https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/405/GCF_000001405.40_GRCh38.p14/GRCh38_major_release_seqs_for_alignment_pipelines/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna.gz). This file must be unzipped. |
+| Genomic loci | BED | BED file with the genomic loci of interest, in relation to the above reference. <mark>TODO: add example</mark> |
 
-- A MinKnow sequencing output folder containing the `fastq_pass` subfolder, which may optionally contain `barcode` subfolders. This provided output folder is the same folder where MinKnow will write the sequencing summary file, which is necessary to flag the end of the real-time file ingestion.
-- FASTA human reference genome version GRCh38.p14, as provided [here](https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/405/GCF_000001405.40_GRCh38.p14/GRCh38_major_release_seqs_for_alignment_pipelines/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna.gz). #TODO: add download instructions
-- BED file with the genomic loci of interest, in relation to the above reference. #TODO: add example
+## Software requirements
 
-The reference genome can be downloaded through the command line thus:
-``` bash
-wget https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/405/GCF_000001405.40_GRCh38.p14/GRCh38_major_release_seqs_for_alignment_pipelines/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna.gz
-gunzip GCA_000001405.15_GRCh38_no_alt_analysis_set.fna.gz
-```
+This workflow makes use of Nextflow and Docker to execute and manage all other dependencies.
+
+If you are executing this workflow through [EPI2ME](#https://epi2me.nanoporetech.com/), then both these dependencies should be part of [its installation instructions](https://epi2me.nanoporetech.com/epi2me-docs/installation/). If you need to install them manually, please follow their official documentation:
+
+- [Nextflow](https://docs.seqera.io/nextflow/install) (v25.04 or higher)
+- [Docker](https://docs.docker.com/get-started/get-docker/)
 
 ## System requirements
 
 The pipeline expects at least 16 threads to be available and 32GB of RAM. We recommend at least 64 GB of RAM to decrease the runtime significantly.
 
-
 ## General usage
 
-### Through EPI2ME
+<details>
+  <summary><b><font size="+1">Through EPI2ME</font></b></summary>
 
-This pipeline is compatible with the EPI2ME platform by ONT. Please see [ONT's installation guide](https://epi2me.nanoporetech.com/epi2me-docs/quickstart/).
+  This pipeline is compatible with the EPI2ME platform by ONT. Please see [ONT's installation guide](https://epi2me.nanoporetech.com/epi2me-docs/quickstart/).
 
-Installation inside EPI2ME:
-1. Go to workflows by clicking on "installed workflows", or click the workflows icon in the top bar.
-2. click "Import workflow".
-3. Paste "https://github.com/cyclomics/cyclomicsseq" into the text bar and click Import workflow.
+  Installation inside EPI2ME:
+  1. Go to workflows by clicking on "installed workflows", or click the workflows icon in the top bar.
+  2. click "Import workflow".
+  3. Paste "https://github.com/cyclomics/cyclomicsseq" into the text bar and click Import workflow.
 
-Updating workflow on EPI2ME:
+  Updating workflow on EPI2ME:
 
-### Command line use for Linux
+</details>
 
-In this section we assume that you have docker and nextflow installed on your system, if so running the pipeline is straightforward. You can run the pipeline directly from this repo, or pull it yourself and point nextflow towards it.
+<details>
+  <summary><b><font size="+1">Through command line</font></b></summary>
 
-```bash
-nextflow run cyclomics/cycmomicsseq -profile docker --input_read_dir tests/informed/fastq_pass/ --output_dir results/ --reference tests/informed/tp53.fasta
-```
+  <mark>TODO</mark>
 
-The command above will automatically pull the CyclomicsSeq from GitHub. If you prefer to manually clone the repository before running the pipeline, you can do so with the following command:
+  In this section we assume that you have docker and nextflow installed on your system, if so running the pipeline is straightforward. You can run the pipeline directly from the repo.
 
-```bash
-git clone git@github.com:cyclomics/cyclomicsseq.git
-cd cyclomicsseq
-nextflow run main.nf -profile docker --input_read_dir tests/informed/fastq_pass/ --output_dir results/ --reference tests/informed/tp53.fasta
-```
+  ```bash
+  nextflow run cyclomics/wf-cycmomicsseq-amp --input_dir tests/informed/fastq_pass/ --reference tests/informed/tp53.fasta --regions <TODO> --output_dir results/ 
+  ```
+</details>
 
+## Troubleshooting
+
+If you encounter any issues with the workflow where there is unexpected behaviour, then we kindly request that you [submit an issue on the GitHub repository](https://github.com/cyclomics/wf-cyclomicsseq-amp/issues). This helps the development team address your issues quickly.
+
+Alternatively, you can e-mail Cyclomics directly at info@cyclomics.com.

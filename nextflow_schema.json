@@ -2,7 +2,9 @@
     "$schema": "http://json-schema.org/draft-07/schema",
     "$id": "https://raw.githubusercontent.com/cyclomics/wf-cyclomicsseq-amp/main/nextflow_schema.json",
     "title": "cyclomics/wf-cyclomicsseq-amp",
+    "workflow_title": "CySeq Amplicon",
     "description": "Variant identification analysis workflow for CySeq amplicon sequencing.",
+    "url": "https://github.com/cyclomics/wf-cyclomicsseq-amp",
     "type": "object",
     "definitions": {
         "input": {
@@ -14,7 +16,6 @@
                 "sample_name": {
                     "title": "Sample name (Optional)",
                     "type": "string",
-                    "default": "",
                     "description": "Override the sample name used in the pipeline.",
                     "help_text": "This option will override automated sample name detection and use the provided value instead."
                 },
@@ -22,7 +23,6 @@
                     "title": "Input read directory",
                     "type": "string",
                     "format": "path",
-                    "default": "",
                     "description": "Folder containing reads in fastq or fastq.gz format, usually the fastq_pass folder made by MinKnow.",
                     "help_text": "An example whould be /data/sequencing/experiment_name/sample_name/20230213_0900_MN12345_FAA12345_1e411152/fastq_pass \n The parent folder contains a folder called fastq_pass and a sequencing summary."
                 },
@@ -30,7 +30,6 @@
                     "title": "Reference genome FASTA file",
                     "type": "string",
                     "format": "file-path",
-                    "default": "",
                     "description": "Reference genome FASTA.",
                     "help_text": "Reference genome to be used for consensus, alignment and variant calling.\nWe suggest GRCh38.p14, since this has been tested to work with the variant effect prediction API. Please see the README for instructions to obtain this reference genome."
                 },
@@ -38,15 +37,13 @@
                     "title": "Regions of interest BED file",
                     "type": "string",
                     "format": "file-path",
-                    "default": "auto",
                     "description": "Region of interest, either `auto` or a path to a file in BED format corresponding to the reference used.",
                     "help_text": "When provided, only locations in the BED file will be examined in the variant identification process. The `auto` strategy automatically selects loci based on read depth."
                 },
                 "target_depth": {
                     "title": "Target read depth per amplicon (Optional)",
                     "type": "integer",
-                    "default": 0,
-                    "description": "The desired amplicon depth, which will be used to mark the point at which all amplicons reach this value. If set to 0, then no target depth will be used.",
+                    "description": "The desired amplicon depth, which will be used to mark the point at which all amplicons reach this value. If not set, then no target depth will be used.",
                     "help_text": "This option only adjusts the amplicon read depth plot in the report."
                 }
             },
@@ -60,10 +57,11 @@
             "description": "Parameters for saving and naming workflow outputs",
             "properties": {
                 "output_dir": {
+                    "title": "Output directory name",
                     "type": "string",
                     "default": "output",
                     "format": "directory-path",
-                    "description": "Output directory for all workflow results."
+                    "description": "Name of the output directory for all workflow results. This directory will be saved within a unique run-specific folder."
                 }
             },
             "required": ["output_dir"]
@@ -89,6 +87,7 @@
                 "minimap2.mode": {
                     "title": "Minimap2 mode",
                     "type": "string",
+                    "enum": ["map-ont"],
                     "default": "map-ont",
                     "description": "Minimap2 preset for read mapping.",
                     "help_text": "The minimap2 preset to be used for raw read mapping. The default is `map-ont`, which is optimized for long ONT reads."
@@ -101,6 +100,23 @@
                     "default": "**.{fq,fastq,fq.gz,fastq.gz}"
                 }
             }
+        }
+    },
+    "properties": {
+        "validate_params": {
+            "type": "boolean"
+        }
+    },
+    "resources": {
+        "minimum": {
+            "cpu": 8,
+            "memory": "32 GB",
+            "disk": "50 GB"
+        },
+        "recommended": {
+            "cpu": 16,
+            "memory": "64 GB",
+            "disk": "100 GB"
         }
     }
 }

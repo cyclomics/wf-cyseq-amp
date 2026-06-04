@@ -73,7 +73,7 @@ process StreamDepth {
         tuple val(sample_id), val(file_id), path("amplicon_depth_live.yml")
 
     script:
-        def target_depth_arg = params.target_depth != 0 ? "--target_depth ${params.target_depth}" : ''
+        def target_depth_arg = params.target_depth != null ? "--target_depth ${params.target_depth}" : ''
         """
         sum_depth.py \
             --depth_yml "${depth_yml}" \
