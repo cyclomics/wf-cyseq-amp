@@ -109,7 +109,7 @@
     },
     "resources": {
         "minimum": {
-            "cpu": 8,
+            "cpu": 16,
             "memory": "32 GB",
             "disk": "50 GB"
         },
