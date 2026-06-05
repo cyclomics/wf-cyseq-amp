@@ -67,7 +67,7 @@ process FilterAlignments {
 
 process CyseqConsensus {
     cpus 8 // cpus = n + 4
-    memory 20.GB
+    memory 18.GB
     
     container params.containers.cyseqtools
 

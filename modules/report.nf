@@ -124,6 +124,7 @@ process StreamReadMetrics {
 
 process ReportStreamData {
     container params.containers.alnutils
+    maxForks 1
     publishDir "${params.output_dir}", mode: 'copy'
 
     input:
