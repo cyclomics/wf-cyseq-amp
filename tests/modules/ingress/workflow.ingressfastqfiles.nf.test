@@ -1,15 +1,8 @@
 nextflow_workflow {
 
-    name "Test Workflow ingress_fastq_files"
+    name "Test Workflow ingress"
     script "modules/ingress.nf"
-    workflow "ingress_fastq_files"
-    
-    // We need to test the edge cases:
-    // Params:
-    // for input dir / and no /
-    // for include_fastq_fail == true or false
-    // Inputs:
-    // barcoded vs not barcoded
+    workflow "ingress"
 
     test("Input dir with trailing slash") {
         tag "workflow"
@@ -17,7 +10,7 @@ nextflow_workflow {
         when {
             params {
                 input_dir = "${projectDir}/tests/data/example_input/example_sample_name/"
-                include_fastq_fail = false
+                split_fastq_by_size = true
                 read_pattern = "**.{fq,fastq,fq.gz,fastq.gz}"
                 stop_pattern = "{seq*,DONE}.txt"
                 sample_name = ""
@@ -34,7 +27,7 @@ nextflow_workflow {
 
         then {
             assert workflow.success
-            assert workflow.out.read_fastq.size() == 2
+            assert workflow.out.ingested_fastq.size() == 2
         }
     }
 
@@ -44,7 +37,7 @@ nextflow_workflow {
         when {
             params {
                 input_dir = "${projectDir}/tests/data/example_input/example_sample_name"
-                include_fastq_fail = false
+                split_fastq_by_size = true
                 read_pattern = "**.{fq,fastq,fq.gz,fastq.gz}"
                 stop_pattern = "{seq*,DONE}.txt"
                 sample_name = ""
@@ -61,36 +54,8 @@ nextflow_workflow {
 
         then {
             assert workflow.success
-            assert workflow.out.read_fastq.size() == 2
+            assert workflow.out.ingested_fastq.size() == 2
         }
-    }
-
-    test("Include fastq_fail true") {
-        tag "workflow"
-        tag "integation-test"
-        when {
-            params {
-                input_dir = "${projectDir}/tests/data/example_input/example_sample_name/"
-                include_fastq_fail = true
-                read_pattern = "**.{fq,fastq,fq.gz,fastq.gz}"
-                stop_pattern = "{seq*,DONE}.txt"
-                sample_name = ""
-            }
-            workflow {
-                def read_pattern = "${params.input_dir}${params.read_pattern}"
-                def stop_pattern = "${params.input_dir}${params.stop_pattern}"
-                """
-                input[0] = "${read_pattern}"
-                input[1] = "${stop_pattern}"
-                """
-            }
-        }
-
-        then {
-            assert workflow.success
-            assert workflow.out.read_fastq.size() == 3
-        }
-
     }
 
     test("Barcoded sample") {
@@ -99,7 +64,7 @@ nextflow_workflow {
         when {
             params {
                 input_dir = "${projectDir}/tests/data/example_input/example_sample_name_barcoded/"
-                include_fastq_fail = false
+                split_fastq_by_size = true
                 read_pattern = "**.{fq,fastq,fq.gz,fastq.gz}"
                 stop_pattern = "{seq*,DONE}.txt"
                 sample_name = ""
@@ -115,11 +80,11 @@ nextflow_workflow {
         }
         then {
             assert workflow.success
-            assert workflow.out.read_fastq.size() == 3
-            assert workflow.out.read_fastq[0][0].startsWith("example_sample_name_barcoded_")
-            assert workflow.out.read_fastq[0][0].endsWith("_barcode01")
-            assert workflow.out.read_fastq[0][1] == "dummy"
-            assert workflow.out.read_fastq[0][2].endsWith("wf-cyclomicsseq-amp/tests/data/example_input/example_sample_name_barcoded/barcode01/dummy.fastq")
+            assert workflow.out.ingested_fastq.size() == 3
+            assert workflow.out.ingested_fastq[0][0].startsWith("example_sample_name_barcoded_")
+            assert workflow.out.ingested_fastq[0][0].endsWith("_barcode01")
+            assert workflow.out.ingested_fastq[0][1] == "dummy_001"
+            assert workflow.out.ingested_fastq[0][2].endsWith("dummy_001.fastq.gz")
         }
     }
 
@@ -129,7 +94,7 @@ nextflow_workflow {
         when {
             params {
                 input_dir = "${projectDir}/tests/data/example_input/example_sample_name/"
-                include_fastq_fail = false
+                split_fastq_by_size = true
                 read_pattern = "**.{fq,fastq,fq.gz,fastq.gz}"
                 stop_pattern = "{seq*,DONE}.txt"
                 sample_name = "CustomSampleName"
@@ -145,10 +110,10 @@ nextflow_workflow {
         }
         then {
             assert workflow.success
-            assert workflow.out.read_fastq.size() == 2
-            assert workflow.out.read_fastq[0][0].startsWith("CustomSampleName_")
-            assert workflow.out.read_fastq[0][1] == "dummy01"
-            assert workflow.out.read_fastq[0][2].endsWith("wf-cyclomicsseq-amp/tests/data/example_input/example_sample_name/fastq_pass/dummy01.fastq")
+            assert workflow.out.ingested_fastq.size() == 2
+            assert workflow.out.ingested_fastq[0][0].startsWith("CustomSampleName_")
+            assert workflow.out.ingested_fastq[0][1] == "dummy01_001"
+            assert workflow.out.ingested_fastq[0][2].endsWith("dummy01_001.fastq.gz")
         }
     }
 }

@@ -1,0 +1,594 @@
+data:
+- link:
+    source:
+    - 0
+    - 0
+    - 1
+    - 1
+    - 1
+    - 2
+    - 2
+    - 2
+    - 2
+    - 2
+    - 2
+    - 2
+    target:
+    - 1
+    - 2
+    - 3
+    - 4
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    value:
+    - 26621757
+    - 39857
+    - 3962870
+    - 1860074
+    - 20798813
+    - 0
+    - 39857
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+  node:
+    color:
+    - '#242323'
+    - '#42f5c8'
+    - '#f57e42'
+    - '#B0C4DE'
+    - '#6395EE'
+    - '#305CDE'
+    - '#228b22'
+    - '#f9f9f9'
+    - '#ffdf00'
+    - '#ffdf00'
+    - '#8b6914'
+    - '#030303'
+    - '#030303'
+    customdata:
+    - 'Total number of bases: 26661614'
+    - 'Number of bases: 26621757, 99.85% of total'
+    - 'Number of bases: 39857, 0.15% of total'
+    - 'Number of bases: 3962870, 14.89% of success, 14.86% of total'
+    - 'Number of bases: 1860074, 6.99% of success, 6.98% of total'
+    - 'Number of bases: 20798813, 78.13% of success, 78.01% of total'
+    - 'Number of bases: 0, 0.00% of failed, 0.00% of total'
+    - 'Number of bases: 39857, 100.00% of failed, 0.15% of total'
+    - 'Number of bases: 0, 0.00% of failed, 0.00% of total'
+    - 'Number of bases: 0, 0.00% of failed, 0.00% of total'
+    - 'Number of bases: 0, 0.00% of failed, 0.00% of total'
+    - 'Number of bases: 0, 0.00% of failed, 0.00% of total'
+    - 'Number of bases: 0, 0.00% of failed, 0.00% of total'
+    hovertemplate: '%{customdata}'
+    label:
+    - run
+    - success
+    - fail
+    - 1D
+    - 2D
+    - 3D
+    - CHIMERA
+    - Consensus sequence did not align to reference genome
+    - Less than 3 segments
+    - No high complexity or longer than 30 bases prototypes
+    - Number of valid alignments too low
+    - Read has zero alignments
+    - Unclear forward/reverse pattern, failed to determine if 2D or 3D
+    line:
+      color: black
+      width: 0.5
+    pad: 15
+    thickness: 20
+  type: sankey
+layout:
+  template:
+    data:
+      barpolar:
+      - marker:
+          line:
+            color: white
+            width: 0.5
+          pattern:
+            fillmode: overlay
+            size: 10
+            solidity: 0.2
+        type: barpolar
+      bar:
+      - error_x:
+          color: rgb(36,36,36)
+        error_y:
+          color: rgb(36,36,36)
+        marker:
+          line:
+            color: white
+            width: 0.5
+          pattern:
+            fillmode: overlay
+            size: 10
+            solidity: 0.2
+        type: bar
+      carpet:
+      - aaxis:
+          endlinecolor: rgb(36,36,36)
+          gridcolor: white
+          linecolor: white
+          minorgridcolor: white
+          startlinecolor: rgb(36,36,36)
+        baxis:
+          endlinecolor: rgb(36,36,36)
+          gridcolor: white
+          linecolor: white
+          minorgridcolor: white
+          startlinecolor: rgb(36,36,36)
+        type: carpet
+      choropleth:
+      - colorbar:
+          outlinewidth: 1
+          tickcolor: rgb(36,36,36)
+          ticks: outside
+        type: choropleth
+      contourcarpet:
+      - colorbar:
+          outlinewidth: 1
+          tickcolor: rgb(36,36,36)
+          ticks: outside
+        type: contourcarpet
+      contour:
+      - colorbar:
+          outlinewidth: 1
+          tickcolor: rgb(36,36,36)
+          ticks: outside
+        colorscale:
+        - - 0.0
+          - '#440154'
+        - - 0.1111111111111111
+          - '#482878'
+        - - 0.2222222222222222
+          - '#3e4989'
+        - - 0.3333333333333333
+          - '#31688e'
+        - - 0.4444444444444444
+          - '#26828e'
+        - - 0.5555555555555556
+          - '#1f9e89'
+        - - 0.6666666666666666
+          - '#35b779'
+        - - 0.7777777777777778
+          - '#6ece58'
+        - - 0.8888888888888888
+          - '#b5de2b'
+        - - 1.0
+          - '#fde725'
+        type: contour
+      heatmap:
+      - colorbar:
+          outlinewidth: 1
+          tickcolor: rgb(36,36,36)
+          ticks: outside
+        colorscale:
+        - - 0.0
+          - '#440154'
+        - - 0.1111111111111111
+          - '#482878'
+        - - 0.2222222222222222
+          - '#3e4989'
+        - - 0.3333333333333333
+          - '#31688e'
+        - - 0.4444444444444444
+          - '#26828e'
+        - - 0.5555555555555556
+          - '#1f9e89'
+        - - 0.6666666666666666
+          - '#35b779'
+        - - 0.7777777777777778
+          - '#6ece58'
+        - - 0.8888888888888888
+          - '#b5de2b'
+        - - 1.0
+          - '#fde725'
+        type: heatmap
+      histogram2dcontour:
+      - colorbar:
+          outlinewidth: 1
+          tickcolor: rgb(36,36,36)
+          ticks: outside
+        colorscale:
+        - - 0.0
+          - '#440154'
+        - - 0.1111111111111111
+          - '#482878'
+        - - 0.2222222222222222
+          - '#3e4989'
+        - - 0.3333333333333333
+          - '#31688e'
+        - - 0.4444444444444444
+          - '#26828e'
+        - - 0.5555555555555556
+          - '#1f9e89'
+        - - 0.6666666666666666
+          - '#35b779'
+        - - 0.7777777777777778
+          - '#6ece58'
+        - - 0.8888888888888888
+          - '#b5de2b'
+        - - 1.0
+          - '#fde725'
+        type: histogram2dcontour
+      histogram2d:
+      - colorbar:
+          outlinewidth: 1
+          tickcolor: rgb(36,36,36)
+          ticks: outside
+        colorscale:
+        - - 0.0
+          - '#440154'
+        - - 0.1111111111111111
+          - '#482878'
+        - - 0.2222222222222222
+          - '#3e4989'
+        - - 0.3333333333333333
+          - '#31688e'
+        - - 0.4444444444444444
+          - '#26828e'
+        - - 0.5555555555555556
+          - '#1f9e89'
+        - - 0.6666666666666666
+          - '#35b779'
+        - - 0.7777777777777778
+          - '#6ece58'
+        - - 0.8888888888888888
+          - '#b5de2b'
+        - - 1.0
+          - '#fde725'
+        type: histogram2d
+      histogram:
+      - marker:
+          line:
+            color: white
+            width: 0.6
+        type: histogram
+      mesh3d:
+      - colorbar:
+          outlinewidth: 1
+          tickcolor: rgb(36,36,36)
+          ticks: outside
+        type: mesh3d
+      parcoords:
+      - line:
+          colorbar:
+            outlinewidth: 1
+            tickcolor: rgb(36,36,36)
+            ticks: outside
+        type: parcoords
+      pie:
+      - automargin: true
+        type: pie
+      scatter3d:
+      - line:
+          colorbar:
+            outlinewidth: 1
+            tickcolor: rgb(36,36,36)
+            ticks: outside
+        marker:
+          colorbar:
+            outlinewidth: 1
+            tickcolor: rgb(36,36,36)
+            ticks: outside
+        type: scatter3d
+      scattercarpet:
+      - marker:
+          colorbar:
+            outlinewidth: 1
+            tickcolor: rgb(36,36,36)
+            ticks: outside
+        type: scattercarpet
+      scattergeo:
+      - marker:
+          colorbar:
+            outlinewidth: 1
+            tickcolor: rgb(36,36,36)
+            ticks: outside
+        type: scattergeo
+      scattergl:
+      - marker:
+          colorbar:
+            outlinewidth: 1
+            tickcolor: rgb(36,36,36)
+            ticks: outside
+        type: scattergl
+      scattermapbox:
+      - marker:
+          colorbar:
+            outlinewidth: 1
+            tickcolor: rgb(36,36,36)
+            ticks: outside
+        type: scattermapbox
+      scattermap:
+      - marker:
+          colorbar:
+            outlinewidth: 1
+            tickcolor: rgb(36,36,36)
+            ticks: outside
+        type: scattermap
+      scatterpolargl:
+      - marker:
+          colorbar:
+            outlinewidth: 1
+            tickcolor: rgb(36,36,36)
+            ticks: outside
+        type: scatterpolargl
+      scatterpolar:
+      - marker:
+          colorbar:
+            outlinewidth: 1
+            tickcolor: rgb(36,36,36)
+            ticks: outside
+        type: scatterpolar
+      scatter:
+      - fillpattern:
+          fillmode: overlay
+          size: 10
+          solidity: 0.2
+        type: scatter
+      scatterternary:
+      - marker:
+          colorbar:
+            outlinewidth: 1
+            tickcolor: rgb(36,36,36)
+            ticks: outside
+        type: scatterternary
+      surface:
+      - colorbar:
+          outlinewidth: 1
+          tickcolor: rgb(36,36,36)
+          ticks: outside
+        colorscale:
+        - - 0.0
+          - '#440154'
+        - - 0.1111111111111111
+          - '#482878'
+        - - 0.2222222222222222
+          - '#3e4989'
+        - - 0.3333333333333333
+          - '#31688e'
+        - - 0.4444444444444444
+          - '#26828e'
+        - - 0.5555555555555556
+          - '#1f9e89'
+        - - 0.6666666666666666
+          - '#35b779'
+        - - 0.7777777777777778
+          - '#6ece58'
+        - - 0.8888888888888888
+          - '#b5de2b'
+        - - 1.0
+          - '#fde725'
+        type: surface
+      table:
+      - cells:
+          fill:
+            color: rgb(237,237,237)
+          line:
+            color: white
+        header:
+          fill:
+            color: rgb(217,217,217)
+          line:
+            color: white
+        type: table
+    layout:
+      annotationdefaults:
+        arrowhead: 0
+        arrowwidth: 1
+      autotypenumbers: strict
+      coloraxis:
+        colorbar:
+          outlinewidth: 1
+          tickcolor: rgb(36,36,36)
+          ticks: outside
+      colorscale:
+        diverging:
+        - - 0.0
+          - rgb(103,0,31)
+        - - 0.1
+          - rgb(178,24,43)
+        - - 0.2
+          - rgb(214,96,77)
+        - - 0.3
+          - rgb(244,165,130)
+        - - 0.4
+          - rgb(253,219,199)
+        - - 0.5
+          - rgb(247,247,247)
+        - - 0.6
+          - rgb(209,229,240)
+        - - 0.7
+          - rgb(146,197,222)
+        - - 0.8
+          - rgb(67,147,195)
+        - - 0.9
+          - rgb(33,102,172)
+        - - 1.0
+          - rgb(5,48,97)
+        sequential:
+        - - 0.0
+          - '#440154'
+        - - 0.1111111111111111
+          - '#482878'
+        - - 0.2222222222222222
+          - '#3e4989'
+        - - 0.3333333333333333
+          - '#31688e'
+        - - 0.4444444444444444
+          - '#26828e'
+        - - 0.5555555555555556
+          - '#1f9e89'
+        - - 0.6666666666666666
+          - '#35b779'
+        - - 0.7777777777777778
+          - '#6ece58'
+        - - 0.8888888888888888
+          - '#b5de2b'
+        - - 1.0
+          - '#fde725'
+        sequentialminus:
+        - - 0.0
+          - '#440154'
+        - - 0.1111111111111111
+          - '#482878'
+        - - 0.2222222222222222
+          - '#3e4989'
+        - - 0.3333333333333333
+          - '#31688e'
+        - - 0.4444444444444444
+          - '#26828e'
+        - - 0.5555555555555556
+          - '#1f9e89'
+        - - 0.6666666666666666
+          - '#35b779'
+        - - 0.7777777777777778
+          - '#6ece58'
+        - - 0.8888888888888888
+          - '#b5de2b'
+        - - 1.0
+          - '#fde725'
+      colorway:
+      - '#1F77B4'
+      - '#FF7F0E'
+      - '#2CA02C'
+      - '#D62728'
+      - '#9467BD'
+      - '#8C564B'
+      - '#E377C2'
+      - '#7F7F7F'
+      - '#BCBD22'
+      - '#17BECF'
+      font:
+        color: rgb(36,36,36)
+      geo:
+        bgcolor: white
+        lakecolor: white
+        landcolor: white
+        showlakes: true
+        showland: true
+        subunitcolor: white
+      hoverlabel:
+        align: left
+      hovermode: closest
+      mapbox:
+        style: light
+      paper_bgcolor: white
+      plot_bgcolor: white
+      polar:
+        angularaxis:
+          gridcolor: rgb(232,232,232)
+          linecolor: rgb(36,36,36)
+          showgrid: false
+          showline: true
+          ticks: outside
+        bgcolor: white
+        radialaxis:
+          gridcolor: rgb(232,232,232)
+          linecolor: rgb(36,36,36)
+          showgrid: false
+          showline: true
+          ticks: outside
+      scene:
+        xaxis:
+          backgroundcolor: white
+          gridcolor: rgb(232,232,232)
+          gridwidth: 2
+          linecolor: rgb(36,36,36)
+          showbackground: true
+          showgrid: false
+          showline: true
+          ticks: outside
+          zeroline: false
+          zerolinecolor: rgb(36,36,36)
+        yaxis:
+          backgroundcolor: white
+          gridcolor: rgb(232,232,232)
+          gridwidth: 2
+          linecolor: rgb(36,36,36)
+          showbackground: true
+          showgrid: false
+          showline: true
+          ticks: outside
+          zeroline: false
+          zerolinecolor: rgb(36,36,36)
+        zaxis:
+          backgroundcolor: white
+          gridcolor: rgb(232,232,232)
+          gridwidth: 2
+          linecolor: rgb(36,36,36)
+          showbackground: true
+          showgrid: false
+          showline: true
+          ticks: outside
+          zeroline: false
+          zerolinecolor: rgb(36,36,36)
+      shapedefaults:
+        fillcolor: black
+        line:
+          width: 0
+        opacity: 0.3
+      ternary:
+        aaxis:
+          gridcolor: rgb(232,232,232)
+          linecolor: rgb(36,36,36)
+          showgrid: false
+          showline: true
+          ticks: outside
+        baxis:
+          gridcolor: rgb(232,232,232)
+          linecolor: rgb(36,36,36)
+          showgrid: false
+          showline: true
+          ticks: outside
+        bgcolor: white
+        caxis:
+          gridcolor: rgb(232,232,232)
+          linecolor: rgb(36,36,36)
+          showgrid: false
+          showline: true
+          ticks: outside
+      title:
+        x: 0.05
+      xaxis:
+        automargin: true
+        gridcolor: rgb(232,232,232)
+        linecolor: rgb(36,36,36)
+        showgrid: false
+        showline: true
+        ticks: outside
+        title:
+          standoff: 15
+        zeroline: false
+        zerolinecolor: rgb(36,36,36)
+      yaxis:
+        automargin: true
+        gridcolor: rgb(232,232,232)
+        linecolor: rgb(36,36,36)
+        showgrid: false
+        showline: true
+        ticks: outside
+        title:
+          standoff: 15
+        zeroline: false
+        zerolinecolor: rgb(36,36,36)
+  title:
+    text: Throughput in consensus bases
+  legend:
+    valign: top
+  height: 450
+  autosize: true
+name: consensus_length/sankey

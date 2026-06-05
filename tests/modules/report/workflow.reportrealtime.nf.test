@@ -1,12 +1,12 @@
 nextflow_workflow {
 
-    name "Test workflow: report_realtime"
+    name "Test workflow: report_live"
     script "modules/report.nf"
-    workflow "report_realtime"
+    workflow "report_live"
 
     // With BED file (regions != auto)
     test("Produces report with reads and depth when regions provided") {
-        tag "report_realtime_wf_1"
+        tag "report_live_wf_1"
         tag "workflow"
         tag "integation-test"
 
@@ -50,7 +50,7 @@ nextflow_workflow {
 
     // Without BED file (regions == auto)
     test("Produces report with reads only when regions is auto") {
-        tag "report_realtime_wf_2"
+        tag "report_live_wf_2"
         tag "workflow"
         tag "integation-test"
 
@@ -85,7 +85,7 @@ nextflow_workflow {
 
     // Real-time behaviour: emits per file_id, not just at end
     test("Emits one report per file_id pair, not just final") {
-        tag "report_realtime_wf_3"
+        tag "report_live_wf_3"
         tag "workflow"
         tag "integation-test"
 
@@ -123,7 +123,7 @@ nextflow_workflow {
 
     // Accumulation: final report has cumulative counts
     test("Final report accumulates all reads correctly") {
-        tag "report_realtime_wf_4"
+        tag "report_live_wf_4"
         tag "workflow"
         tag "integation-test"
 
@@ -166,7 +166,7 @@ nextflow_workflow {
 
     // Multi-sample: each sample gets its own report
     test("Two samples produce independent reports") {
-        tag "report_realtime_wf_5"
+        tag "report_live_wf_5"
         tag "workflow"
         tag "integation-test"
         

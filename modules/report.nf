@@ -140,6 +140,7 @@ process ReportStreamData {
         """
         report_live.py \
             --template ${params.report_template} \
+            --sample_id ${sample_id} \
             --output_html report_${sample_id}.html \
             --output_json report_${sample_id}.json
         """

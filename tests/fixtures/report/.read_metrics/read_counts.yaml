@@ -1,0 +1,15 @@
+failed:
+  CHIMERA: 7215
+  Consensus sequence did not align to reference genome: 321
+  Less than 3 segments: 47904
+  No high complexity or longer than 30 bases prototypes: 124
+  Number of valid alignments too low: 5802
+  Read has zero alignments: 45558
+  Unclear forward/reverse pattern, failed to determine if 2D or 3D: 1821
+  grouped: 108745
+run: 290010
+success:
+  1D: 41427
+  2D: 17421
+  3D: 122417
+  grouped: 181265
