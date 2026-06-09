@@ -4,10 +4,13 @@ Finalizes the report after collecting all upstream processes.
 Merges multiple JSON fragments into a single data structure and injects it into HTML.
 """
 
-import json
 import argparse
+import glob
+import json
+import os
 import re
-from typing import List, Dict
+from typing import Dict, List
+
 
 def load_report_data(json_file: str) -> dict:
     """Load report data from JSON file."""
@@ -57,14 +60,30 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--json", nargs='+', required=True, help="List of JSON fragments")
     parser.add_argument("--html", required=True)
-    parser.add_argument("--output", required=True)
+    parser.add_argument("--sample_id", required=True)
+    parser.add_argument("--clean_dir", type=str, required=False)
     args = parser.parse_args()
 
     # Merge all data
     final_report_data = merge_report_fragments(args.json)
     
     # Inject into template
-    inject_into_html(final_report_data, args.html, args.output)
+    inject_into_html(final_report_data, args.html, f"report_{args.sample_id}.html")
+
+    # Clean up intermediate files if specified
+    if args.clean_dir and os.path.exists(args.clean_dir):
+        search_pattern = os.path.join(args.clean_dir, f"report_{args.sample_id}_*.html")
+
+        for old_file in glob.glob(search_pattern):
+            print(f"Attempting to delete stale stream report: {old_file}")
+            try:
+                os.remove(old_file)
+                print(f"Successfully deleted stale stream report: {old_file}")
+            except OSError as e:
+                print(f"Skipping locked file: {old_file}. Error: {e}")
+    else:
+        print(f"No clean directory specified or directory does not exist: {args.clean_dir}")
+
 
 if __name__ == "__main__":
     main()
