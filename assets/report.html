@@ -7,6 +7,10 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/colresizable/1.6.0/colResizable-1.6.min.js"></script>
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CyclomicsSeq Report</title>
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
@@ -40,8 +44,8 @@
             color: var(--text-primary);
             display: flex;
             flex-direction: column;
-            height: 100vh;
-            overflow: hidden;
+            min-height: 100vh;
+            overflow-y: auto;
         }
 
         /* ── Header ── */
@@ -102,7 +106,7 @@
         #layout {
             display: flex;
             margin-top: var(--header-height);
-            height: calc(100vh - var(--header-height));
+            min-height: calc(100vh - var(--header-height));
         }
 
         /* ── Sidebar ── */
@@ -180,8 +184,8 @@
         /* ── Main content ── */
         #main {
             flex: 1;
-            overflow-y: auto;
-            overflow-x: auto;
+            /* overflow-y: auto;
+            overflow-x: auto; */
             padding: 28px 32px;
         }
 
@@ -1173,24 +1177,27 @@ document.addEventListener('DOMContentLoaded', () => {
 // ── Boot ─────────────────────────────────────────────────────────
 function loadEmbeddedData() {
     const embedded = document.getElementById('embedded-data').textContent.trim();
-    // if (!embedded || embedded === '{}') {
-    //     // If no data yet, try again in 10 seconds
-    //     setTimeout(() => location.reload(), 10000);
-    //     return;
-    // }
+    if (!embedded || embedded === '{}') {
+        // If no data has been injected yet, reload in 5 seconds to try again
+        setTimeout(() => {
+            window.location.reload(true); // 'true' forces a hard reload bypassing cache
+        }, 5000);
+        return;
+    }
 
     const data = JSON.parse(embedded);
     renderDashboard(data);
 
-    // If the analysis is NOT final, reload the page in 10 seconds to get the new file
-    // if (!data.final) {
-    //     console.log("Analysis in progress... reloading in 10s");
-    //     setTimeout(() => {
-    //         location.reload();
-    //     }, 10000); 
-    // } else {
-    //     console.log("Analysis complete. Polling stopped.");
-    // }
+    // If the analysis is NOT final, force a hard reload in 5 seconds 
+    // to pick up the newly overwritten HTML file from Nextflow
+    if (!data.final) {
+        console.log("Analysis in progress... checking for file updates in 5s");
+        setTimeout(() => {
+            window.location.reload(true); // 'true' forces a hard reload bypassing cache
+        }, 5000); 
+    } else {
+        console.log("Analysis complete. Polling stopped.");
+    }
 }
 
 loadEmbeddedData();

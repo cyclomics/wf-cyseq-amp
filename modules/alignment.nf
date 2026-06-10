@@ -47,8 +47,8 @@ workflow merge_consensus {
 
 process Minimap2Align {
     container params.containers.minimap2
-    cpus 8
-    memory 20.GB
+    cpus 4
+    memory 15.GB
 
     input:
         tuple val(sample_id), val(file_id), path(fq)

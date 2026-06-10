@@ -95,9 +95,10 @@ workflow {
 
     // REPORT: Final
     FinalizeReport(
-        report_live.out.live_report.last().combine(
-            call_variants.out.variant_table, by: 0
-        )
+        report_live.out.live_report
+            .groupTuple(by: 0)
+            .map { sample_id, htmls, jsons -> tuple(sample_id, htmls[-1], jsons[-1]) }
+            .combine(call_variants.out.variant_table, by: 0)
     )
 }
 

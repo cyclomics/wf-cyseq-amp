@@ -1,47 +1,74 @@
-# wf-cyclomicsseq-amp
+# wf-cyseq-amp
 
+This workflow uses concatemeric CySeq reads as input to generate consensus reads in real-time, which will then be used to call variants over a reference.
 
-## Testing
-Testing of this workflow is performed using [[nf-test](https://www.nf-test.com)].
+> <b>Expected use case:</b> <br>
+> This workflow is designed specifically for ONT long-read sequencing reads generated using a CySeq (S or L) protocol in association with a PCR amplification panel. It expects reads to pile up on known genomic loci. The workflow will generate consensus reads in those loci and use the consensus pileups to call variants within the loci.
 
-There are a few types of tests in this repo, these tests should be tagged as such.
-Each nextflow process should have unit test to test its behaviour, tagged as `unit-test`.
-Additionally there sould be integration tests for sub-workflows if these are used.
-Finally there should be end-to-end tests for the main workflow.
+<details>
+  <summary><b>Table of contents</b></summary>
 
-### Writing tests
-nf-test has a build in test generation tool:
-``` bash
-./nf-test generate --help
-Unknown option: '--help'
-Usage: nf-test generate [COMMAND]
-Commands:
-  function
-  pipeline
-  process
-  workflow
-```
+  - [Input requirements](#input-requirements)
+  - [System requirements](#system-requirements)
+  - [Software requirements](#software-requirements)
+  - [General usage](#general-usage)
+  - [Troubleshooting](#troubleshooting)
 
-#### Naming tests
-tests should follow the same folder structure as the repo. The name of the test file is [FILE].[PROCESSNAME|workflow|function].nf.test .
+</details>
 
+## Input requirements
 
-#### tips:
-use a tag like tag = 'dev' and run 
+The following inputs are mandatory:
 
-./nf-test test tests/modules/ingress.nf.test --tag dev
+| Input | Format | Description |
+| ----- | ------ | ----------- |
+| Input data folder | Directory | A MinKnow sequencing output folder containing the `fastq_pass` subfolder, which may optionally contain `barcode` subfolders. This provided output folder is the same folder where MinKnow will write the sequencing summary file, which is necessary to flag the end of the real-time file ingestion. |
+| Reference genome | FASTA | FASTA human reference genome version GRCh38.p14, [ideally NCBI's major release for alignment pipelines provided here](https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/405/GCF_000001405.40_GRCh38.p14/GRCh38_major_release_seqs_for_alignment_pipelines/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna.gz). This file must be unzipped. |
+| Genomic loci | BED | BED file with the genomic loci of interest, in relation to the above reference. <mark>TODO: add example</mark> |
 
-To only run the test you are working on!
+## Software requirements
 
+This workflow makes use of Nextflow and Docker to execute and manage all other dependencies.
 
-### Github actions
-There are currently 3 github actions related to testing, this can be optimized with sharding later.
+If you are executing this workflow through [EPI2ME](#https://epi2me.nanoporetech.com/), then both these dependencies should be part of [its installation instructions](https://epi2me.nanoporetech.com/epi2me-docs/installation/). If you need to install them manually, please follow their official documentation:
 
-1. nf-test-full-tests.yml
-This runs all the nf-test tests and will run on pushes and PR's into main and dev
+- [Nextflow](https://docs.seqera.io/nextflow/install) (v25.04 or higher)
+- [Docker](https://docs.docker.com/get-started/get-docker/)
 
-1. nf-test-unit-test.yml
-This runs the all tests tagged as `unit-test` on PR's, but not on main and dev. As we run all the tests in that case already.
+## System requirements
 
-1. nf-test-changed-unit-test.yml
-This runs the all tests tagged as `unit-test` that have been affected by changes on pushes, but not on main and dev. As we run all the tests in that case already.
+The pipeline expects at least 16 threads to be available and 32GB of RAM. We recommend at least 64 GB of RAM to decrease the runtime significantly.
+
+## General usage
+
+<details>
+  <summary><b><font size="+1">Through EPI2ME</font></b></summary>
+
+  This pipeline is compatible with the EPI2ME platform by ONT. Please see [ONT's installation guide](https://epi2me.nanoporetech.com/epi2me-docs/quickstart/).
+
+  Installation inside EPI2ME:
+  1. Go to workflows by clicking on "installed workflows", or click the workflows icon in the top bar.
+  2. click "Import workflow".
+  3. Paste "https://github.com/cyclomics/cyclomicsseq" into the text bar and click Import workflow.
+
+  Updating workflow on EPI2ME:
+
+</details>
+
+<details>
+  <summary><b><font size="+1">Through command line</font></b></summary>
+
+  <mark>TODO</mark>
+
+  In this section we assume that you have docker and nextflow installed on your system, if so running the pipeline is straightforward. You can run the pipeline directly from the repo.
+
+  ```bash
+  nextflow run cyclomics/wf-cycmomicsseq-amp --input_dir tests/informed/fastq_pass/ --reference tests/informed/tp53.fasta --regions <TODO> --output_dir results/ 
+  ```
+</details>
+
+## Troubleshooting
+
+If you encounter any issues with the workflow where there is unexpected behaviour, then we kindly request that you [submit an issue on the GitHub repository](https://github.com/cyclomics/wf-cyclomicsseq-amp/issues). This helps the development team address your issues quickly.
+
+Alternatively, you can e-mail Cyclomics directly at info@cyclomics.com.

@@ -124,6 +124,7 @@ process StreamReadMetrics {
 
 process ReportStreamData {
     container params.containers.alnutils
+    maxForks 1
     publishDir "${params.output_dir}", mode: 'copy'
 
     input:
@@ -133,14 +134,15 @@ process ReportStreamData {
               path(consensus_cards_yml), path(consensus_yml)
 
     output:
-        tuple val(sample_id), path("report_${sample_id}.html"), path("report_${sample_id}.json"), emit: report
+        tuple val(sample_id), path("report_${sample_id}*.html"), path("report_${sample_id}.json"), emit: report
 
     script:
+        def absoluteOutputDir = file(params.output_dir).toAbsolutePath()
         """
         report_live.py \
             --template ${params.report_template} \
-            --output_html report_${sample_id}.html \
-            --output_json report_${sample_id}.json
+            --sample_id ${sample_id} \
+            --clean_dir "${absoluteOutputDir}"
         """
 }
 
@@ -155,11 +157,13 @@ process FinalizeReport {
         path("report_${sample_id}.html")
 
     script:
+        def absoluteOutputDir = file(params.output_dir).toAbsolutePath()
         """
         finalize_report.py \
             --html ${report_html} \
             --json ${report_json} ${variant_table} \
-            --output report_${sample_id}.html
+            --sample_id ${sample_id} \
+            --clean_dir "${absoluteOutputDir}"
         """
 }
 

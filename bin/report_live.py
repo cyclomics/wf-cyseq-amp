@@ -6,7 +6,9 @@ assembles report data, and injects it as JSON into the HTML template.
 
 import argparse
 import base64
+import glob
 import json
+import os
 import re
 from datetime import datetime
 from pathlib import Path
@@ -14,7 +16,6 @@ from typing import Union
 
 import numpy as np
 import yaml
-
 
 CARD_NAMES = {
     "n_raw_reads": ("Raw reads", None, "Total number of raw reads in the run."),
@@ -165,7 +166,7 @@ def build_report_data(cards: list[dict], plots: list[dict]) -> dict:
     }
 
 
-def inject_into_html(template_file: str, report_data: dict, output_file: str) -> None:
+def inject_into_html(template_file: str, report_data: dict, output_file: Path) -> None:
     """Inject report_data as JSON into the HTML template and write output."""
     with open(template_file, encoding="utf-8") as f:
         template = f.read()
@@ -188,9 +189,8 @@ def inject_into_html(template_file: str, report_data: dict, output_file: str) ->
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--template", required=True)
-    parser.add_argument("--output_html", required=True)
-    parser.add_argument("--output_json", required=True)
-    parser.add_argument("--sample_id", required=False, default=None)
+    parser.add_argument("--sample_id", required=True)
+    parser.add_argument("--clean_dir", type=str, required=False)
     args = parser.parse_args()
 
     cards, plots = load_all_yamls(".")
@@ -199,10 +199,31 @@ def main():
     if args.sample_id:
         report_data["sample_id"] = args.sample_id
 
-    with open(args.output_json, "w", encoding="utf-8") as f:
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:20]
+    output_json_path = Path(f"report_{args.sample_id}.json")
+    output_html_path = Path(f"report_{args.sample_id}_{timestamp}.html")
+    with open(output_json_path, "w", encoding="utf-8") as f:
         json.dump(report_data, f, indent=2)
 
-    inject_into_html(args.template, report_data, args.output_html)
+    inject_into_html(args.template, report_data, output_html_path)
+
+        # Clean up intermediate files if specified
+    if args.clean_dir and os.path.exists(args.clean_dir):
+        search_pattern = os.path.join(args.clean_dir, f"report_{args.sample_id}_*.html")
+
+        for old_file in glob.glob(search_pattern):
+            if os.path.basename(old_file) == output_html_path.name:
+                continue
+            
+            print(f"Attempting to delete stale stream report: {old_file}")
+            try:
+                os.remove(old_file)
+                print(f"Successfully deleted stale stream report: {old_file}")
+            except OSError as e:
+                print(f"Skipping locked file: {old_file}. Error: {e}")
+    else:
+        print(f"No clean directory specified or directory does not exist: {args.clean_dir}")
+
 
 
 if __name__ == "__main__":

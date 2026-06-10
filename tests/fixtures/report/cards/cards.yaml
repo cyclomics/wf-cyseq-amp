@@ -1,0 +1,8 @@
+cards:
+  n_raw_reads: 290010
+  median_read_length_raw: 1354.0
+  median_repeats: 5.0
+  n_mapped_raw: 181265
+  median_mappability_raw: 69.0
+  n_consensus_reads: 181265
+  median_read_length_consensus: 146.0

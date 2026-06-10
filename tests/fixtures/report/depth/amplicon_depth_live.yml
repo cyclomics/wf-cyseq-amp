@@ -1,0 +1,30 @@
+name: Depth per amplicon
+data:
+  type: bar
+  x:
+  - Amp5
+  - Amp4
+  - Amp3
+  - Amp2
+  - Amp1
+  - Amp6
+  y:
+  - 3771.0
+  - 1485.0
+  - 100815.0
+  - 123567.0
+  - 19342.5
+  - 35665.0
+  marker:
+    color: grey
+layout:
+  title: Median amplicon depth
+  xaxis:
+    title: ''
+    tickangle: -45
+    showgrid: false
+  yaxis:
+    title: Summed median depth
+    showgrid: false
+  width: 500
+  height: 400
