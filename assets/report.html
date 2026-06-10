@@ -44,8 +44,8 @@
             color: var(--text-primary);
             display: flex;
             flex-direction: column;
-            height: 100vh;
-            overflow: hidden;
+            min-height: 100vh;
+            overflow-y: auto;
         }
 
         /* ── Header ── */
@@ -106,7 +106,7 @@
         #layout {
             display: flex;
             margin-top: var(--header-height);
-            height: calc(100vh - var(--header-height));
+            min-height: calc(100vh - var(--header-height));
         }
 
         /* ── Sidebar ── */
@@ -184,8 +184,8 @@
         /* ── Main content ── */
         #main {
             flex: 1;
-            overflow-y: auto;
-            overflow-x: auto;
+            /* overflow-y: auto;
+            overflow-x: auto; */
             padding: 28px 32px;
         }
 
