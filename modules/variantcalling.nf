@@ -26,7 +26,7 @@ workflow call_variants {
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 process CallVariantsLofreq {
-    publishDir { "${params.output_dir}/${sample_id}/variants" }, mode: 'copy'
+    // publishDir { "${params.output_dir}/${sample_id}/variants" }, mode: 'copy'
 
     container params.containers.lofreq
     memory 20.GB
@@ -76,7 +76,7 @@ process AnnotateVariants {
 }
 
 process WriteVariantTable {
-    publishDir "${params.output_dir}/QC", mode: 'copy'
+    publishDir "${params.output_dir}/${sample_id}/variants", mode: 'copy'
     
     container params.containers.alnutils
     memory 4.GB
@@ -86,11 +86,11 @@ process WriteVariantTable {
     tuple val(sample_id), val(file_id), path(vcf_file)
 
     output:
-    tuple val(sample_id), path("${vcf_file.simpleName}_table.json")
+    tuple val(sample_id), path("${vcf_file.simpleName}.tsv"), path("${vcf_file.simpleName}.json")
 
     script:
     """
-    write_variants_table.py ${vcf_file} ${vcf_file.simpleName}_table.json --priority-limit 89
+    write_variants_table.py ${vcf_file} ${vcf_file.simpleName}.tsv ${vcf_file.simpleName}.json
     """
 }
 
