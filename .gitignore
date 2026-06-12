@@ -4,7 +4,6 @@ simulation/
 work/
 venv/
 
-*DONE.*
 .nf-test*
 .vscode
 .logs
