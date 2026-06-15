@@ -20,7 +20,7 @@ nextflow_process {
                     "sample_1",
                     "file_1",
                     file("${projectDir}/tests/fixtures/variants.annotated.vcf")
-                ])
+                ])  
                 """
             }
         }
@@ -28,7 +28,7 @@ nextflow_process {
         then {
             assert process.success
 
-            def table = path(process.out[0][0][1]).json
+            def table = path(process.out[0][0][2]).json
             assert table.'variant-table'.name == 'variant-table'
             assert table.'variant-table'.data.size() == 3
             assert table.'variant-table'.data[0].size() == 7
