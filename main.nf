@@ -91,7 +91,7 @@ workflow {
     merged_bam = merge_consensus.out.merged_bam
     
     // 4. Variant calling
-    call_variants(merged_bam, ch_regions, ch_reference)
+    call_variants(merged_bam, ch_reference, ch_regions)
 
     // REPORT: Final
     FinalizeReport(

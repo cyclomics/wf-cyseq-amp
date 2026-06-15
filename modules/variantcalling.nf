@@ -7,11 +7,11 @@
 workflow call_variants {
     take:
         reads_aligned
-        regions
         reference
+        regions
 
     main:
-        CallVariantsLofreq(reference, reads_aligned, regions)
+        CallVariantsLofreq(reads_aligned, reference, regions)
         AnnotateVariants(CallVariantsLofreq.out)
         WriteVariantTable(AnnotateVariants.out)
     emit:
@@ -33,8 +33,8 @@ process CallVariantsLofreq {
     cpus 8
 
     input:
-        tuple path(reference), val(reference_idx)
         tuple val(sample_id), val(file_id), path(bam), path(bai)
+        tuple path(reference), val(reference_idx)
         path(bed)
 
     output:
@@ -76,7 +76,7 @@ process AnnotateVariants {
 }
 
 process WriteVariantTable {
-    publishDir "${params.output_dir}/${sample_id}/variants", mode: 'copy'
+    publishDir { "${params.output_dir}/${sample_id}/variants" }, mode: 'copy'
     
     container params.containers.alnutils
     memory 4.GB
