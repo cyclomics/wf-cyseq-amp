@@ -67,20 +67,6 @@ process Minimap2Align {
         """
 }
 
-process AnnotateBamYTags {
-    container params.containers.alnutils
-    input:
-        tuple val(sample_id), val(file_id), path(bam), path(bai), path(json)
-
-    output:
-        tuple val(sample_id), val(file_id), path("${file_id}.annotated.bam"), path("${file_id}.annotated.bam.bai")
-
-    script:
-        """
-        annotate_bam_y.py ${json} ${bam} ${file_id}.annotated.bam
-        """
-}
-
 process MergeBamFiles {
     publishDir { "${params.output_dir}/${sample_id}/consensus_alignments" }, mode: 'copy'
     container params.containers.samtools

@@ -1,0 +1,38 @@
+nextflow_process {
+
+    name "Test Process GetAmpliconDepth (alignment)"
+    script "modules/alignment.nf"
+    process "GetAmpliconDepth"
+
+    test("Computes amplicon depth from BAM and BED") {
+        tag "unit-test"
+
+        when {
+            process {
+                """
+                input[0] = Channel.of([
+                    "sample_1",
+                    "file_1",
+                    file("${projectDir}/tests/data/lambda/lambda_mut.bam"),
+                    file("${projectDir}/tests/data/lambda/lambda_mut.bam.bai")
+                ])
+                input[1] = Channel.of(file("${projectDir}/tests/fixtures/small.bed"))
+                """
+            }
+        }
+
+        then {
+            assert process.success
+
+            // Output is a tuple [sample_id, file_id, depth_yml]
+            assert process.out[0][0][0] == "sample_1"
+            assert process.out[0][0][1] == "file_1"
+            assert path(process.out[0][0][2]).fileName.toString() == "sample_1_amplicon_depth.yml"
+
+            // YAML file should exist and contain depth data
+            def yml = path(process.out[0][0][2]).yaml
+            assert yml.data.x.size() > 0
+            assert yml.data.y.size() > 0
+        }
+    }
+}

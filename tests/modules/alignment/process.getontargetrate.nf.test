@@ -1,0 +1,39 @@
+nextflow_process {
+
+    name "Test Process GetOnTargetRate"
+    script "modules/alignment.nf"
+    process "GetOnTargetRate"
+
+    test("Calculates on-target rate from BAM and BED") {
+        tag "unit-test"
+
+        when {
+            process {
+                """
+                input[0] = Channel.of([
+                    "sample_1",
+                    "file_1",
+                    file("${projectDir}/tests/data/lambda/lambda_mut.bam"),
+                    file("${projectDir}/tests/data/lambda/lambda_mut.bam.bai")
+                ])
+                input[1] = Channel.of(file("${projectDir}/tests/fixtures/small.bed"))
+                """
+            }
+        }
+
+        then {
+            assert process.success
+
+            // Output is a tuple [sample_id, file_id, on_target_rate_yml]
+            assert process.out[0][0][0] == "sample_1"
+            assert process.out[0][0][1] == "file_1"
+            assert path(process.out[0][0][2]).fileName.toString() == "sample_1_on_target_rate.yml"
+
+            // YAML file should contain on-target rate data
+            def content = path(process.out[0][0][2]).text
+            assert content.contains("total_reads:")
+            assert content.contains("on_target_reads:")
+            assert content.contains("off_target_reads:")
+        }
+    }
+}
