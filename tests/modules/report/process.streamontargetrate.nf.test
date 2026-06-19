@@ -24,10 +24,10 @@ nextflow_process {
             assert process.success
 
             def yml = path(process.out[0][0][2]).yaml
-            assert yml.total_reads == 1000
-            assert yml.on_target_reads == 900
-            assert yml.off_target_reads == 100
-            assert yml.cards.on_target_rate == 90.0
+            assert yml.total_reads == 181165
+            assert yml.on_target_reads == 173562
+            assert yml.off_target_reads == 7603
+            assert yml.cards.on_target_rate == 95.8
         }
     }
 
@@ -51,16 +51,10 @@ nextflow_process {
             assert process.success
 
             def yml = path(process.out[0][0][2]).yaml
-            // on_target_rate.yml: 1000 total, 900 on, 100 off
-            // on_target_rate_live.yml: 181165 total, 173562 on, 7603 off
-            // Accumulated: 182165 total, 174462 on, 7703 off
-            assert yml.total_reads == 182165
-            assert yml.on_target_reads == 174462
-            assert yml.off_target_reads == 7703
-
-            // Recalculated rate: 174462 / 182165 * 100 ≈ 95.8
-            assert yml.cards.on_target_rate >= 95.0
-            assert yml.cards.on_target_rate <= 96.0
+            assert yml.total_reads == 362330
+            assert yml.on_target_reads == 347124
+            assert yml.off_target_reads == 15206
+            assert yml.cards.on_target_rate == 95.8
         }
     }
 
