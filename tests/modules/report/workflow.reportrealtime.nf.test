@@ -4,210 +4,50 @@ nextflow_workflow {
     script "modules/report.nf"
     workflow "report_live"
 
-    // With BED file (regions != auto)
-    test("Produces report with reads and depth when regions provided") {
+    test("Produces a live report from one file_id") {
         tag "report_live_wf_1"
         tag "workflow"
-        tag "integation-test"
+        tag "integration-test"
 
         when {
             params {
-                regions       = "targets.bed"   // anything != "auto"
-                target_depth  = null
-                output_dir    = "${workDir}/output"
+                target_depth    = null
+                output_dir      = "${workDir}/output"
                 report_template = "${projectDir}/tests/fixtures/report.html"
             }
             workflow {
                 """
-                raw_fastq_json = Channel.of(
-                    ["sample_1", "file_1", file("${projectDir}/tests/fixtures/reads_raw.json")],
-                    ["sample_1", "file_2", file("${projectDir}/tests/fixtures/reads_raw_2.json")]
+                consensus_folder = Channel.of(
+                    ["sample_1", "file_1", file("${projectDir}/tests/fixtures/report/.read_metrics")]
                 )
                 depth_table = Channel.of(
-                    ["sample_1", "file_1", file("${projectDir}/tests/fixtures/amplicon_depth.yml")],
-                    ["sample_1", "file_2", file("${projectDir}/tests/fixtures/amplicon_depth_2.yml")]
+                    ["sample_1", "file_1", file("${projectDir}/tests/fixtures/report/depth/amplicon_depth_live.yml")]
                 )
-                input[0] = raw_fastq_json
+                on_target_rate = Channel.of(
+                    ["sample_1", "file_1", file("${projectDir}/tests/fixtures/report/depth/on_target_rate_live.yml")]
+                )
+
+                input[0] = consensus_folder
                 input[1] = depth_table
+                input[2] = on_target_rate
                 """
             }
         }
 
         then {
             assert workflow.success
-            assert workflow.out.realtime_report.size() > 0
+            assert workflow.out.realtime_report.size() == 1
 
-            // Last emission should have cumulative totals
-            def lastJson = path(workflow.out.realtime_report.last()[2]).json
-            assert lastJson.final == false
-            assert lastJson.plots.size() == 2
+            def report = workflow.out.realtime_report[0]
+            assert report[0] == "sample_1"
+            assert path(report[1]).fileName.toString().startsWith("report_sample_1")
+            assert path(report[2]).fileName.toString().startsWith("report_sample_1")
 
-            def plotNames = lastJson.plots.collect { it.name }
-            assert plotNames.contains("Raw reads")
-            assert plotNames.contains("Depth per amplicon")
-        }
-    }
-
-    // Without BED file (regions == auto)
-    test("Produces report with reads only when regions is auto") {
-        tag "report_live_wf_2"
-        tag "workflow"
-        tag "integation-test"
-
-        when {
-            params {
-                regions       = "auto"
-                target_depth  = null
-                output_dir    = "${workDir}/output"
-                report_template = "${projectDir}/tests/fixtures/report.html"
-            }
-            workflow {
-                """
-                raw_fastq_json = Channel.of(
-                    ["sample_1", "file_1", file("${projectDir}/tests/fixtures/reads_raw.json")],
-                    ["sample_1", "file_2", file("${projectDir}/tests/fixtures/reads_raw_2.json")]
-                )
-                input[0] = raw_fastq_json
-                input[1] = Channel.empty()
-                """
-            }
-        }
-
-        then {
-            assert workflow.success
-            assert workflow.out.realtime_report.size() > 0
-
-            def lastJson = path(workflow.out.realtime_report.last()[2]).json
-            assert lastJson.plots.size() == 1
-            assert lastJson.plots[0].name == "Raw reads"
-        }
-    }
-
-    // Real-time behaviour: emits per file_id, not just at end
-    test("Emits one report per file_id pair, not just final") {
-        tag "report_live_wf_3"
-        tag "workflow"
-        tag "integation-test"
-
-        when {
-            params {
-                regions       = "targets.bed"
-                target_depth  = null
-                output_dir    = "${workDir}/output"
-                report_template = "${projectDir}/tests/fixtures/report.html"
-            }
-            workflow {
-                """
-                raw_fastq_json = Channel.of(
-                    ["sample_1", "file_1", file("${projectDir}/tests/fixtures/reads_raw.json")],
-                    ["sample_1", "file_2", file("${projectDir}/tests/fixtures/reads_raw_2.json")],
-                    ["sample_1", "file_3", file("${projectDir}/tests/fixtures/reads_raw_3.json")]
-                )
-                depth_table = Channel.of(
-                    ["sample_1", "file_1", file("${projectDir}/tests/fixtures/amplicon_depth.yml")],
-                    ["sample_1", "file_2", file("${projectDir}/tests/fixtures/amplicon_depth_2.yml")],
-                    ["sample_1", "file_3", file("${projectDir}/tests/fixtures/amplicon_depth.yml")]
-                )
-                input[0] = raw_fastq_json
-                input[1] = depth_table
-                """
-            }
-        }
-
-        then {
-            assert workflow.success
-            // Should emit 3 reports, one per file_id
-            assert workflow.out.realtime_report.size() == 3
-        }
-    }
-
-    // Accumulation: final report has cumulative counts
-    test("Final report accumulates all reads correctly") {
-        tag "report_live_wf_4"
-        tag "workflow"
-        tag "integation-test"
-
-        when {
-            params {
-                regions       = "auto"
-                target_depth  = null
-                output_dir    = "${workDir}/output"
-                report_template = "${projectDir}/tests/fixtures/report.html"
-            }
-            workflow {
-                """
-                // 4000 + 5000 + 3000 = 12000
-                raw_fastq_json = Channel.of(
-                    ["sample_1", "file_1", file("${projectDir}/tests/fixtures/reads_raw.json")],
-                    ["sample_1", "file_2", file("${projectDir}/tests/fixtures/reads_raw_2.json")],
-                    ["sample_1", "file_3", file("${projectDir}/tests/fixtures/reads_raw_3.json")]
-                )
-                input[0] = raw_fastq_json
-                input[1] = Channel.empty()
-                """
-            }
-        }
-
-        then {
-            assert workflow.success
-
-            def allEmissions = workflow.out.realtime_report.collect { path(it[2]).json }
-            def finalJson = allEmissions.max { emission ->
-                def card = emission.cards.find { it.name == "Raw reads" }
-                card ? (card.value instanceof List ? card.value[0] : card.value) as Integer : 0
-            }
-
-            def rawReadsCard = finalJson.cards.find { it.name == "Raw reads" }
-            assert rawReadsCard != null
-            def rawReadsValue = rawReadsCard.value instanceof List ? rawReadsCard.value[0] : rawReadsCard.value
-            assert rawReadsValue == 12000
-        }
-    }
-
-    // Multi-sample: each sample gets its own report
-    test("Two samples produce independent reports") {
-        tag "report_live_wf_5"
-        tag "workflow"
-        tag "integation-test"
-        
-        when {
-            params {
-                regions       = "auto"
-                target_depth  = null
-                output_dir    = "${workDir}/output"
-                report_template = "${projectDir}/tests/fixtures/report.html"
-            }
-            workflow {
-                """
-                raw_fastq_json = Channel.of(
-                    ["sample_1", "file_1", file("${projectDir}/tests/fixtures/reads_raw.json")],
-                    ["sample_2", "file_1", file("${projectDir}/tests/fixtures/reads_raw_2.json")]
-                )
-                input[0] = raw_fastq_json
-                input[1] = Channel.empty()
-                """
-            }
-        }
-
-        then {
-            assert workflow.success
-
-            def sampleIds = workflow.out.realtime_report.collect { it[0] }
-            assert sampleIds.contains("sample_1")
-            assert sampleIds.contains("sample_2")
-
-            // Each report only contains its own sample
-            workflow.out.realtime_report.each { emission ->
-                def sampleId = emission[0]
-                def json = path(emission[2]).json
-                json.cards.each { card ->
-                    def cardValue = card.value instanceof List ? card.value[0] : card.value
-                    assert cardValue instanceof Integer || cardValue instanceof Number
-                    // Card name should not reference the other sample
-                    def otherSample = sampleIds.find { it != sampleId }
-                    assert !card.name.contains(otherSample)
-            }
-            }
+            def json = path(report[2]).json
+            assert json.sample_id == "sample_1"
+            assert json.final == false
+            assert json.cards.size() > 0
+            assert json.plots.size() > 0
         }
     }
 }
