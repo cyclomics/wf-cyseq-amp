@@ -1,0 +1,54 @@
+nextflow_process {
+
+    name "Test Process IndexReference"
+    script "modules/common.nf"
+    process "IndexReference"
+
+    test("Indexes a FASTA reference and produces .fai") {
+        tag "unit-test"
+
+        when {
+            process {
+                """
+                input[0] = file("${projectDir}/tests/data/simple/tiny_ref.fasta")
+                """
+            }
+        }
+
+        then {
+            assert process.success
+
+            // Output is a tuple [reference, reference.fai]
+            assert process.out[0][0].size() == 2
+            assert path(process.out[0][0][0]).fileName.toString() == "tiny_ref.fasta"
+            assert path(process.out[0][0][1]).fileName.toString() == "tiny_ref.fasta.fai"
+
+            // .fai file should contain at least one line
+            def faiLines = path(process.out[0][0][1]).readLines()
+            assert faiLines.size() >= 1
+            // First column of .fai is the contig name
+            assert faiLines[0].startsWith("chr1")
+        }
+    }
+
+    test("Indexes lambda phage reference") {
+        tag "unit-test"
+
+        when {
+            process {
+                """
+                input[0] = file("${projectDir}/tests/data/lambda/lambda_phage.fasta")
+                """
+            }
+        }
+
+        then {
+            assert process.success
+
+            assert path(process.out[0][0][1]).fileName.toString() == "lambda_phage.fasta.fai"
+            def faiLines = path(process.out[0][0][1]).readLines()
+            assert faiLines.size() >= 1
+            assert faiLines[0].startsWith("J02459.1")
+        }
+    }
+}

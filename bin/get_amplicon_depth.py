@@ -6,9 +6,10 @@ depth per amplicon, and writes a YAML file containing Plotly chart data.
 
 import argparse
 import statistics
-import yaml
 from collections import defaultdict
 from pathlib import Path
+
+import yaml
 
 
 def parse_bed(bed_file: str) -> list[dict]:
@@ -21,36 +22,70 @@ def parse_bed(bed_file: str) -> list[dict]:
         3: amplicon name
     """
     amplicons = []
-    with open(bed_file) as f:
-        for line in f:
+
+    with open(bed_file, encoding="utf-8") as f:
+        for lineno, line in enumerate(f, start=1):
             line = line.strip()
+
             if not line or line.startswith("#"):
                 continue
-            fields = line.split("\t")
-            amplicons.append({
-                "chrom": fields[0],
-                "start": int(fields[1]),
-                "end": int(fields[2]),
-                "name": fields[3],
-            })
+
+            fields = line.split()
+
+            if len(fields) < 3:
+                raise ValueError(
+                    f"Invalid BED line {lineno}: expected at least 3 columns, got {len(fields)}: {line!r}"
+                )
+
+            amplicons.append(
+                {
+                    "chrom": fields[0],
+                    "start": int(fields[1]),
+                    "end": int(fields[2]),
+                    "name": fields[3] if len(fields) > 3 else f"amplicon_{lineno}",
+                }
+            )
 
     return amplicons
 
 
-def parse_depth(depth_tsv: str, amplicons: list[dict]) -> dict[str, list[int]]:
+def parse_depth(
+    depth_tsv: str,
+    amplicons: list[dict],
+) -> dict[str, list[int]]:
     """
     Read samtools depth output and bucket per-base depths by amplicon name.
+
+    Expected format:
+        chrom <whitespace> pos <whitespace> depth
     """
     depths: dict[str, list[int]] = defaultdict(list)
 
     with open(depth_tsv) as f:
-        for line in f:
+        for lineno, line in enumerate(f, start=1):
             line = line.strip()
+
             if not line:
                 continue
-            chrom, pos, depth = line.split("\t")
-            pos = int(pos)
-            depth = int(depth)
+
+            fields = line.split()
+
+            if len(fields) != 3:
+                raise ValueError(
+                    f"Invalid depth line {lineno}: "
+                    f"expected 3 columns, got {len(fields)}: {line!r}"
+                )
+
+            chrom, pos_str, depth_str = fields
+
+            try:
+                pos = int(pos_str)
+                depth = int(depth_str)
+            except ValueError as e:
+                raise ValueError(
+                    f"Invalid depth line {lineno}: "
+                    f"position and depth must be integers: {line!r}"
+                ) from e
 
             for amp in amplicons:
                 if chrom == amp["chrom"] and amp["start"] < pos <= amp["end"]:
