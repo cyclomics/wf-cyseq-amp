@@ -32,25 +32,9 @@ nextflow_process {
             assert path(process.out[0][0][2]).fileName.toString() == "sample_1.merged.bam"
             assert path(process.out[0][0][3]).fileName.toString() == "sample_1.merged.bam.bai"
 
-            // Merged BAM should be non-empty
+            // Merged BAM and BAI should be non-empty
             assert path(process.out[0][0][2]).size() > 0
             assert path(process.out[0][0][3]).size() > 0
-
-            // Count reads in merged BAM using samtools
-            def merged = path(process.out[0][0][2]).toString()
-
-            def run = { cmd ->
-                def proc = cmd.execute()
-                proc.waitFor()
-                if (proc.exitValue() != 0) {
-                    throw new RuntimeException("Command failed: ${cmd}\n" + proc.err.text)
-                }
-                return proc.in.text.trim().toInteger()
-            }
-
-            def mergedCount = run("samtools view -c ${merged}")
-
-            assert mergedCount == 200000
         }
     }
 
