@@ -1,0 +1,11 @@
+name: Depth per amplicon
+data:
+  type: bar
+  x:
+  - AMP1
+  - AMP2
+  - AMP3
+  y:
+  - 500.0
+  - 400.0
+  - 600.0

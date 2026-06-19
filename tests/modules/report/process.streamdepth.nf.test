@@ -1,8 +1,8 @@
 nextflow_process {
 
-    name "Test UpdateRunningDepth"
+    name "Test StreamDepth"
     script "modules/report.nf"
-    process "UpdateRunningDepth"
+    process "StreamDepth"
     
     // First run, no prior published file
     test("First file, no prior accumulation") {
@@ -18,7 +18,7 @@ nextflow_process {
                     "sample_1",
                     "file_1",
                     file("${projectDir}/tests/fixtures/amplicon_depth.yml"),
-                    file("amplicon_depth_running.yml")
+                    file("amplicon_depth_live.yml")
                 ])
                 """
             }
@@ -50,7 +50,7 @@ nextflow_process {
                     "sample_1",
                     "file_2",
                     file("${projectDir}/tests/fixtures/amplicon_depth_2.yml"),
-                    file("${projectDir}/tests/fixtures/amplicon_depth_running.yml")
+                    file("${projectDir}/tests/fixtures/amplicon_depth_live.yml")
                 ])
                 """
             }
@@ -81,7 +81,7 @@ nextflow_process {
                     "sample_1",
                     "file_1",
                     file("${projectDir}/tests/fixtures/amplicon_depth_2.yml"),
-                    file("${projectDir}/tests/fixtures/amplicon_depth_running.yml")
+                    file("${projectDir}/tests/fixtures/amplicon_depth_live.yml")
                 ])
                 """
             }
@@ -128,7 +128,7 @@ data:
                     "sample_1",
                     "file_1",
                     zeroDepth,
-                    file("amplicon_depth_running.yml")
+                    file("amplicon_depth_live.yml")
                 ])
                 """
             }

@@ -1,0 +1,36 @@
+nextflow_workflow {
+
+    name "Test Workflow make_consensus"
+    script "modules/consensus.nf"
+    workflow "make_consensus"
+
+    test("Basic end-to-end consensus workflow wiring") {
+        tag "workflow"
+        tag "unit-test"
+
+        when {
+            workflow {
+                """
+                input[0] = Channel.of([
+                    "sample_1",
+                    "file01",
+                    file("${projectDir}/tests/fixtures/small.fastq")
+                ])
+
+                input[1] = Channel.of([
+                    file("${projectDir}/tests/fixtures/ref.fasta"),
+                    "ref"
+                ])
+                """
+            }
+        }
+
+        then {
+            assert workflow.success
+            // Expect the workflow to emit consensus_fastq and consensus_folder outputs
+            assert workflow.out.consensus_fastq != null
+            assert workflow.out.consensus_folder != null
+        }
+    }
+
+}

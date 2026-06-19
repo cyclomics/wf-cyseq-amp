@@ -3,9 +3,9 @@ import argparse
 import json
 from pathlib import Path
 from typing import Any
+
 import pandas as pd
 
-TAB_PRIORITY = 2
 TAB_NAME = "variant-table"
 
 COLUMN_SCHEMA = {
@@ -131,34 +131,33 @@ def restructure_annotations(df: pd.DataFrame) -> pd.DataFrame:
 
     return annotation_df
 
-def main(vcf_file: Path, variant_table_file: Path, priority_limit: int) -> None:
+def main(vcf_file: Path, variants_tsv: Path, variants_json: Path) -> None:
     json_obj = {
         TAB_NAME: {
             "name": TAB_NAME,
             "data": [],
             "columns": [],
-            "column_types": {},
-            "priority": TAB_PRIORITY
+            "column_types": {}
         }
     }
 
-    if TAB_PRIORITY < priority_limit:
-        raw_df = load_vcf(vcf_file)
-        processed_df = restructure_annotations(raw_df)
+    raw_df = load_vcf(vcf_file)
+    processed_df = restructure_annotations(raw_df)
 
-        json_obj[TAB_NAME]["columns"] = processed_df.columns.tolist()
-        json_obj[TAB_NAME]["data"] = processed_df.to_dict(orient="records")
+    with open(variants_tsv, "w", encoding="utf-8") as fh:
+        processed_df.to_csv(fh, sep="\t", index=False)
 
-        # NEW: send schema to frontend
-        json_obj[TAB_NAME]["column_types"] = COLUMN_SCHEMA
+    json_obj[TAB_NAME]["columns"] = processed_df.columns.tolist()
+    json_obj[TAB_NAME]["data"] = processed_df.to_dict(orient="records")
+    json_obj[TAB_NAME]["column_types"] = COLUMN_SCHEMA
 
-    with open(variant_table_file, "w", encoding="utf-8") as fh:
+    with open(variants_json, "w", encoding="utf-8") as fh:
         json.dump(json_obj, fh, indent=2)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("vcf_file", type=Path)
-    parser.add_argument("variant_table_file", type=Path)
-    parser.add_argument("--priority-limit", type=int, default=89)
+    parser.add_argument("variants_tsv", type=Path)
+    parser.add_argument("variants_json", type=Path)
     args = parser.parse_args()
-    main(args.vcf_file, args.variant_table_file, args.priority_limit)
+    main(args.vcf_file, args.variants_tsv, args.variants_json)

@@ -15,14 +15,14 @@ nextflow_process {
             process {
                 """
                 input[0] = Channel.of([
-                    file("${projectDir}/tests/data/lambda/lambda_phage.fasta"),
-                    file("${projectDir}/tests/data/lambda/lambda_phage.fasta.fai")
-                ])
-                input[1] = Channel.of([
                     "sample_1",
                     "file_1",
                     file("${projectDir}/tests/data/lambda/lambda_mut.bam"),
                     file("${projectDir}/tests/data/lambda/lambda_mut.bam.bai")
+                ])
+                input[1] = Channel.of([
+                    file("${projectDir}/tests/data/lambda/lambda_phage.fasta"),
+                    file("${projectDir}/tests/data/lambda/lambda_phage.fasta.fai")
                 ])
                 input[2] = Channel.of(file("${projectDir}/tests/fixtures/small.bed"))
                 """

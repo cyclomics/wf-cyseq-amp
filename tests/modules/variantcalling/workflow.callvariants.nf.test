@@ -17,15 +17,15 @@ nextflow_workflow {
                     ["sample_1", "file_1", file("${projectDir}/tests/data/lambda/lambda_mut.bam"), file("${projectDir}/tests/data/lambda/lambda_mut.bam.bai")],
                     ["sample_2", "file_1", file("${projectDir}/tests/data/lambda/lambda_mut.bam"), file("${projectDir}/tests/data/lambda/lambda_mut.bam.bai")]
                 )
-                ch_positions = Channel.of(file("${projectDir}/tests/fixtures/small.bed"))
                 ch_reference = Channel.of([
                     file("${projectDir}/tests/data/lambda/lambda_phage.fasta"),
                     file("${projectDir}/tests/data/lambda/lambda_phage.fasta.fai")
                 ])
+                ch_regions = Channel.of(file("${projectDir}/tests/fixtures/small.bed"))
 
                 input[0] = ch_reads_aligned
-                input[1] = ch_positions.collect()
-                input[2] = ch_reference.collect()
+                input[1] = ch_reference.collect()
+                input[2] = ch_regions.collect()
                 """
             }
         }

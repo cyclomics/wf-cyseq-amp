@@ -1,0 +1,98 @@
+nextflow_process {
+
+    name "Test Process Minimap2Align"
+    script "modules/alignment.nf"
+    process "Minimap2Align"
+
+    test("Aligns FASTQ reads to reference with map-ont mode") {
+        tag "unit-test"
+
+        when {
+            process {
+                """
+                input[0] = Channel.of([
+                    "sample_1",
+                    "file_1",
+                    file("${projectDir}/tests/data/simple/dummy.fastq")
+                ])
+                input[1] = Channel.of([
+                    file("${projectDir}/tests/data/simple/tiny_ref.fasta"),
+                    file("${projectDir}/tests/data/simple/tiny_ref.fasta") // placeholder for index
+                ])
+                input[2] = "map-ont"
+                """
+            }
+        }
+
+        then {
+            assert process.success
+
+            // Output is a tuple [sample_id, file_id, sam]
+            assert process.out[0][0][0] == "sample_1"
+            assert process.out[0][0][1] == "file_1"
+            assert path(process.out[0][0][2]).fileName.toString() == "file_1.sam"
+
+            // SAM file should contain header and alignments
+            def samContent = path(process.out[0][0][2]).text
+            assert samContent.contains("@SQ")
+            assert samContent.contains("chr1")
+        }
+    }
+
+    test("Aligns reads to lambda phage reference") {
+        tag "unit-test"
+
+        when {
+            process {
+                """
+                input[0] = Channel.of([
+                    "sample_1",
+                    "file_1",
+                    file("${projectDir}/tests/data/simple/dummy.fastq")
+                ])
+                input[1] = Channel.of([
+                    file("${projectDir}/tests/data/lambda/lambda_phage.fasta"),
+                    file("${projectDir}/tests/data/lambda/lambda_phage.fasta.fai")
+                ])
+                input[2] = "map-ont"
+                """
+            }
+        }
+
+        then {
+            assert process.success
+
+            def samContent = path(process.out[0][0][2]).text
+            assert samContent.contains("@SQ")
+            assert samContent.contains("J02459.1")
+        }
+    }
+
+    test("Supports sr alignment mode") {
+        tag "unit-test"
+
+        when {
+            process {
+                """
+                input[0] = Channel.of([
+                    "sample_1",
+                    "file_1",
+                    file("${projectDir}/tests/data/simple/dummy.fastq")
+                ])
+                input[1] = Channel.of([
+                    file("${projectDir}/tests/data/simple/tiny_ref.fasta"),
+                    file("${projectDir}/tests/data/simple/tiny_ref.fasta")
+                ])
+                input[2] = "sr"
+                """
+            }
+        }
+
+        then {
+            assert process.success
+
+            assert path(process.out[0][0][2]).fileName.toString() == "file_1.sam"
+            assert path(process.out[0][0][2]).exists()
+        }
+    }
+}

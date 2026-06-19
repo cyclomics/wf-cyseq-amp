@@ -1,0 +1,40 @@
+nextflow_process {
+
+    name "Test Process CyseqConsensus"
+    script "modules/consensus.nf"
+    process "CyseqConsensus"
+
+    test("Generates consensus from name-sorted BAM") {
+        tag "unit-test"
+        tag "long-running"
+
+        when {
+            process {
+                """
+                input[0] = Channel.of([
+                    "sample_1",
+                    "file_1",
+                    file("${projectDir}/tests/data/lambda/lambda_mut.namesort.bam")
+                ])
+                input[1] = Channel.of([
+                    file("${projectDir}/tests/data/lambda/lambda_phage.fasta"),
+                    file("${projectDir}/tests/data/lambda/lambda_phage.fasta.fai")
+                ])
+                """
+            }
+        }
+
+        then {
+            assert process.success
+
+            // Output is a tuple [sample_id, file_id, consensus.sam, consensus_folder]
+            assert process.out[0][0][0] == "sample_1"
+            assert process.out[0][0][1] == "file_1"
+            assert path(process.out[0][0][2]).fileName.toString() == "consensus.sam"
+            assert path(process.out[0][0][3]).fileName.toString() == "file_1_consensus"
+
+            // Consensus SAM should exist
+            assert path(process.out[0][0][2]).exists()
+        }
+    }
+}

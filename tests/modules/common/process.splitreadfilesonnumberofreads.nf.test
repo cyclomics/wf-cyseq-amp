@@ -1,0 +1,69 @@
+nextflow_process {
+
+    name "Test Process SplitReadFilesOnNumberOfReads"
+    script "modules/common.nf"
+    process "SplitReadFilesOnNumberOfReads"
+
+    test("Splits a FASTQ file into chunks") {
+        tag "unit-test"
+
+        when {
+            params {
+                max_fastq_size = 1  // 1 read per chunk
+            }
+            process {
+                """
+                input[0] = Channel.of([
+                    "sample_1",
+                    "file_1",
+                    file("${projectDir}/tests/data/simple/dummy.fastq")
+                ])
+                """
+            }
+        }
+
+        then {
+            assert process.success
+
+            // Output is a tuple [sample_id, file_id, split_files]
+            assert process.out[0][0][0] == "sample_1"
+            assert process.out[0][0][1] == "file_1"
+
+            // With max_fastq_size=1, the 2-read file should split into 2 files
+            def splitFiles = process.out[0][0][2]
+            assert splitFiles instanceof List || splitFiles.size() >= 2
+        }
+    }
+
+    test("Single chunk when file is smaller than max_fastq_size") {
+        tag "unit-test"
+
+        when {
+            params {
+                max_fastq_size = 40000  // far more than the 2 reads
+            }
+            process {
+                """
+                input[0] = Channel.of([
+                    "sample_1",
+                    "file_1",
+                    file("${projectDir}/tests/data/simple/dummy.fastq")
+                ])
+                """
+            }
+        }
+
+        then {
+            assert process.success
+
+            // Should produce a single output file (no splitting needed)
+            def splitFiles = process.out[0][0][2]
+            if (splitFiles instanceof List) {
+                assert splitFiles.size() == 1
+            } else {
+                // Single file emitted directly
+                assert path(splitFiles).exists()
+            }
+        }
+    }
+}

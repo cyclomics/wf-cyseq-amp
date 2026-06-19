@@ -1,0 +1,53 @@
+nextflow_workflow {
+
+    name "Test workflow: report_live"
+    script "modules/report.nf"
+    workflow "report_live"
+
+    test("Produces a live report from one file_id") {
+        tag "report_live_wf_1"
+        tag "workflow"
+        tag "integration-test"
+
+        when {
+            params {
+                target_depth    = null
+                output_dir      = "${workDir}/output"
+                report_template = "${projectDir}/tests/fixtures/report.html"
+            }
+            workflow {
+                """
+                consensus_folder = Channel.of(
+                    ["sample_1", "file_1", file("${projectDir}/tests/fixtures/report/.read_metrics2")]
+                )
+                depth_table = Channel.of(
+                    ["sample_1", "file_1", file("${projectDir}/tests/fixtures/report/depth/amplicon_depth.yml")]
+                )
+                on_target_rate = Channel.of(
+                    ["sample_1", "file_1", file("${projectDir}/tests/fixtures/report/depth/on_target_rate.yml")]
+                )
+
+                input[0] = consensus_folder
+                input[1] = depth_table
+                input[2] = on_target_rate
+                """
+            }
+        }
+
+        then {
+            assert workflow.success
+            assert workflow.out.live_report.size() == 1
+
+            def report = workflow.out.live_report[0]
+            assert report[0] == "sample_1"
+            assert path(report[1]).fileName.toString().startsWith("report_sample_1")
+            assert path(report[2]).fileName.toString().startsWith("report_sample_1")
+
+            def json = path(report[2]).json
+            assert json.sample_id == "sample_1"
+            assert json.final == false
+            assert json.cards.size() > 0
+            assert json.plots.size() > 0
+        }
+    }
+}

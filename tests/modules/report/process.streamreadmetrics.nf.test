@@ -1,0 +1,44 @@
+nextflow_process {
+
+    name "Test StreamReadMetrics"
+    script "modules/report.nf"
+    process "StreamReadMetrics"
+
+    test("Generates read metrics from published file") {
+        tag "unit-test"
+
+        when {
+            process {
+                """
+                input[0] = Channel.of([
+                    "sample_1",
+                    "file_1",
+                    file("${projectDir}/tests/fixtures/report/.prev_read_metrics"),
+                    file("${projectDir}/tests/fixtures/report/.read_metrics")
+                ])
+                """
+            }
+        }
+
+        then {
+            assert process.success
+
+            // Number of explicit outputs
+            assert process.out[0][0].size() == 5
+
+            // Number of plot files
+            assert process.out[0][0][4].size() == 15
+            
+
+            def yml = path(process.out[0][0][4][0]).yaml
+            assert yml.name =="consensus_length/histogram_all"
+            println(process.out[0][0].size())
+            println(process.out[0][0][4].size())
+
+            // def yml = path(process.out[0][0][4][0]).yaml
+            // println(yml)
+            // assert yml.name == "consensus_length/histogram_all"
+            // assert yml['success']['grouped']['n'] == 181265
+        }
+    }
+}

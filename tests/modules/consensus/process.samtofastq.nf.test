@@ -1,0 +1,38 @@
+nextflow_process {
+
+    name "Test Process SamToFastq"
+    script "modules/consensus.nf"
+    process "SamToFastq"
+
+    test("Converts SAM to FASTQ") {
+        tag "unit-test"
+
+        when {
+            process {
+                """
+                // Create a minimal SAM file from the test BAM
+                input[0] = Channel.of([
+                    "sample_1",
+                    "file_1",
+                    file("${projectDir}/tests/data/lambda/lambda_mut.bam")
+                ])
+                """
+            }
+        }
+
+        then {
+            assert process.success
+
+            // Output is a tuple [sample_id, file_id, fastq]
+            assert process.out[0][0][0] == "sample_1"
+            assert process.out[0][0][1] == "file_1"
+            assert path(process.out[0][0][2]).fileName.toString() == "file_1.fastq"
+
+            // FASTQ should contain reads
+            def lines = path(process.out[0][0][2]).readLines()
+            assert lines.size() > 0
+            // FASTQ format: first line starts with @
+            assert lines[0].startsWith("@")
+        }
+    }
+}

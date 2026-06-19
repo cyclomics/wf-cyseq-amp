@@ -7,16 +7,16 @@
 workflow call_variants {
     take:
         reads_aligned
-        regions
         reference
+        regions
 
     main:
-        CallVariantsLofreq(reference, reads_aligned, regions)
+        CallVariantsLofreq(reads_aligned, reference, regions)
         AnnotateVariants(CallVariantsLofreq.out)
         WriteVariantTable(AnnotateVariants.out)
     emit:
         variants = AnnotateVariants.out
-        variant_table = WriteVariantTable.out
+        variant_table = WriteVariantTable.out.map { sample_id, _tsv, json -> tuple(sample_id, json) }
 }
 
 
@@ -26,15 +26,15 @@ workflow call_variants {
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 process CallVariantsLofreq {
-    publishDir { "${params.output_dir}/${sample_id}/variants" }, mode: 'copy'
+    // publishDir { "${params.output_dir}/${sample_id}/variants" }, mode: 'copy'
 
     container params.containers.lofreq
     memory 20.GB
     cpus 8
 
     input:
-        tuple path(reference), val(reference_idx)
         tuple val(sample_id), val(file_id), path(bam), path(bai)
+        tuple path(reference), val(reference_idx)
         path(bed)
 
     output:
@@ -76,7 +76,7 @@ process AnnotateVariants {
 }
 
 process WriteVariantTable {
-    publishDir "${params.output_dir}/QC", mode: 'copy'
+    publishDir { "${params.output_dir}/${sample_id}/variants" }, mode: 'copy'
     
     container params.containers.alnutils
     memory 4.GB
@@ -86,11 +86,11 @@ process WriteVariantTable {
     tuple val(sample_id), val(file_id), path(vcf_file)
 
     output:
-    tuple val(sample_id), path("${vcf_file.simpleName}_table.json")
+    tuple val(sample_id), path("${vcf_file.simpleName}.tsv"), path("${vcf_file.simpleName}.json")
 
     script:
     """
-    write_variants_table.py ${vcf_file} ${vcf_file.simpleName}_table.json --priority-limit 89
+    write_variants_table.py ${vcf_file} ${vcf_file.simpleName}.tsv ${vcf_file.simpleName}.json
     """
 }
 

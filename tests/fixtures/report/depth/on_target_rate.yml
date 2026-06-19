@@ -1,0 +1,5 @@
+total_reads: 181165
+on_target_reads: 173562
+off_target_reads: 7603
+cards:
+  on_target_rate: 95.8

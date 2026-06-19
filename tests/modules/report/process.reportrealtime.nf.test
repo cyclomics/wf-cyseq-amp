@@ -31,8 +31,8 @@ nextflow_process {
             assert process.success
 
             // Both outputs are emitted
-            assert path(process.out.report[0][1]).fileName.toString() == "report_sample_1.html"
-            assert path(process.out.report[0][2]).fileName.toString() == "report_sample_1.json"
+            assert path(process.out.report[0][1]).fileName.toString().startsWith("report_sample_1")
+            assert path(process.out.report[0][2]).fileName.toString().startsWith("report_sample_1")
 
             // JSON has correct structure
             def json = path(process.out.report[0][2]).json

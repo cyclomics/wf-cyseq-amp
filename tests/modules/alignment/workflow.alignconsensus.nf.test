@@ -1,0 +1,56 @@
+nextflow_workflow {
+
+    name "Test workflow: align_consensus"
+    script "modules/alignment.nf"
+    workflow "align_consensus"
+
+    test("Aligns consensus reads and computes on-target metrics") {
+        tag "workflow"
+        tag "unit-test"
+
+        when {
+            workflow {
+                """
+                ch_consensus_reads = Channel.of([
+                    "sample_1",
+                    "file_1",
+                    file("${projectDir}/tests/data/simple/dummy.fastq")
+                ])
+
+                ch_reference = Channel.of([
+                    file("${projectDir}/tests/data/simple/tiny_ref.fasta"),
+                    file("${projectDir}/tests/data/simple/tiny_ref.fasta")
+                ])
+
+                ch_regions = Channel.of(file("${projectDir}/tests/fixtures/small.bed"))
+                ch_mode = Channel.of("sr")
+
+                input[0] = ch_consensus_reads
+                input[1] = ch_reference
+                input[2] = ch_regions
+                input[3] = ch_mode
+                """
+            }
+        }
+
+        then {
+            assert workflow.success
+            assert workflow.out.aligned_consensus_bam.size() == 1
+            assert workflow.out.depth_table.size() == 1
+            assert workflow.out.on_target_rate.size() == 1
+
+            assert workflow.out.aligned_consensus_bam[0][0] == "sample_1"
+            assert workflow.out.aligned_consensus_bam[0][1] == "file_1"
+            assert path(workflow.out.aligned_consensus_bam[0][2]).fileName.toString().endsWith(".bam")
+
+            assert workflow.out.depth_table[0][0] == "sample_1"
+            assert workflow.out.depth_table[0][1] == "file_1"
+            assert path(workflow.out.depth_table[0][2]).fileName.toString().endsWith("_amplicon_depth.yml")
+
+            assert workflow.out.on_target_rate[0][0] == "sample_1"
+            assert workflow.out.on_target_rate[0][1] == "file_1"
+            assert path(workflow.out.on_target_rate[0][2]).fileName.toString().endsWith("_on_target_rate.yml")
+        }
+    }
+
+}

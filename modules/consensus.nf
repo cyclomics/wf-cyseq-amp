@@ -45,26 +45,6 @@ process SamToFastq {
         """
 }
 
-process FilterAlignments {
-    container params.containers.samtools
-    
-    input:
-        tuple val(sample_id), val(file_id), path(bam_in), path(bai_in)
-
-    output:
-        tuple val(sample_id), val(file_id), path("${file_id}.filtered.bam"), path("${file_id}.filtered.bam.bai")
-
-    script:
-        """
-        samtools view -b \\
-          -F 256 \\
-          --input-fmt-option 'filter=[NM]<50 && mapq >20' \\
-          -o ${file_id}.filtered.bam \\
-          $bam_in 
-        samtools index ${file_id}.filtered.bam
-        """
-}
-
 process CyseqConsensus {
     cpus 8 // cpus = n + 4
     memory 18.GB

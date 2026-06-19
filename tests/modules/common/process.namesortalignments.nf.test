@@ -1,0 +1,36 @@
+nextflow_process {
+
+    name "Test Process NameSortAlignments"
+    script "modules/common.nf"
+    process "NameSortAlignments"
+
+    test("Sorts a BAM file by read name") {
+        tag "unit-test"
+
+        when {
+            process {
+                """
+                input[0] = Channel.of([
+                    "sample_1",
+                    "file_1",
+                    file("${projectDir}/tests/data/lambda/lambda_mut.bam")
+                ])
+                """
+            }
+        }
+
+        then {
+            assert process.success
+
+            // Output is a tuple [sample_id, file_id, bam]
+            assert process.out[0][0].size() == 3
+            assert process.out[0][0][0] == "sample_1"
+            assert process.out[0][0][1] == "file_1"
+            assert path(process.out[0][0][2]).fileName.toString() == "file_1.bam"
+
+            // BAM file should exist and be non-empty
+            assert path(process.out[0][0][2]).exists()
+            assert path(process.out[0][0][2]).size() > 0
+        }
+    }
+}
