@@ -16,7 +16,7 @@ workflow call_variants {
         WriteVariantTable(AnnotateVariants.out)
     emit:
         variants = AnnotateVariants.out
-        variant_table = WriteVariantTable.out
+        variant_table = WriteVariantTable.out.map { sample_id, _tsv, json -> tuple(sample_id, json) }
 }
 
 
