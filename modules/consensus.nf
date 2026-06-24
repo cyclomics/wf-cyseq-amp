@@ -30,8 +30,8 @@ workflow make_consensus {
 
 process SamToFastq {
     container params.containers.samtools
-    cpus 4
-    memory 5.GB
+    cpus 1
+    memory 50.MB
 
     input:
         tuple val(sample_id), val(file_id), path(sam)
@@ -47,7 +47,7 @@ process SamToFastq {
 
 process CyseqConsensus {
     cpus 8 // cpus = n + 4
-    memory 18.GB
+    memory 20.GB
     
     container params.containers.cyseqtools
 

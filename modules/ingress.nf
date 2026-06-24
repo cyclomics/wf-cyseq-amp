@@ -105,6 +105,8 @@ workflow ingress {
 
 process SplitFastq {
     container params.containers.seqkit
+    cpus 1
+    memory 1.GB
     
     input:
         tuple val(sample_id), val(file_id), path(fastq)

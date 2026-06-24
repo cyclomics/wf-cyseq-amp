@@ -70,6 +70,8 @@ process Minimap2Align {
 process MergeBamFiles {
     publishDir { "${params.output_dir}/${sample_id}/consensus_alignments" }, mode: 'copy'
     container params.containers.samtools
+    cpus 1
+    memory 500.MB
 
     input:
         tuple val(sample_id), val(file_ids), path(bams_in)
@@ -86,6 +88,9 @@ process MergeBamFiles {
 
 process GetOnTargetRate {
     container params.containers.alnutils
+    cpus 1
+    memory 50.MB
+
     input:
         tuple val(sample_id), val(file_id), path(bam), path(bai)
         path(bed)
@@ -101,6 +106,8 @@ process GetOnTargetRate {
 
 process GetAmpliconDepth {
     container params.containers.alnutils
+    cpus 1
+    memory 50.MB
     
     input:
         tuple val(sample_id), val(file_id), path(bam), path(bai)

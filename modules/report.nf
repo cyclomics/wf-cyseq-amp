@@ -48,7 +48,7 @@ workflow report_live {
             .combine(live_read_metrics, by: [0, 1])
 
 
-        ReportStreamData(paired)
+        ReportStreamData(paired, channel.fromPath(params.report_template).collect())
         live_report = ReportStreamData.out.report
 
     emit:
@@ -62,9 +62,11 @@ workflow report_live {
 */
 
 process StreamDepth {
+    publishDir { "${params.output_dir}/${sample_id}/report/depth" }, mode: 'copy', overwrite: true
     container params.containers.alnutils
     maxForks 1
-    publishDir { "${params.output_dir}/${sample_id}/report/depth" }, mode: 'copy', overwrite: true
+    cpus 1
+    memory 50.MB
 
     input:
         tuple val(sample_id), val(file_id), path(depth_yml), path(published_file)
@@ -83,9 +85,11 @@ process StreamDepth {
 }
 
 process StreamOnTargetRate {
+    publishDir { "${params.output_dir}/${sample_id}/report/depth" }, mode: 'copy', overwrite: true
     container params.containers.alnutils
     maxForks 1
-    publishDir { "${params.output_dir}/${sample_id}/report/depth" }, mode: 'copy', overwrite: true
+    cpus 1
+    memory 50.MB
 
     input:
         tuple val(sample_id), val(file_id), path(on_target_rate_yml), path(published_file)
@@ -103,9 +107,11 @@ process StreamOnTargetRate {
 }
 
 process StreamReadMetrics {
+    publishDir { "${params.output_dir}/${sample_id}/report" }, mode: 'copy', overwrite: true
     container params.containers.cyseqtools
     maxForks 1
-    publishDir { "${params.output_dir}/${sample_id}/report" }, mode: 'copy', overwrite: true
+    cpus 1
+    memory 2.GB
 
     input:
         tuple val(sample_id), val(file_id), path(metrics_folder), path(published_folder)
@@ -123,15 +129,18 @@ process StreamReadMetrics {
 }
 
 process ReportStreamData {
+    publishDir "${params.output_dir}", mode: 'copy'
     container params.containers.alnutils
     maxForks 1
-    publishDir "${params.output_dir}", mode: 'copy'
+    cpus 1
+    memory 2.GB
 
     input:
         tuple val(sample_id), val(file_id),
               path(depth_yml),
               path(on_target_rate_yml),
               path(consensus_cards_yml), path(consensus_yml)
+        path report_template
 
     output:
         tuple val(sample_id), path("report_${sample_id}*.html"), path("report_${sample_id}.json"), emit: report
@@ -140,15 +149,17 @@ process ReportStreamData {
         def absoluteOutputDir = file(params.output_dir).toAbsolutePath()
         """
         report_live.py \
-            --template ${params.report_template} \
+            --template ${report_template} \
             --sample_id ${sample_id} \
             --clean_dir "${absoluteOutputDir}"
         """
 }
 
 process FinalizeReport {
-    container params.containers.alnutils
     publishDir "${params.output_dir}", mode: 'copy'
+    container params.containers.alnutils
+    cpus 1
+    memory 4.GB
 
     input:
         tuple val(sample_id), path(report_html), path(report_json), path(variant_table)

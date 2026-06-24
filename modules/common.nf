@@ -26,40 +26,10 @@ workflow common_workflow {
     PROCESSES
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-process SplitReadFilesOnNumberOfReads {
-    container params.containers.seqkit
-    cpus 4
-
-    input:
-        tuple val(sample_id), val(file_id), path(fq)
-
-    output:
-        tuple val(sample_id), val(file_id), path("split/${file_id}_*.fastq")
-
-    script:
-        """
-        seqkit split -j ${task.cpus} -e .gz -s $params.max_fastq_size --by-size-prefix ${file_id}_ -O split $fq
-        gunzip split/*.gz
-        """
-}
-
-process FilterShortReads {
-    container params.containers.seqkit
-
-    input:
-        tuple val(sample_id), val(file_id), path(fq)
-
-    output:
-        tuple val(sample_id), val("${file_id}"), path("${file_id}_filtered.fastq")
-
-    script:
-        """
-        seqkit seq -m ${params.min_raw_length} $fq > "${fq.simpleName}_filtered.fastq"
-        """
-}
-
 process IndexReference {
     container params.containers.samtools
+    cpus 1
+    memory 100.MB
     
     input:
         path(reference)
@@ -75,6 +45,8 @@ process IndexReference {
 
 process PosSortIndexAlignments {
     container params.containers.samtools
+    cpus 1
+    memory 100.MB
 
     input:
         tuple val(sample_id), val(file_id), path(sam)
@@ -92,6 +64,8 @@ process PosSortIndexAlignments {
 process NameSortAlignments {
     publishDir { "${params.output_dir}/${sample_id}/concatemer_alignments" }, mode: 'copy'
     container params.containers.samtools
+    cpus 1
+    memory 1.GB
 
     input:
         tuple val(sample_id), val(file_id), path(sam)
@@ -108,6 +82,8 @@ process NameSortAlignments {
 
 process GetAmpliconDepth {
     container params.containers.alnutils
+    cpus 1
+    memory 100.MB
     
     input:
         tuple val(sample_id), val(file_id), path(bam), path(bai)

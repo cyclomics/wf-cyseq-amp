@@ -27,11 +27,10 @@ workflow call_variants {
 */
 process CallVariantsLofreq {
     // publishDir { "${params.output_dir}/${sample_id}/variants" }, mode: 'copy'
-
     container params.containers.lofreq
-    memory 20.GB
     cpus 8
-
+    memory 5.GB
+    
     input:
         tuple val(sample_id), val(file_id), path(bam), path(bai)
         tuple path(reference), val(reference_idx)
@@ -57,11 +56,10 @@ process CallVariantsLofreq {
 
 process AnnotateVariants {
     publishDir { "${params.output_dir}/${sample_id}/variants" }, mode: 'copy'
-    
     container params.containers.alnutils
-    memory 4.GB
-    cpus 2
     maxForks 1
+    cpus 1
+    memory 200.MB
 
     input:
         tuple val(sample_id), val(file_id), path(vcf)
@@ -77,10 +75,9 @@ process AnnotateVariants {
 
 process WriteVariantTable {
     publishDir { "${params.output_dir}/${sample_id}/variants" }, mode: 'copy'
-    
     container params.containers.alnutils
-    memory 4.GB
-    cpus 2
+    cpus 1
+    memory 50.MB
 
     input:
     tuple val(sample_id), val(file_id), path(vcf_file)
