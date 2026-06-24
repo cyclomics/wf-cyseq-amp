@@ -12,468 +12,347 @@
     <meta http-equiv="Expires" content="0">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CyclomicsSeq Report</title>
+    <title>CySeq Amplicon Report</title>
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
     <style>
-        :root {
-            --bg: #f4f5f7;
-            --sidebar-bg: #1a1f2e;
-            --sidebar-width: 220px;
-            --header-height: 64px;
-            --accent: #4f8ef7;
-            --accent-hover: #3a7ae8;
-            --card-bg: #ffffff;
-            --text-primary: #1a1f2e;
-            --text-secondary: #6b7280;
-            --text-sidebar: #a0aec0;
-            --text-sidebar-active: #ffffff;
-            --border: #e5e7eb;
-            --active-indicator: #4f8ef7;
-            --font-body: 'IBM Plex Sans', sans-serif;
-            --font-mono: 'IBM Plex Mono', monospace;
-            --shadow-card: 0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.05);
-            --shadow-sidebar: 2px 0 12px rgba(0,0,0,0.15);
-        }
+    :root {
+        --bg: #f4f5f7;
+        --header-bg: #1a1f2e;
+        --header-height: 64px;
+        --accent: #4f8ef7;
+        --accent-hover: #3a7ae8;
+        --card-bg: #ffffff;
+        --text-primary: #1a1f2e;
+        --text-secondary: #6b7280;
+        --border: #e5e7eb;
+        --font-body: 'Poppins', sans-serif;
+        --font-mono: 'Poppins', monospace;
+        --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        body {
-            font-family: var(--font-body);
-            background: var(--bg);
-            color: var(--text-primary);
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            overflow-y: auto;
-        }
+    body {
+        font-family: var(--font-body);
+        background: var(--bg);
+        color: var(--text-primary);
+        min-height: 100vh;
+        overflow-y: auto;
+        padding-top: var(--header-height);
+    }
 
-        /* ── Header ── */
-        #header {
-            position: fixed;
-            top: 0; left: 0; right: 0;
-            height: var(--header-height);
-            background: var(--card-bg);
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            padding: 0 28px;
-            z-index: 100;
-            gap: 16px;
-        }
+    /* ── Hide Sidebar & Make Layout Sequential ── */
+    #sidebar {
+        display: none !important;
+    }
 
-        #header-title {
-            font-size: 15px;
-            font-weight: 600;
-            color: var(--text-primary);
-            letter-spacing: -0.01em;
-        }
+    .section {
+        display: block !important;
+        margin-bottom: 40px;
+    }
 
-        #header-sample {
-            font-family: var(--font-mono);
-            font-size: 12px;
-            color: var(--text-secondary);
-            background: var(--bg);
-            padding: 3px 10px;
-            border-radius: 20px;
-            border: 1px solid var(--border);
-        }
+    #main {
+        flex: 1;
+        padding: 32px 24px;
+        max-width: 1280px;
+        margin: 0 auto;
+        width: 100%;
+    }
 
-        #header-status {
-            margin-left: auto;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 12px;
-            color: var(--text-secondary);
-        }
+    /* ── Header ── */
+    #header {
+        position: fixed;
+        top: 0; left: 0; right: 0;
+        height: var(--header-height);
+        background: var(--header-bg);
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        padding: 0 32px;
+        z-index: 100;
+        gap: 16px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
 
-        #status-dot {
-            width: 8px; height: 8px;
-            border-radius: 50%;
-            background: #10b981;
-            animation: pulse 2s infinite;
-        }
+    #header-title {
+        font-size: 16px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+    }
 
-        #status-dot.final { background: #6b7280; animation: none; }
+    #header-sample {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: #a0aec0;
+        background: rgba(255, 255, 255, 0.12);
+        padding: 4px 12px;
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
-        }
+    #header-status {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        color: #a0aec0;
+    }
 
-        /* ── Layout ── */
-        #layout {
-            display: flex;
-            margin-top: var(--header-height);
-            min-height: calc(100vh - var(--header-height));
-        }
+    #status-dot {
+        width: 8px; height: 8px;
+        border-radius: 50%;
+        background: #10b981;
+        animation: pulse 2s infinite;
+    }
 
-        /* ── Sidebar ── */
-        #sidebar {
-            width: var(--sidebar-width);
-            background: var(--sidebar-bg);
-            box-shadow: var(--shadow-sidebar);
-            display: flex;
-            flex-direction: column;
-            flex-shrink: 0;
-            overflow-y: auto;
-            padding: 24px 0;
-        }
+    #status-dot.final { background: #6b7280; animation: none; }
 
-        .sidebar-section-label {
-            font-size: 10px;
-            font-weight: 600;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            color: #4a5568;
-            padding: 0 20px 8px;
-            margin-top: 16px;
-        }
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.4; }
+    }
 
-        .sidebar-section-label:first-child { margin-top: 0; }
+    /* ── Container Elements ── */
+    #generation-time {
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin-bottom: 24px;
+        font-family: var(--font-mono);
+    }
 
-        .nav-btn {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            width: 100%;
-            padding: 10px 20px;
-            background: none;
-            border: none;
-            cursor: pointer;
-            color: var(--text-sidebar);
-            font-family: var(--font-body);
-            font-size: 13.5px;
-            font-weight: 400;
-            text-align: left;
-            border-left: 3px solid transparent;
-            transition: all 0.15s ease;
-        }
+    /* ── Summary Statistics Cards Grid ── */
+    #cards-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 6px;
+        margin-top: 18px;
+        padding-bottom: 0px;
+    }
 
-        .nav-btn:hover {
-            background: rgba(255,255,255,0.05);
-            color: #e2e8f0;
-        }
+    .stat-card {
+        position: relative;
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 18px 22px;
+        box-shadow: var(--shadow-card);
+        transition: box-shadow 0.15s, border-color 0.15s;
+    }
 
-        .nav-btn.active {
-            color: var(--text-sidebar-active);
-            background: rgba(79, 142, 247, 0.12);
-            border-left-color: var(--active-indicator);
-            font-weight: 500;
-        }
+    .stat-card:hover { 
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+        border-color: #cbd5e1;
+    }
 
-        .nav-btn .nav-icon {
-            width: 16px; height: 16px;
-            opacity: 0.7;
-            flex-shrink: 0;
-        }
+    .stat-card .info-container {
+        position: absolute;
+        top: 14px; right: 14px;
+        width: 18px; height: 18px;
+    }
 
-        .nav-btn.active .nav-icon { opacity: 1; }
+    .stat-card .card-info-icon {
+        display: block;
+        width: 18px; height: 18px;
+        line-height: 16px;
+        text-align: center;
+        font-family: sans-serif;
+        font-size: 11px;
+        font-weight: bold;
+        color: var(--text-secondary);
+        border: 1px solid var(--text-secondary);
+        border-radius: 50%;
+        opacity: 0.5;
+        cursor: pointer;
+    }
 
-        .nav-btn .badge {
-            margin-left: auto;
-            font-size: 10px;
-            background: rgba(255,255,255,0.1);
-            color: #a0aec0;
-            padding: 1px 6px;
-            border-radius: 10px;
-            font-family: var(--font-mono);
-        }
+    .stat-card .card-info-icon:hover { opacity: 1; color: var(--accent); border-color: var(--accent); }
 
-        /* ── Main content ── */
-        #main {
-            flex: 1;
-            /* overflow-y: auto;
-            overflow-x: auto; */
-            padding: 28px 32px;
-        }
+    .stat-card .card-tooltip {
+        display: none;
+        position: absolute;
+        bottom: 100%; left: 50%;
+        transform: translateX(-50%);
+        margin-bottom: 8px;
+        background: var(--header-bg);
+        color: white;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 11px;
+        z-index: 1000;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        width: 220px;
+    }
 
-        /* ── Cards ── */
-        #cards-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 14px;
-            margin-bottom: 28px;
-        }
+    .stat-card .card-info-icon:hover + .card-tooltip { display: block; }
 
-        .stat-card {
-            position: relative;
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 16px 20px;
-            min-width: 160px;
-            box-shadow: var(--shadow-card);
-            transition: box-shadow 0.15s;
-        }
+    .stat-card .card-value {
+        font-size: 22px;
+        font-weight: 600;
+        color: var(--text-primary);
+        font-family: var(--font-mono);
+    }
 
-        .stat-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .stat-card .card-label {
+        font-size: 11px;
+        color: var(--text-secondary);
+        margin-top: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+    }
 
-        .stat-card .info-container {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            width: 18px;
-            height: 18px;
-        }
+    /* ── Section Content Wrappers ── */
+    .section-wrapper {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 28px;
+        margin-bottom: 32px;
+        box-shadow: var(--shadow-card);
+    }
 
-        .stat-card .card-info-icon {
-            display: block;
-            width: 18px;
-            height: 18px;
-            line-height: 18px;
-            text-align: center;
-            font-family: sans-serif;
-            font-size: 11px;
-            font-weight: bold;
-            color: #6b7280;
-            border: 1px solid #6b7280;
-            border-radius: 50%;
-            opacity: 0.5;
-            transition: opacity 0.15s;
-        }
+    .section-title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
 
-        .stat-card .card-info-icon:hover {
-            opacity: 1;
-            color: var(--accent);
-            border-color: var(--accent);
-        }
+    .section-help-box {
+        display: block !important;
+        background: var(--bg);
+        padding: 14px 18px;
+        border-radius: 6px;
+        font-size: 13px;
+        line-height: 1.6;
+        border-left: 4px solid var(--accent);
+        margin-top: 14px;
+    }
 
-        .stat-card .card-tooltip {
-            display: none;
-            position: absolute;
+    .section-help-box.open { display: block; }
 
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            margin-bottom: 8px;
+    /* ── Inner Plot View Button Tab Bars ── */
+    .plot-tabs {
+        display: flex;
+        gap: 6px;
+        margin-top: 18px;
+        padding-bottom: 12px;
+    }
 
-            background: var(--sidebar-bg);
-            color: white;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 11px;
-            z-index: 1000;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            width: 180px;
-            white-space: normal;
-        }
- 
-        .stat-card .card-tooltip::after {
-            content: '';
-            position: absolute;
-            bottom: -5px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 0;
-            height: 0;
-            border-top: 6px solid var(--sidebar-bg);
-            border-left: 6px solid transparent;
-            border-right: 6px solid transparent;
-        }
- 
-        .stat-card .card-info-icon:hover + .card-tooltip {
-            display: block;
-        }
+    .plot-tab-btn, 
+    #select-all, 
+    #show-selected, 
+    #show-all, 
+    #reset {
+        padding: 6px 14px;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        color: var(--text-secondary);
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        margin-bottom: 0px;
+        display: inline-block;
+    }
+
+    .plot-tab-btn:hover,
+    #select-all:hover, 
+    #show-selected:hover, 
+    #show-all:hover, 
+    #reset:hover {
+        background: var(--border);
+        color: var(--text-primary);
+    }
+
+    .plot-tab-btn.active,
+    #select-all.active, 
+    #show-selected.active, 
+    #show-all.active, 
+    #reset.active {
+        background: var(--accent);
+        color: white;
+        border-color: var(--accent);
+    }
+
+    .plot-container { 
+        margin-top: 20px; 
+        margin-bottom: 20px;
+        padding: 20px 24px;
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        box-shadow: var(--shadow-card);
+    }
+    .plot-container > .plot-card { display: none; }
+    .plot-container > .plot-card.active {
+        display: block;
+        animation: fadeIn 0.5s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(4px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .plot-card {
+        min-width: 400px;
+        max-width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    /* 2. Aggressively target and dissolve Plotly's forced canvas wrapper box */
+    .plot-card .js-plotly-plot,
+    .plot-card .plot-container.plotly {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    .plot-card h5 {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        margin-bottom: 16px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    /* ── DataTables & Output Responsive Viewports ── */
+    .table-responsive-container {
+        width: 100%;
+        overflow-x: auto;
+        margin-top: 16px;
+    }
+    #variant-table { width: 100% !important; }
 
 
-        .stat-card .card-value {
-            font-size: 22px;
-            font-weight: 600;
-            color: var(--text-primary);
-            font-family: var(--font-mono);
-            line-height: 1.1;
-        }
+    /* ── Empty states ── */
+    .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 40px 24px;
+        width: 100%;
+    }
+    .empty-state svg {
+        margin-bottom: 12px;
+        color: var(--text-secondary);
+    }
+</style>
 
-        .stat-card .card-label {
-            font-size: 10px;
-            color: var(--text-secondary);
-            margin-top: 4px;
-            font-weight: 400;
-        }
 
-        /* ── Sections ── */
-        .section {
-            display: none;
-        }
-
-        .section.active {
-            display: block;
-            animation: fadeIn 0.2s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(6px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-
-        /* ── Section Title Help Button & Box ── */
-        .section-title {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .section-help-btn {
-            display: inline-block;
-            width: 22px;
-            height: 22px;
-            line-height: 20px;
-            text-align: center;
-            background: transparent;
-            border: 1px solid var(--border);
-            color: var(--text-secondary);
-            border-radius: 50%;
-            font-size: 12px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.15s ease;
-            padding: 0;
-            user-select: none;
-        }
-
-        .section-help-btn:hover,
-        .section-help-btn.active {
-            color: var(--accent);
-            border-color: var(--accent);
-            background: rgba(79, 142, 247, 0.1);
-        }
-
-        /* Full width block that sits below title and forces layout content down */
-        .section-help-box {
-            display: none;
-            width: 100%;
-            background: var(--card-bg);
-            color: var(--text-primary);
-            padding: 14px 18px;
-            border-radius: 0px;
-            font-size: 13px;
-            line-height: 1.6;
-            border-left: 4px solid var(--accent);
-            border-top: 1px solid var(--border);
-            border-right: 1px solid var(--border);
-            border-bottom: 1px solid var(--border);
-            margin-top: 12px;
-            animation: fadeIn 0.15s ease;
-            min-width: 400px;
-            max-width: 100%;
-        }
-
-        .section-help-box.open {
-            display: block;
-        }
-
-        .empty-state {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 60px 20px;
-            color: var(--text-secondary);
-            gap: 12px;
-        }
-
-        .empty-state svg { opacity: 0.3; }
-
-        .empty-state p {
-            font-size: 14px;
-            font-weight: 400;
-        }
-
-        #generation-time {
-            font-size: 12px;
-            color: var(--text-secondary);
-            margin-bottom: 20px;
-            font-family: var(--font-mono);
-        }
-
-        /* ── Plots ── */
-        /* Container bar for sub-section plot buttons */
-        .plot-tabs {
-            display: flex;
-            gap: 8px;
-        }
-
-        /* Tab button styling matching your overall theme */
-        .plot-tab-btn {
-            padding: 6px 14px;
-            background: transparent;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            color: var(--text-secondary);
-            font-size: 12px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.15s ease;
-            margin-top: 20px;
-        }
-
-        .plot-tab-btn:hover {
-            background: var(--bg);
-            color: var(--text-primary);
-        }
-
-        /* Active tab presentation rule */
-        .plot-tab-btn.active {
-            background: var(--accent);
-            color: white;
-            border-color: var(--accent);
-        }
-
-        /* HIDE all plot cards by default inside dynamic sub-views */
-        .plot-container > .plot-card {
-            display: none;
-        }
-
-        /* Only show the currently chosen graph card */
-        .plot-container > .plot-card.active {
-            display: block;
-            animation: fadeIn 0.2s ease; /* reuses your predefined animation style */
-        }
-
-        .plot-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 20px 24px;
-            box-shadow: var(--shadow-card);
-            margin-top: 20px;
-            margin-bottom: 20px;
-            min-width: 400px;
-            max-width: 100%;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        .plot-card h5 {
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--text-secondary);
-            margin-bottom: 14px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        /* ── Variant table ── */
-        #variant-table {
-            width: 100% !important;
-        }
-
-       #variant-table td:hover {
-            white-space: normal;
-            overflow: visible;
-            position: relative;
-            z-index: 50;
-            background: white;
-        }
-
-        /* optional: make checkbox column stable */
-        #variant-table th:first-child,
-        #variant-table td:first-child {
-            width: 40px;
-        }
-    </style>
 </head>
 <body>
 
@@ -494,222 +373,147 @@
 <!-- Layout -->
 <div id="layout">
 
-    <!-- Sidebar -->
-    <nav id="sidebar">
-        <!-- Analysis -->
-        <div class="sidebar-section-label">Analysis</div>
-
-        <button class="nav-btn active" onclick="showSection('run-stats', this)" data-section="run-stats">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="12" width="4" height="9"/><rect x="9" y="8" width="4" height="13"/>
-                <rect x="15" y="4" width="4" height="17"/>
-            </svg>
-            Run Stats
-        </button>
-
-        <button class="nav-btn" onclick="showSection('amplicon-depth', this)" data-section="amplicon-depth">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="12" width="4" height="9"/><rect x="9" y="8" width="4" height="13"/>
-                <rect x="15" y="4" width="4" height="17"/>
-            </svg>
-            Amplicon Depth
-        </button>
-
-        <button class="nav-btn" onclick="showSection('variants', this)" data-section="variants">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2v-4M9 21H5a2 2 0 01-2-2v-4m0 0h18"/>
-            </svg>
-            Variants
-        </button>
-
-        <!-- QC -->
-        <div class="sidebar-section-label">QC</div>
-
-        <button class="nav-btn" onclick="showSection('consensus-reads', this)" data-section="consensus-reads">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-            </svg>
-            Consensus Reads
-        </button>
-
-        <button class="nav-btn" onclick="showSection('num-repeats', this)" data-section="num-repeats">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-            </svg>
-            Number Repeats
-        </button>
-
-        <button class="nav-btn" onclick="showSection('mapped-bases', this)" data-section="mapped-bases">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-            </svg>
-            Mapped Bases
-        </button>
-
-        <button class="nav-btn" onclick="showSection('raw-length', this)" data-section="raw-length">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-            </svg>
-            Raw Reads
-        </button>
-    </nav>
-
     <!-- Main -->
     <main id="main">
         
-        <!-- Analysis -->
+        <!-- General stats -->
         <div id="run-stats" class="section active">
             <div class="section-title">
-                <button class="section-help-btn" data-target="help-run-stats">?</button>
                 General run statistics
             </div>
-            <div id="help-run-stats" class="section-help-box">
-                This section provides an overview of the sequencing run, including the number of reads generated, total bases sequenced, and other key metrics.
-                <br/>The Sankey plot shows the flow of sequenced reads through consensus generation. It displays reads that pass or fail consenus. Reads that pass consensus are further categorized by their type (1D, 2D or 3D). Reads that fail consensus are further categorized by their reason for failure.
-            </div>
-            <div id="cards-row"></div>
-            <div id="plots-read-counts-sankey"></div>
+            
+            <div id="cards-grid"></div>
         </div>
+
+        <!-- Read yield -->
+        <div id="read-yield" class="section">
+            <div class="section-title">
+                Read yield evolution
+            </div>
+
+            <div class="plot-container">
+                <div class="plot-tabs">
+                    <button class="plot-tab-btn active" onclick="switchPlot(this, 'plots-read-counts-sankey')">All read counts</button>
+                    <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-consensus-length-sankey')">Consensus bases</button>
+                     <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-raw-length-sankey')">Raw bases</button>
+                </div>
+
+                <div id="plots-read-counts-sankey" class="plot-card active">
+                    <div id="help-run-stats" class="section-help-box">
+                        This section provides an overview of the sequencing run, including the number of reads generated, total bases sequenced, and other key metrics.
+                        <br/>The Sankey plot shows the flow of sequenced reads through consensus generation. It displays reads that pass or fail consenus. Reads that pass consensus are further categorized by their type (1D, 2D or 3D). Reads that fail consensus are further categorized by their reason for failure.
+                    </div>
+                </div>
+                <div id="plots-consensus-length-sankey" class="plot-card">
+                    <div id="help-consensus-reads" class="section-help-box">
+                        This section shows the yield of consensus read bases generated.
+                        <br/>The Sankey plot shows the proportion of consensus bases by read type (1D, 2D, 3D) after successful consensus. When consensus fails, the underlying reason is displayed.
+                    </div>
+                </div>
+                <div id="plots-raw-length-sankey" class="plot-card">
+                    <div id="help-raw-length" class="section-help-box">
+                        This section shows the yield of raw read bases analysed.
+                        <br/>The Sankey plot shows the proportion of raw bases by read type (1D, 2D, 3D) after successful consensus. When consensus fails, the underlying reason is displayed.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Amplicon depth -->
 
         <div id="amplicon-depth" class="section">
             <div class="section-title">
-                <button class="section-help-btn" data-target="help-amplicon-depth">?</button>
                 Depth per amplicon
             </div>
-            <div id="help-amplicon-depth" class="section-help-box">
-                This section shows the median depth of coverage for each amplicon. For each amplicon, read depth is determined at each position, and the median depth across the locus is calculated.
-                <br/>If a target depth is specified, it is shown as a dashed line. Amplicons that meet the target are colored blue.
+
+            <div class="plot-container">
+                <div id="plots-amplicon-depth", class="plot-card active">
+                    <div id="help-amplicon-depth" class="section-help-box">
+                        This section shows the median depth of coverage for each amplicon. For each amplicon, read depth is determined at each position, and the median depth across the locus is calculated.
+                        <br/>If a target depth is specified, it is shown as a dashed line. Amplicons that meet the target are colored blue.
+                    </div>
+                </div>
             </div>
-            <div id="plots-amplicon-depth"></div>
         </div>
 
+        <!-- Variant table -->
         <div id="variants" class="section">
             <div class="section-title">
-                <button class="section-help-btn" data-target="help-variants">?</button>
                 Detected variants
             </div>
-            <div id="help-variants" class="section-help-box">
-                This section lists the variants detected in the sample. Variants are identified by comparing the consensus sequences to the reference genome. The table includes information about each variant, such as its genomic position, codon and amino acid changes, type (e.g., SNV, indel), and allele frequency.
-                <br/>Use the buttons above the table to select which variants to display.
-            </div>
-            <div id="variants-table-container" class="plot-card">
+            <div id="variants-table-container" class="plot-container">
+                <div id="help-variants" class="section-help-box">
+                    This section lists the variants detected in the sample. Variants are identified by comparing the consensus sequences to the reference genome. The table includes information about each variant, such as its genomic position, codon and amino acid changes, type (e.g., SNV, indel), and allele frequency.
+                    <br/>Use the buttons above the table to select which variants to display.
+                </div>
+
+                <br><br>
                 <div style="overflow-x: auto;">
-                    <button id="select-all">Select All </button>
-                    <button id="show-selected">Show Selected</button>
-                    <button id="show-all">Show All</button>
-                    <button id="reset">Reset</button>
+                    <div style="display: flex; gap: 6px; margin-bottom: 14px;">
+                        <button id="select-all">Select All </button>
+                        <button id="show-selected">Show Selected</button>
+                        <button id="show-all">Show All</button>
+                        <button id="reset">Reset</button>
+                    </div>
+
                     <table id="variant-table" class="display"></table>
                 </div>
-                <!-- <div class="empty-state">
+
+                <div class="empty-state">
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                         <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
                         <line x1="12" y1="16" x2="12.01" y2="16"/>
                     </svg>
                     <p>Variant data not yet available.</p>
-                </div> -->
+                </div>
             </div>
         </div>
 
-        <!-- QC -->
-        <div id="consensus-reads" class="section">
+        <!-- Read structures -->
+        <div id="quality-control" class="section">
             <div class="section-title">
-                <button class="section-help-btn" data-target="help-consensus-reads">?</button>
-                Consensus read yield
-            </div>
-            <div id="help-consensus-reads" class="section-help-box">
-                This section shows the yield of consensus read bases and consensus read lengths generated.
-                <br/>The Sankey plot shows the proportion of consensus bases by read type (1D, 2D, 3D) after successful consensus. When consensus fails, the underlying reason is displayed.
-                <br/>Histograms show the distribution of consensus read lengths in three ways: (i) stratified by read type, (ii) stratified by consensus outcome, and (iii) all reads unstratified.
+                Read structures
             </div>
 
-            <div class="plot-tabs">
-                <button class="plot-tab-btn active" onclick="switchPlot(this, 'plots-consensus-length-sankey')">Sankey</button>
-                <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-consensus-length-histogram-type')">By Type</button>
-                <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-consensus-length-histogram-outcome')">By Outcome</button>
-                <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-consensus-length-histogram-all')">All Reads</button>
-            </div>
             <div class="plot-container">
-                <div id="plots-consensus-length-sankey" class="plot-card active"></div>
-                <div id="plots-consensus-length-histogram-type" class="plot-card"></div>
-                <div id="plots-consensus-length-histogram-outcome" class="plot-card"></div>
-                <div id="plots-consensus-length-histogram-all" class="plot-card"></div>
+                <div class="plot-tabs">
+                    <button class="plot-tab-btn active" onclick="switchPlot(this, 'plots-consensus-length-histogram-type')">Consensus read lengths</button>
+                     <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-raw-length-histogram-type')">Raw read lengths</button>
+                     <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-num-repeats-histogram-type')">Number of repeats</button>
+                     <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-mapped-bases-histogram-type')">Mapped fraction</button>
+                </div>
+
+                    <div id="plots-consensus-length-histogram-type" class="plot-card active">
+                        <div id="help-consensus-length" class="section-help-box">
+                            This histogram shows the distribution of consensus read lengths stratified by read type.
+                        </div>
+                    </div>
+                    <div id="plots-raw-length-histogram-type" class="plot-card">
+                        <div id="help-raw-length" class="section-help-box">
+                            This histogram shows the distribution of raw read lengths stratified by read type.
+                        </div>
+                    </div>
+                    <div id="plots-num-repeats-histogram-type" class="plot-card">
+                        <div id="help-num-repeats" class="section-help-box">
+                            This histogram shows the number of repeats in each processed read. A repeat is defined as the base subunit of a concatemeric read, typically corresponding to the original insert.
+                            <br/>The distribution of the number of repeats is stratified by read type.
+                        </div>
+                    </div>
+                    <div id="plots-mapped-bases-histogram-type" class="plot-card">
+                        <div id="help-mapped-bases" class="section-help-box">
+                        This section shows the fraction of mapped bases per read. That is, for each read, the number of bases that successfully mapped to the reference, over the total read length.
+                        <br/>The distribution of mapped fractions is stratified by read type.
+                    </div>
+                    </div>
             </div>
         </div>
-
-        <div id="num-repeats" class="section">
-            <div class="section-title">
-                <button class="section-help-btn" data-target="help-num-repeats">?</button>
-                Number of concatemer repeats
-            </div>
-            <div id="help-num-repeats" class="section-help-box">
-                This section shows the number of repeats in each processed read. A repeat is defined as the base subunit of a concatemeric read, typically corresponding to the original insert.
-                <br/>Histograms show the distribution of the number of repeats in three ways: (i) stratified by read type, (ii) stratified by consensus outcome, and (iii) all reads unstratified.
-            </div>
-
-            <div class="plot-tabs">
-                <button class="plot-tab-btn active" onclick="switchPlot(this, 'plots-num-repeats-histogram-type')">By Type</button>
-                <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-num-repeats-histogram-outcome')">By Outcome</button>
-                <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-num-repeats-histogram-all')">All Reads</button>
-            </div>
-            <div class="plot-container">
-                <div id="plots-num-repeats-histogram-type" class="plot-card active"></div>
-                <div id="plots-num-repeats-histogram-outcome" class="plot-card"></div>
-                <div id="plots-num-repeats-histogram-all" class="plot-card"></div>
-            </div>
-        </div>
-
-        <div id="mapped-bases" class="section">
-            <div class="section-title">
-                <button class="section-help-btn" data-target="help-mapped-bases">?</button>
-                Mapped bases
-            </div>
-            <div id="help-mapped-bases" class="section-help-box">
-                This section shows the fraction of mapped bases per read. That is, for each read, the number of bases that successfully mapped to the reference, over the total read length.
-                <br/>Histograms show the distribution of mapped fractions in three ways: (i) stratified by read type, (ii) stratified by consensus outcome, and (iii) all reads unstratified.
-            </div>
-            <div class="plot-tabs">
-                <button class="plot-tab-btn active" onclick="switchPlot(this, 'plots-mapped-bases-histogram-type')">By Type</button>
-                <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-mapped-bases-histogram-outcome')">By Outcome</button>
-                <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-mapped-bases-histogram-all')">All Reads</button>
-            </div>
-            <div class="plot-container">
-                <div id="plots-mapped-bases-histogram-type" class="plot-card active"></div>
-                <div id="plots-mapped-bases-histogram-outcome" class="plot-card"></div>
-                <div id="plots-mapped-bases-histogram-all" class="plot-card"></div>
-            </div>
-        </div>
-
-        <div id="raw-length" class="section">
-            <div class="section-title">
-                <button class="section-help-btn" data-target="help-raw-length">?</button>
-                Raw read yield
-            </div>
-            <div id="help-raw-length" class="section-help-box">
-                This section shows the yield of raw read bases and raw read lengths analysed.
-                <br/>The Sankey plot shows the proportion of raw bases by read type (1D, 2D, 3D) after successful consensus. When consensus fails, the underlying reason is displayed.
-                <br/>Histograms show the distribution of raw read lengths in three ways: (i) stratified by read type, (ii) stratified by consensus outcome, and (iii) all reads unstratified.
-            </div>
-            <div class="plot-tabs">
-                <button class="plot-tab-btn active" onclick="switchPlot(this, 'plots-raw-length-sankey')">Sankey</button>
-                <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-raw-length-histogram-type')">By Type</button>
-                <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-raw-length-histogram-outcome')">By Outcome</button>
-                <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-raw-length-histogram-all')">All Reads</button>
-                
-            </div>
-            <div class="plot-container">
-                <div id="plots-raw-length-sankey" class="plot-card active"></div>
-                <div id="plots-raw-length-histogram-type" class="plot-card"></div>
-                <div id="plots-raw-length-histogram-outcome" class="plot-card"></div>
-                <div id="plots-raw-length-histogram-all" class="plot-card"></div>
-            </div>
-        </div>
-
     </main>
 </div>
 
 <script id="embedded-data" type="application/json">
 {}
 </script>
+
 
 <script>
 // ── Section routing ──────────────────────────────────────────────
@@ -804,7 +608,7 @@ function renderDashboard(data) {
     }
 
     // Cards
-    const cardsRow = document.getElementById('cards-row');
+    const cardsRow = document.getElementById('cards-grid');
     cardsRow.innerHTML = '';
     (data.cards || []).forEach(card => {
         cardsRow.innerHTML += `
@@ -1179,9 +983,9 @@ function loadEmbeddedData() {
     const embedded = document.getElementById('embedded-data').textContent.trim();
     if (!embedded || embedded === '{}') {
         // If no data has been injected yet, reload in 5 seconds to try again
-        setTimeout(() => {
-            window.location.reload(true); // 'true' forces a hard reload bypassing cache
-        }, 5000);
+        // setTimeout(() => {
+        //     window.location.reload(true); // 'true' forces a hard reload bypassing cache
+        // }, 5000);
         return;
     }
 
@@ -1192,9 +996,9 @@ function loadEmbeddedData() {
     // to pick up the newly overwritten HTML file from Nextflow
     if (!data.final) {
         console.log("Analysis in progress... checking for file updates in 5s");
-        setTimeout(() => {
-            window.location.reload(true); // 'true' forces a hard reload bypassing cache
-        }, 5000); 
+        // setTimeout(() => {
+        //     window.location.reload(true); // 'true' forces a hard reload bypassing cache
+        // }, 5000); 
     } else {
         console.log("Analysis complete. Polling stopped.");
     }
