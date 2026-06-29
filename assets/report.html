@@ -498,12 +498,21 @@
                     <table id="variant-table" class="display"></table>
                 </div>
 
-                <div class="empty-state">
+                <div id="variant-waiting" class="empty-state">
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                         <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
                         <line x1="12" y1="16" x2="12.01" y2="16"/>
                     </svg>
                     <p>Variant data not yet available.</p>
+                </div>
+
+                <div id="variant-empty" class="empty-state" style="display:none;">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="8" y1="8" x2="16" y2="16"/>
+                        <line x1="16" y1="8" x2="8" y2="16"/>
+                    </svg>
+                    <p>No variants were detected.</p>
                 </div>
             </div>
         </div>
@@ -673,9 +682,28 @@ function renderDashboard(data) {
     // Variant Table
     if (data.tabs) {
 
+        const emptyState = document.getElementById("variant-empty");
+        const waitingState = document.getElementById("variant-waiting");
+        const tableWrapper = document.querySelector("#variant-table").closest("div");
+
         const variantTab = data.tabs.find(t => t.name === 'variant-table');
 
-        if (variantTab && variantTab.data?.length > 0) {
+        if (!variantTab) {
+            // Waiting
+            waitingState.style.display = "flex";
+            emptyState.style.display = "none";
+            tableWrapper.style.display = "none";
+        } else {
+            // We have a table definition
+            waitingState.style.display = "none";
+
+            if (variantTab.data.length === 0) {
+                emptyState.style.display = "flex";
+            } else {
+                emptyState.style.display = "none";
+            }
+
+            tableWrapper.style.display = "";
 
             const tableId = '#variant-table';
             const columnTypes = variantTab.column_types || {};
@@ -995,8 +1023,6 @@ function renderDashboard(data) {
                 });
             });
 
-        } else {
-            console.log("No variant data found.");
         }
     }
 }
