@@ -89,7 +89,7 @@
     #header-sample {
         font-family: var(--font-mono);
         font-size: 12px;
-        color: #a0aec0;
+        color: var(--accent-hover);
         background: rgba(255, 255, 255, 0.12);
         padding: 4px 12px;
         border-radius: 20px;
@@ -102,7 +102,7 @@
         align-items: center;
         gap: 8px;
         font-size: 12px;
-        color: #D6E2F4;
+        color: var(--accent-hover);
     }
 
     #status-dot {
@@ -130,7 +130,7 @@
     /* ── Summary Statistics Cards Grid ── */
     #cards-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
         gap: 6px;
         margin-top: 18px;
         padding-bottom: 0px;
@@ -172,7 +172,7 @@
         cursor: pointer;
     }
 
-    .stat-card .card-info-icon:hover { opacity: 1; color: var(--accent); border-color: var(--accent); }
+    .stat-card .card-info-icon:hover { opacity: 1; color: var(--accent-contrast); border-color: var(--accent-contrast); }
 
     .stat-card .card-tooltip {
         display: none;
@@ -357,8 +357,6 @@
         color: var(--accent-contrast);
     }
 </style>
-
-
 </head>
 <body>
 
@@ -1008,74 +1006,7 @@ function loadEmbeddedData() {
     }
 }
 
-// loadEmbeddedData();
-
-(function() {
-        // 1. Figure out the path to the matching json file automatically
-        // Example: /path/to/wf-metagenomics-report.html -> /path/to/wf-metagenomics-report.json
-        const currentHtmlPath = window.location.pathname;
-        const jsonPath = currentHtmlPath.substring(0, currentHtmlPath.lastIndexOf('.')) + '.json';
-
-        let lastDataString = null;
-        const checkInterval = 3000; // Poll the JSON file every 3 seconds
-
-        function fetchLiveMetrics() {
-            // Append a unique cache-buster string so EPI2ME fetches the JSON file fresh off the disk
-            const fetchUrl = jsonPath + '?cb=' + new Date().getTime();
-
-            fetch(fetchUrl)
-                .then(response => {
-                    if (!response.ok) throw new Error("JSON file not updated or written yet.");
-                    return response.json();
-                })
-                .then(data => {
-                    const currentDataString = JSON.stringify(data);
-                    
-                    // 2. Check if the metrics data has actually changed
-                    if (lastDataString === null) {
-                        lastDataString = currentDataString;
-                        console.log("⏱️ Live polling system initialized. Data loaded.");
-                        updateDashboardUI(data);
-                    } else if (lastDataString !== currentDataString) {
-                        lastDataString = currentDataString;
-                        console.log("🔄 New pipeline metrics detected! Updating dashboard UI elements dynamically...");
-                        
-                        // 3. Update your metrics, plots, and tables *without* reloading the page!
-                        updateDashboardUI(data);
-                    } else {
-                        console.log("🔍 Polled JSON: No changes detected yet.");
-                    }
-                })
-                .catch(err => {
-                    console.log("⏳ Waiting for Nextflow to update JSON file...", err.message);
-                });
-        }
-
-        // 4. This function targets your specific HTML/DOM elements and replaces their contents
-        function updateDashboardUI(data) {
-            // Examples of mapping the JSON directly to your dashboard layout:
-            
-            // If you have a total reads counter element:
-            if (data.total_reads) {
-                const readsEl = document.getElementById('total-reads-counter');
-                if (readsEl) readsEl.textContent = Number(data.total_reads).toLocaleString();
-            }
-
-            // If you have a data table (e.g. your variant table):
-            if (data.variants && typeof updateVariantTable === 'function') {
-                updateVariantTable(data.variants);
-            }
-
-            // If you are using Plotly charts:
-            if (data.plotly_chart_data && window.Plotly) {
-                Plotly.react('my-plotly-div', data.plotly_chart_data.data, data.plotly_chart_data.layout);
-            }
-        }
-
-        // Start the background listening loop
-        fetchLiveMetrics();
-        setInterval(fetchLiveMetrics, checkInterval);
-    })();
+loadEmbeddedData();
 </script>
 </body>
 </html>
