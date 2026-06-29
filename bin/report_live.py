@@ -18,7 +18,11 @@ import numpy as np
 import yaml
 
 CARD_NAMES = {
-    "n_raw_reads": ("Raw reads", None, "Total number of raw reads in the run."),
+    "n_raw_reads": (
+        "Raw reads",
+        None,
+        "Total number of ingested raw reads in the sequencing run.",
+    ),
     "median_read_length_raw": (
         "Median raw read length",
         "bp",
@@ -34,7 +38,7 @@ CARD_NAMES = {
     "n_mapped_raw": (
         "Mapped raw reads",
         None,
-        "Number of raw reads successfully mapped to the reference",
+        "Number of ingested raw reads successfully mapped to the reference.",
     ),
     "median_mappability_raw": (
         "Median alignment completeness",
@@ -54,7 +58,7 @@ CARD_NAMES = {
     "on_target_rate": (
         "Consensus on-target rate",
         "%",
-        "Percentage of successful consensus reads mapping to target loci.",
+        "Percentage of successful consensus reads mapping to the target loci.",
     ),
 }
 
@@ -190,8 +194,12 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--template", required=True)
     parser.add_argument("--sample_id", required=True)
-    parser.add_argument("--epi2me_report", type=bool, default=False,
-                        help="Generate timestamped report for EPI2ME")
+    parser.add_argument(
+        "--epi2me_report",
+        type=bool,
+        default=False,
+        help="Generate timestamped report for EPI2ME",
+    )
     parser.add_argument("--clean_dir", type=str, required=False)
     args = parser.parse_args()
 
@@ -221,7 +229,7 @@ def main():
         for old_file in glob.glob(search_pattern):
             if os.path.basename(old_file) == output_html_path.name:
                 continue
-            
+
             print(f"Attempting to delete stale stream report: {old_file}")
             try:
                 os.remove(old_file)
@@ -229,8 +237,9 @@ def main():
             except OSError as e:
                 print(f"Skipping locked file: {old_file}. Error: {e}")
     else:
-        print(f"No clean directory specified or directory does not exist: {args.clean_dir}")
-
+        print(
+            f"No clean directory specified or directory does not exist: {args.clean_dir}"
+        )
 
 
 if __name__ == "__main__":

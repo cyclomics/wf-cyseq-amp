@@ -190,7 +190,7 @@
         width: 18px; height: 18px;
         line-height: 16px;
         text-align: center;
-        font-family: sans-serif;
+        font-family: var(--font-body);
         font-size: 11px;
         font-weight: bold;
         color: var(--text-secondary);
@@ -224,18 +224,18 @@
     .stat-card .card-info-icon:hover + .card-tooltip { display: block; }
 
     .stat-card .card-value {
+        font-family: var(--font-mono);
         font-size: 22px;
         font-weight: 600;
         color: var(--text-primary);
-        font-family: var(--font-mono);
     }
 
     .stat-card .card-label {
-        font-size: 11px;
+        font-family: var(--font-mono);
+        font-size: 10px;
         color: var(--text-secondary);
         margin-top: 4px;
         text-transform: uppercase;
-        letter-spacing: 0.02em;
     }
 
     .stat-card > * {
@@ -267,7 +267,7 @@
         background: var(--bg);
         padding: 14px 18px;
         border-radius: 6px;
-        font-size: 13px;
+        font-size: 12px;
         line-height: 1.6;
         border-left: 4px solid var(--accent);
         margin-top: 14px;
@@ -288,13 +288,14 @@
     #show-selected, 
     #show-all, 
     #reset {
-        padding: 6px 14px;
+        padding: 4px 10px;
         background: var(--bg);
         border: 1px solid var(--border);
         border-radius: 6px;
         color: var(--text-secondary);
-        font-size: 12px;
-        font-weight: 500;
+        font-family: var(--font-mono);
+        font-size: 8px;
+        text-transform: uppercase;
         cursor: pointer;
         transition: all 0.15s ease;
         margin-bottom: 0px;
