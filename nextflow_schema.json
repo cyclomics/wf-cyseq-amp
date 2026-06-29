@@ -49,7 +49,6 @@
             },
             "required": ["input_dir", "reference", "regions"]
         },
-
         "output": {
             "title": "Output Options",
             "type": "object",
@@ -98,6 +97,12 @@
                     "description": "Regular expression for fastq files used in the analysis.",
                     "help_text": "By default the regex looks for the folder pass and fastq_pass. pass is used when rebasecalling data. fastq_pass is created normally by MinKnow.\n You can limit the amount of data by altering this value e.g. by changing it to \n {pass,fastq_pass}/**{1,2}.{fq,fastq,fq.gz,fastq.gz} \n will only take in fastq files ending in 1 and 2.",
                     "default": "**.{fq,fastq,fq.gz,fastq.gz}"
+                },
+                "epi2me_report": {
+                    "title": "Generate timestamped report for EPI2ME",
+                    "type": "boolean",
+                    "default": true,
+                    "description": "If set to true, the real time report will be generated with a timestamp in the filename, suitable for visualization on EPI2ME. If set to false, the report will be generated without a timestamp in the filename, suitable for local visualization."
                 }
             }
         }

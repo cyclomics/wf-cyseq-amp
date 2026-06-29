@@ -151,6 +151,7 @@ process ReportStreamData {
         report_live.py \
             --template ${report_template} \
             --sample_id ${sample_id} \
+            --epi2me_report ${params.epi2me_report} \
             --clean_dir "${absoluteOutputDir}"
         """
 }
@@ -174,6 +175,7 @@ process FinalizeReport {
             --html ${report_html} \
             --json ${report_json} ${variant_table} \
             --sample_id ${sample_id} \
+            --epi2me_report ${params.epi2me_report} \
             --clean_dir "${absoluteOutputDir}"
         """
 }

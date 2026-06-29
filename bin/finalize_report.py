@@ -61,6 +61,8 @@ def main():
     parser.add_argument("--json", nargs='+', required=True, help="List of JSON fragments")
     parser.add_argument("--html", required=True)
     parser.add_argument("--sample_id", required=True)
+    parser.add_argument("--epi2me_report", type=bool, default=False,
+                        help="Generate timestamped report for EPI2ME")
     parser.add_argument("--clean_dir", type=str, required=False)
     args = parser.parse_args()
 
@@ -71,7 +73,7 @@ def main():
     inject_into_html(final_report_data, args.html, f"report_{args.sample_id}.html")
 
     # Clean up intermediate files if specified
-    if args.clean_dir and os.path.exists(args.clean_dir):
+    if args.epi2me_report and args.clean_dir and os.path.exists(args.clean_dir):
         search_pattern = os.path.join(args.clean_dir, f"report_{args.sample_id}_*.html")
 
         for old_file in glob.glob(search_pattern):

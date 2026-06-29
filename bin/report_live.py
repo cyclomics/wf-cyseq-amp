@@ -190,6 +190,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--template", required=True)
     parser.add_argument("--sample_id", required=True)
+    parser.add_argument("--epi2me_report", type=bool, default=False,
+                        help="Generate timestamped report for EPI2ME")
     parser.add_argument("--clean_dir", type=str, required=False)
     args = parser.parse_args()
 
@@ -199,16 +201,21 @@ def main():
     if args.sample_id:
         report_data["sample_id"] = args.sample_id
 
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:20]
     output_json_path = Path(f"report_{args.sample_id}.json")
-    output_html_path = Path(f"report_{args.sample_id}_{timestamp}.html")
+
+    if args.epi2me_report:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:20]
+        output_html_path = Path(f"report_{args.sample_id}_{timestamp}.html")
+    else:
+        output_html_path = Path(f"report_{args.sample_id}.html")
+
     with open(output_json_path, "w", encoding="utf-8") as f:
         json.dump(report_data, f, indent=2)
 
     inject_into_html(args.template, report_data, output_html_path)
 
-        # Clean up intermediate files if specified
-    if args.clean_dir and os.path.exists(args.clean_dir):
+    # Clean up intermediate reports
+    if args.epi2me_report and args.clean_dir and os.path.exists(args.clean_dir):
         search_pattern = os.path.join(args.clean_dir, f"report_{args.sample_id}_*.html")
 
         for old_file in glob.glob(search_pattern):
