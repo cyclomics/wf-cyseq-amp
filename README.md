@@ -1,7 +1,7 @@
-<div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-  <img src="assets/logo_named.png" alt="logo" width="200" style="display: block;" />
-  <img src="assets/tagline.png" alt="tagline" width="150" style="display: block;" />
-</div>
+<p>
+  <img src="assets/logo_named.png" alt="logo" width="200" align="left" />
+  <img src="assets/tagline.png" alt="tagline" width="150" align="right" />
+</p>
 
 <br>
 
