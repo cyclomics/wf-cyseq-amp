@@ -10,24 +10,24 @@ Uses the cyseqcon.metrics Report API to handle aggregation automatically.
 
 import argparse
 from pathlib import Path
+from textwrap import wrap
 from typing import Any, Mapping
 
 import yaml
-from textwrap import wrap
 from cyseqtools.consensus.metrics.report import Report
 
 PREV_METRICS_FOLDER = Path(".prev_read_metrics")
 
 
-def _get_nested(mapping: Mapping[str, Any], *keys: str) -> Any:
+def _get_nested(mapping: Mapping[str, Any], *keys: str, default: Any = 0) -> Any:
     """Safely retrieve a nested value from a mapping."""
     current: Any = mapping
     for key in keys:
         if not isinstance(current, Mapping):
-            return None
+            return default
         current = current.get(key)
         if current is None:
-            return None
+            return default
     return current
 
 
@@ -116,7 +116,8 @@ def save_metric_cards(report: Report) -> None:
             "n_raw_reads": read_counts.get("run"),
             "median_read_length_raw": _get_nested(raw_length, "run", "median"),
             "median_repeats": _get_nested(num_repeats, "run", "median"),
-            "n_mapped_raw": _get_nested(mapped_bases, "success", "grouped", "n"),
+            "n_mapped_raw": _get_nested(mapped_bases, "success", "grouped", "n")
+                - _get_nested(mapped_bases, "fail", "Read has zero alignments", "n"),
             "median_mappability_raw": _get_nested(mapped_bases, "run", "median"),
             "n_consensus_reads": _get_nested(read_counts, "success", "grouped"),
             "median_read_length_consensus": _get_nested(consensus, "success", "grouped", "median"),
