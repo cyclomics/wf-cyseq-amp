@@ -119,7 +119,7 @@
             "disk": "50 GB"
         },
         "recommended": {
-            "cpu": 16,
+            "cpu": 32,
             "memory": "64 GB",
             "disk": "100 GB"
         }
