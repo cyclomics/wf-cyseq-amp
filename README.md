@@ -1,4 +1,11 @@
-# wf-cyseq-amp
+<div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+  <img src="assets/logo_named.png" alt="logo" width="200" style="display: block;" />
+  <img src="assets/tagline.png" alt="tagline" width="150" style="display: block;" />
+</div>
+
+<br>
+
+# CySeq Amplicon
 
 This workflow uses concatemeric CySeq reads as input to generate consensus reads in real-time, which will then be used to call variants over a reference.
 
