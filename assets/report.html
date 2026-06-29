@@ -144,11 +144,39 @@
         padding: 18px 22px;
         box-shadow: var(--shadow-card);
         transition: box-shadow 0.15s, border-color 0.15s;
+        overflow: visible;
     }
 
+    /* smooth hover elevation + border change */
     .stat-card:hover { 
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
-        border-color: #cbd5e1;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05),
+                    0 4px 6px -2px rgba(0, 0, 0, 0.02);
+        border-color: var(--accent);
+    }
+
+    /* soft gradient overlay layer */
+    .stat-card::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: 10px;
+
+        background: linear-gradient(
+            135deg,
+            transparent 0%,
+            color-mix(in srgb, var(--accent), transparent 60%) 100%
+        );
+
+        opacity: 0;
+        transition: opacity 0.35s ease;
+        pointer-events: none;
+
+        z-index: 0;
+    }
+
+    /* fade overlay in on hover */
+    .stat-card:hover::before {
+        opacity: 1;
     }
 
     .stat-card .info-container {
@@ -177,8 +205,9 @@
     .stat-card .card-tooltip {
         display: none;
         position: absolute;
-        bottom: 100%; left: 50%;
-        transform: translateX(-50%);
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-80%);
         margin-bottom: 8px;
         background: var(--header-bg);
         color: white;
@@ -187,7 +216,9 @@
         font-size: 11px;
         z-index: 1000;
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        width: 220px;
+        width: max-content;
+        max-width: 180px;
+        box-sizing: border-box;
     }
 
     .stat-card .card-info-icon:hover + .card-tooltip { display: block; }
@@ -205,6 +236,11 @@
         margin-top: 4px;
         text-transform: uppercase;
         letter-spacing: 0.02em;
+    }
+
+    .stat-card > * {
+        position: relative;
+        z-index: 1;
     }
 
     /* ── Section Content Wrappers ── */
