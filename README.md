@@ -3,7 +3,7 @@
   <img src="assets/tagline.png" alt="tagline" width="150" align="right" />
 </p>
 
-<br>
+<br><br>
 
 # CySeq Amplicon
 
