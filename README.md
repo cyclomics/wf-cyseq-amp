@@ -37,7 +37,7 @@ The following inputs are mandatory:
 
 This workflow makes use of Nextflow and Docker to execute and manage all other dependencies.
 
-If you are executing this workflow through [EPI2ME](#https://epi2me.nanoporetech.com/), then both these dependencies should be part of [its installation instructions](https://epi2me.nanoporetech.com/epi2me-docs/installation/). If you need to install them manually, please follow their official documentation:
+If you are executing this workflow through [EPI2ME](https://epi2me.nanoporetech.com/), then both these dependencies should be part of [its installation instructions](https://epi2me.nanoporetech.com/epi2me-docs/installation/). If you need to install them manually, please follow their official documentation:
 
 - [Nextflow](https://docs.seqera.io/nextflow/install) (v23.04 or higher)
 - [Docker](https://docs.docker.com/get-started/get-docker/)
