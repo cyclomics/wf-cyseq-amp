@@ -196,8 +196,7 @@ def main():
     parser.add_argument("--sample_id", required=True)
     parser.add_argument(
         "--epi2me_report",
-        type=bool,
-        default=False,
+        action="store_true",
         help="Generate timestamped report for EPI2ME",
     )
     parser.add_argument("--clean_dir", type=str, required=False)

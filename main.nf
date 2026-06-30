@@ -22,7 +22,7 @@ include {
     } from './modules/common'
 include { make_consensus } from './modules/consensus'
 include {
-    align_consensus;
+    get_amplicon_metrics;
     merge_consensus;
     } from './modules/alignment'
 include { call_variants } from './modules/variantcalling'
@@ -63,15 +63,15 @@ workflow {
 
     // 1. Consensus
     make_consensus(raw_fastq, ch_reference)
-    consensus_fastq = make_consensus.out.consensus_fastq
+    consensus_sam = make_consensus.out.consensus_sam
     consensus_folder = make_consensus.out.consensus_folder
 
     // 2. Alignment
     // samtools fastq to transform bam to sam, then minimap2
-    align_consensus(consensus_fastq, ch_reference, ch_regions, minimap2_mode)
-    aligned_consensus_bam = align_consensus.out.aligned_consensus_bam
-    depth_table = align_consensus.out.depth_table
-    on_target_rate = align_consensus.out.on_target_rate
+    get_amplicon_metrics(consensus_sam, ch_regions)
+    aligned_consensus_bam = get_amplicon_metrics.out.aligned_consensus_bam
+    depth_table = get_amplicon_metrics.out.depth_table
+    on_target_rate = get_amplicon_metrics.out.on_target_rate
 
     // REPORT: Live
     report_live(

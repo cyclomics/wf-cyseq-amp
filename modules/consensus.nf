@@ -15,10 +15,9 @@ workflow make_consensus {
         Minimap2Align(read_fastq, reference, "map-ont")
         NameSortAlignments(Minimap2Align.out)
         CyseqConsensus(NameSortAlignments.out, reference)
-        SamToFastq(CyseqConsensus.out.map { it -> tuple(it[0], it[1], it[2]) })
 
     emit:
-        consensus_fastq = SamToFastq.out
+        consensus_sam = CyseqConsensus.out.map { it -> tuple(it[0], it[1], it[2]) }
         consensus_folder = CyseqConsensus.out.map { it -> tuple(it[0], it[1], it[3]) }
 }
 
@@ -56,7 +55,7 @@ process CyseqConsensus {
         tuple path(reference), val(reference_idx)
 
     output:
-        tuple val(sample_id), val(file_id), path("${file_id}_consensus/consensus.sam"), path("${file_id}_consensus")
+        tuple val(sample_id), val(file_id), path("${file_id}_consensus/${file_id}.sam"), path("${file_id}_consensus")
 
     script:
         """
@@ -65,6 +64,8 @@ process CyseqConsensus {
             -i $bam \\
             -r $reference \\
             -o ${file_id}_consensus
+        
+        mv ${file_id}_consensus/consensus.sam ${file_id}_consensus/${file_id}.sam
         """
 }
 

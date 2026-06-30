@@ -147,11 +147,12 @@ process ReportStreamData {
 
     script:
         def absoluteOutputDir = file(params.output_dir).toAbsolutePath()
+        def epiFlag = params.epi2me_report ? "--epi2me_report" : ""
         """
         report_live.py \
             --template ${report_template} \
             --sample_id ${sample_id} \
-            --epi2me_report ${params.epi2me_report} \
+            ${epiFlag} \
             --clean_dir "${absoluteOutputDir}"
         """
 }
@@ -170,12 +171,13 @@ process FinalizeReport {
 
     script:
         def absoluteOutputDir = file(params.output_dir).toAbsolutePath()
+        def epiFlag = params.epi2me_report ? "--epi2me_report" : ""
         """
         finalize_report.py \
             --html ${report_html} \
             --json ${report_json} ${variant_table} \
             --sample_id ${sample_id} \
-            --epi2me_report ${params.epi2me_report} \
+            ${epiFlag} \
             --clean_dir "${absoluteOutputDir}"
         """
 }

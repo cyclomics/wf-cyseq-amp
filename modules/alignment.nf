@@ -5,20 +5,19 @@ include { PosSortIndexAlignments } from './common'
     WORKFLOWS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-workflow align_consensus {
+workflow get_amplicon_metrics {
     take:
         consensus_reads
-        reference
         regions
-        mode
 
     main:
-        Minimap2Align(consensus_reads, reference, mode)
-        PosSortIndexAlignments(Minimap2Align.out)
+        PosSortIndexAlignments(consensus_reads)
         aligned_consensus_bam = PosSortIndexAlignments.out
 
-        depth_table = GetAmpliconDepth(aligned_consensus_bam, regions)
-        on_target_rate = GetOnTargetRate(aligned_consensus_bam, regions)
+        GetAmpliconDepth(aligned_consensus_bam, regions)
+        GetOnTargetRate(aligned_consensus_bam, regions)
+        depth_table = GetAmpliconDepth.out
+        on_target_rate = GetOnTargetRate.out
 
     emit:
         aligned_consensus_bam
