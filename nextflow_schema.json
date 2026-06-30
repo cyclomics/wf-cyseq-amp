@@ -23,8 +23,8 @@
                     "title": "Input read directory",
                     "type": "string",
                     "format": "path",
-                    "description": "Folder containing reads in fastq or fastq.gz format, usually the fastq_pass folder made by MinKnow.",
-                    "help_text": "An example whould be /data/sequencing/experiment_name/sample_name/20230213_0900_MN12345_FAA12345_1e411152/fastq_pass \n The parent folder contains a folder called fastq_pass and a sequencing summary."
+                    "description": "A MinKnow sequencing output folder containing the `fastq_pass` subfolder, which may optionally contain `barcode` subfolders.",
+                    "help_text": "This provided output folder is the same folder where MinKnow will write the sequencing summary file, which is necessary to flag the end of the real-time file ingestion."
                 },
                 "reference": {
                     "title": "Reference genome FASTA file",
@@ -37,8 +37,8 @@
                     "title": "Regions of interest BED file",
                     "type": "string",
                     "format": "file-path",
-                    "description": "Region of interest, either `auto` or a path to a file in BED format corresponding to the reference used.",
-                    "help_text": "When provided, only locations in the BED file will be examined in the variant identification process. The `auto` strategy automatically selects loci based on read depth."
+                    "description": "Path to a file in BED format with the amplicon target loci, relative to the reference used (GRCh38.p14).",
+                    "help_text": "Only locations in the BED file will be examined in the variant identification process."
                 },
                 "target_depth": {
                     "title": "Target read depth per amplicon (Optional)",
@@ -47,7 +47,7 @@
                     "help_text": "This option only adjusts the amplicon read depth plot in the report."
                 }
             },
-            "required": ["input_dir", "reference", "regions"]
+            "required": ["sample_name", "input_dir", "reference", "regions"]
         },
         "output": {
             "title": "Output Options",
@@ -105,8 +105,43 @@
                     "description": "If set to true, the real time report will be generated with a timestamp in the filename, suitable for visualization on EPI2ME. If set to false, the report will be generated without a timestamp in the filename, suitable for local visualization."
                 }
             }
+        },
+        "system": {
+            "title": "System settings",
+            "type": "object",
+            "fa_icon": "fas fa-cogs",
+            "description": "System-level parameters to adjust resource usage behaviour.",
+            "properties": {
+                "executor.cpus": {
+                    "title": "CPUs",
+                    "type": "integer",
+                    "default": 16,
+                    "description": "Total number of CPUs available to the entire workflow to use simultaneously."
+                },
+                "executor.memory": {
+                    "title": "Memory",
+                    "type": "string",
+                    "default": "32 GB",
+                    "description": "Total RAM available to the workflow."
+                }
+            }
+            
         }
     },
+    "allOf": [
+        {
+            "$ref": "#/definitions/input"
+        },
+        {
+            "$ref": "#/definitions/output"
+        },
+        {
+            "$ref": "#/definitions/advanced"
+        },
+        {
+            "$ref": "#/definitions/system"
+        }
+    ],
     "properties": {
         "validate_params": {
             "type": "boolean",
