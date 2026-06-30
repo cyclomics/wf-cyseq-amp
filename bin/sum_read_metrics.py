@@ -9,12 +9,14 @@ Uses the cyseqcon.metrics Report API to handle aggregation automatically.
 """
 
 import argparse
+import json
 from pathlib import Path
 from textwrap import wrap
 from typing import Any, Mapping
 
 import yaml
 from cyseqtools.consensus.metrics.report import Report
+from plotly.utils import PlotlyJSONEncoder
 
 PREV_METRICS_FOLDER = Path(".prev_read_metrics")
 
@@ -78,13 +80,10 @@ def save_metric_plots(report: Report) -> None:
                 trace.name = "<br>".join(wrap(trace.name, width=30))
 
         fig.update_layout(
-            template="simple_white",
-            height=450,
-            autosize=True,
-            legend={"valign": 'top'}
+            template="simple_white", height=450, autosize=True, legend={"valign": "top"}
         )
 
-        fig_json = fig.to_plotly_json()
+        fig_json = json.loads(json.dumps(fig.to_plotly_json(), cls=PlotlyJSONEncoder))
         fig_json["name"] = plot
         _write_yaml(fig_json, Path(f"plots/{plot.replace('/', '_')}.yaml"))
 
@@ -117,10 +116,12 @@ def save_metric_cards(report: Report) -> None:
             "median_read_length_raw": _get_nested(raw_length, "run", "median"),
             "median_repeats": _get_nested(num_repeats, "run", "median"),
             "n_mapped_raw": _get_nested(mapped_bases, "success", "grouped", "n")
-                - _get_nested(mapped_bases, "fail", "Read has zero alignments", "n"),
+            - _get_nested(mapped_bases, "fail", "Read has zero alignments", "n"),
             "median_mappability_raw": _get_nested(mapped_bases, "run", "median"),
             "n_consensus_reads": _get_nested(read_counts, "success", "grouped"),
-            "median_read_length_consensus": _get_nested(consensus, "success", "grouped", "median"),
+            "median_read_length_consensus": _get_nested(
+                consensus, "success", "grouped", "median"
+            ),
         }
     }
 
