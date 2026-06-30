@@ -518,7 +518,7 @@
         </div>
 
         <!-- Read structures -->
-        <div id="quality-control" class="section">
+        <div id="read-structures" class="section">
             <div class="section-title">
                 Read structures
             </div>
@@ -555,6 +555,31 @@
                     </div>
             </div>
         </div>
+
+        <!-- Read qualities -->
+        <div id="read-qualities" class="section">
+            <div class="section-title">
+                Q-Scores
+            </div>
+
+            <div class="plot-container">
+                <div class="plot-tabs">
+                    <button class="plot-tab-btn active" onclick="switchPlot(this, 'plots-consensus-read-average-quality-scores-histogram-type')">Consensus read Q-Scores</button>
+                    <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-raw-read-average-quality-scores-histogram-type')">Raw read Q-Scores</button>
+
+                </div>
+
+                <div id="plots-consensus-read-average-quality-scores-histogram-type" class="plot-card active">
+                    <div id="help-consensus-q" class="section-help-box">
+                        This histogram shows the distribution of consensus read Q-Scores stratified by read type.
+                    </div>
+                </div>
+
+                <div id="plots-raw-read-average-quality-scores-histogram-type" class="plot-card">
+                    <div id="help-raw-q" class="section-help-box">
+                        This histogram shows the distribution of raw read Q-Scores stratified by read type.
+                    </div>
+                </div>
     </main>
 </div>
 
@@ -578,20 +603,13 @@ const PLOT_SECTION_MAP = {
     "Depth per amplicon": "plots-amplicon-depth",
     "Reads per sample": "plots-qc",
     "read_counts/sankey": "plots-read-counts-sankey",
-    "raw_length/histogram_all": "plots-raw-length-histogram-all",
-    "raw_length/histogram_outcome": "plots-raw-length-histogram-outcome",
     "raw_length/histogram_type": "plots-raw-length-histogram-type",
     "raw_length/sankey": "plots-raw-length-sankey",
-    "num_repeats/histogram_all": "plots-num-repeats-histogram-all",
-    "num_repeats/histogram_outcome": "plots-num-repeats-histogram-outcome",
-    "num_repeats/histogram_type": "plots-num-repeats-histogram-type",
-    "mapped_bases/histogram_all": "plots-mapped-bases-histogram-all",
-    "mapped_bases/histogram_outcome": "plots-mapped-bases-histogram-outcome",
+    "raw_read_average_quality_scores/histogram_type": "plots-raw-read-average-quality-scores-histogram-type",
     "mapped_bases/histogram_type": "plots-mapped-bases-histogram-type",
-    "consensus_length/histogram_all": "plots-consensus-length-histogram-all",
-    "consensus_length/histogram_outcome": "plots-consensus-length-histogram-outcome",
     "consensus_length/histogram_type": "plots-consensus-length-histogram-type",
     "consensus_length/sankey": "plots-consensus-length-sankey",
+    "consensus_read_average_quality_scores/histogram_type": "plots-consensus-read-average-quality-scores-histogram-type",
 };
 
 function switchPlot(buttonElement, targetPlotId) {
