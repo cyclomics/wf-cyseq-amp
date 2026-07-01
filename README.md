@@ -1,9 +1,6 @@
 <p>
-  <img src="assets/logo_named.png" alt="logo" width="200" align="left" />
-  <img src="assets/tagline.png" alt="tagline" width="150" align="right" />
+  <img src="assets/header.png" alt="header"/>
 </p>
-
-<br><br>
 
 # CySeq Amplicon
 
