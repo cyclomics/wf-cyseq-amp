@@ -1,16 +1,13 @@
 <p>
-  <img src="assets/logo_named.png" alt="logo" width="200" align="left" />
-  <img src="assets/tagline.png" alt="tagline" width="150" align="right" />
+  <img src="assets/header.png" alt="header"/>
 </p>
-
-<br><br>
 
 # CySeq Amplicon
 
 This workflow uses concatemeric CySeq reads of specific amplicon targets as input to generate consensus reads in real time, which will then be used to call variants within the amplified loci.
 
 > <b>Expected use case:</b> <br>
-> This workflow is designed specifically for ONT long-read sequencing reads generated using a CySeq (S or L) protocol in association with a PCR amplification panel. It expects reads to accumulate on known genomic loci, as high read depth is required for low frequency variant calling. The workflow will generate consensus reads in those loci and use the consensus reads to call variants within the loci.
+> This workflow is designed specifically for ONT long-read sequencing reads generated using a CySeq (Short Fragment or Long Fragment) sequencing kit in association with a PCR amplification panel. It expects reads to accumulate on known genomic loci, as high read depth is required for low frequency variant calling. The workflow will generate consensus reads in those loci and use the consensus reads to call variants within the loci.
 
 <details>
   <summary><b>Table of contents</b></summary>
@@ -29,7 +26,8 @@ The following inputs are mandatory:
 
 | Input | Format | Description |
 | ----- | ------ | ----------- |
-| Input data folder | Directory | A MinKnow sequencing output folder containing the `fastq_pass` subfolder, which may optionally contain `barcode` subfolders. This provided output folder is the same folder where MinKnow will write the sequencing summary file, which is necessary to flag the end of the real-time file ingestion. |
+| Sample name | Text | Required for EPI2ME runs only. A descriptive name for your analysis run, relating to the sample being analysed. |
+| Input data folder | Directory | A MinKNOW sequencing output folder containing the `fastq_pass` subfolder, which may optionally contain `barcode` subfolders. This provided output folder is the same folder where MinKNOW will write the sequencing summary file, which is necessary to flag the end of the real-time file ingestion. |
 | Reference genome | FASTA | FASTA human reference genome version GRCh38.p14, [ideally NCBI's major release for alignment pipelines provided here](https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/405/GCF_000001405.40_GRCh38.p14/GRCh38_major_release_seqs_for_alignment_pipelines/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna.gz). This file must be unzipped. |
 | Genomic loci | BED | BED file with the genomic loci of interest, in relation to the above reference. |
 
@@ -46,7 +44,7 @@ If you are executing this workflow through [EPI2ME](https://epi2me.nanoporetech.
 
 The workflow expects at least 16 CPUs to be available and 32 GB of RAM. Please ensure you have at least 50 GB of disk space available.
 
-We recommend at least 32 CPUs and 64 GB of RAM to decrease the runtime significantly. Primarily increasing the RAM allocation will allow the workflow to run more demanding processes in parallel, decreasing runtime. To further decrease runtime, allow 20 GB extra RAM for every 8 additional CPUs.
+We recommend at least 64 CPUs and 160 GB of RAM to decrease the runtime significantly. Primarily increasing the RAM allocation will allow the workflow to run more demanding processes in parallel, decreasing runtime. To further decrease runtime, allow 20 GB extra RAM for every 8 additional CPUs.
 
 ## General usage
 

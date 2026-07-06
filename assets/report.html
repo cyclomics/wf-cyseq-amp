@@ -432,27 +432,27 @@
 
             <div class="plot-container">
                 <div class="plot-tabs">
-                    <button class="plot-tab-btn active" onclick="switchPlot(this, 'plots-read-counts-sankey')">All read counts</button>
-                    <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-consensus-length-sankey')">Consensus bases</button>
-                     <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-raw-length-sankey')">Raw bases</button>
+                    <button class="plot-tab-btn active" onclick="switchPlot(this, 'plots-read-counts-sankey-group')">All read counts</button>
+                    <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-consensus-length-sankey-group')">Consensus bases</button>
+                     <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-raw-length-sankey-group')">Raw bases</button>
                 </div>
 
-                <div id="plots-read-counts-sankey" class="plot-card active">
+                <div id="plots-read-counts-sankey-group" class="plot-card active">
                     <div id="help-run-stats" class="section-help-box">
-                        This section provides an overview of the sequencing run, including the number of reads generated, total bases sequenced, and other key metrics.
-                        <br/>The Sankey plot shows the flow of sequenced reads through consensus generation. It displays reads that pass or fail consenus. Reads that pass consensus are further categorized by their type (1D, 2D or 3D). Reads that fail consensus are further categorized by their reason for failure.
+                        This section summarizes the sequencing run, including the number of reads, total bases sequenced, and other key metrics. The interactive Sankey plot illustrates the flow of reads through consensus generation, showing which reads pass or fail consensus. Passing reads are classified as ssDNA or dsDNA (a calibration distinction without biological significance for PCR panel workflows), while failing reads are grouped by their reason for failure.
+                        <br/>Low consensus yield may reflect poor sequencing performance or issues during amplification steps.
                     </div>
                 </div>
-                <div id="plots-consensus-length-sankey" class="plot-card">
+                <div id="plots-consensus-length-sankey-group" class="plot-card">
                     <div id="help-consensus-reads" class="section-help-box">
-                        This section shows the yield of consensus read bases generated.
-                        <br/>The Sankey plot shows the proportion of consensus bases by read type (1D, 2D, 3D) after successful consensus. When consensus fails, the underlying reason is displayed.
+                        This section summarizes the yield of consensus read bases generated. The interactive Sankey plot illustrates the proportion of consensus bases by read type after successful consensus, showing which reads pass or fail consensus. Passing reads are classified as ssDNA or dsDNA (a calibration distinction without biological significance for PCR panel workflows), while failing reads are grouped by their reason for failure.
+                        <br/>Low consensus yield may reflect poor sequencing performance or issues during amplification steps.
                     </div>
                 </div>
-                <div id="plots-raw-length-sankey" class="plot-card">
+                <div id="plots-raw-length-sankey-group" class="plot-card">
                     <div id="help-raw-length" class="section-help-box">
-                        This section shows the yield of raw read bases analysed.
-                        <br/>The Sankey plot shows the proportion of raw bases by read type (1D, 2D, 3D) after successful consensus. When consensus fails, the underlying reason is displayed.
+                        This section summarizes the yield of raw read bases analysed. The interactive Sankey plot illustrates the proportion of raw bases by read type after successful consensus, showing which raids pass or fail consensus. Passing reads are classified as ssDNA or dsDNA (a calibration distinction without biological significance for PCR panel workflows), while failing reads are grouped by their reason for failure.
+                        <br/>Low consensus yield may reflect poor sequencing performance or issues during amplification steps.
                     </div>
                 </div>
             </div>
@@ -468,8 +468,8 @@
             <div class="plot-container">
                 <div id="plots-amplicon-depth", class="plot-card active">
                     <div id="help-amplicon-depth" class="section-help-box">
-                        This section shows the median depth of coverage for each amplicon. For each amplicon, read depth is determined at each position, and the median depth across the locus is calculated.
-                        <br/>If a target depth is specified, it is shown as a dashed line. Amplicons that meet the target are colored blue.
+                        This section shows the median depth of coverage for each amplicon, calculated from the median read depth across its positions. If a target depth is specified, it is indicated by a dashed line, and amplicons meeting the target are highlighted in blue.
+                        <br/>Uniform coverage suggests successful amplification, while consistently low-depth amplicons may indicate inefficient PCR amplification or low sequencing yield.
                     </div>
                 </div>
             </div>
@@ -482,8 +482,8 @@
             </div>
             <div id="variants-table-container" class="plot-container">
                 <div id="help-variants" class="section-help-box">
-                    This section lists the variants detected in the sample. Variants are identified by comparing the consensus sequences to the reference genome. The table includes information about each variant, such as its genomic position, codon and amino acid changes, type (e.g., SNV, indel), and allele frequency.
-                    <br/>Use the buttons above the table to select which variants to display.
+                    This section lists variants detected by comparing consensus sequences to the reference genome. For each variant, the table includes its genomic position, codon and amino acid changes, type (e.g., SNV or indel), and allele frequency. Only variants supported by consensus reads are reported. Use the buttons above the table to filter the displayed variants.
+                    <br/>If no variants are detected, the sample may be wild type at those loci or sequencing depth may be insufficient.
                 </div>
 
                 <br><br>
@@ -525,33 +525,35 @@
 
             <div class="plot-container">
                 <div class="plot-tabs">
-                    <button class="plot-tab-btn active" onclick="switchPlot(this, 'plots-consensus-length-histogram-type')">Consensus read lengths</button>
-                     <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-raw-length-histogram-type')">Raw read lengths</button>
-                     <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-num-repeats-histogram-type')">Number of repeats</button>
-                     <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-mapped-bases-histogram-type')">Mapped fraction</button>
+                    <button class="plot-tab-btn active" onclick="switchPlot(this, 'plots-consensus-length-histogram-group')">Consensus read lengths</button>
+                     <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-raw-length-histogram-group')">Raw read lengths</button>
+                     <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-num-repeats-histogram-group')">Number of repeats</button>
+                     <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-mapped-bases-histogram-group')">Mapped fraction</button>
                 </div>
 
-                    <div id="plots-consensus-length-histogram-type" class="plot-card active">
+                    <div id="plots-consensus-length-histogram-group" class="plot-card active">
                         <div id="help-consensus-length" class="section-help-box">
-                            This histogram shows the distribution of consensus read lengths stratified by read type.
+                            This histogram shows the distribution of consensus read lengths by read type. For PCR panel workflows, these read types differ only in calibration and have no biological significance.
+                            <br/>Because consensus read length reflects insert size, this plot helps confirm that reads match the expected PCR amplicon lengths.
                         </div>
                     </div>
-                    <div id="plots-raw-length-histogram-type" class="plot-card">
+                    <div id="plots-raw-length-histogram-group" class="plot-card">
                         <div id="help-raw-length" class="section-help-box">
-                            This histogram shows the distribution of raw read lengths stratified by read type.
+                            This histogram shows the distribution of raw read lengths by read type. For PCR panel workflows, these read types differ only in calibration and have no biological significance.
+                            <br/>A predominance of short raw reads may indicate that concatemers are too short to generate consensus reads, suggesting an issue with RCA.
                         </div>
                     </div>
-                    <div id="plots-num-repeats-histogram-type" class="plot-card">
+                    <div id="plots-num-repeats-histogram-group" class="plot-card">
                         <div id="help-num-repeats" class="section-help-box">
-                            This histogram shows the number of repeats in each processed read. A repeat is defined as the base subunit of a concatemeric read, typically corresponding to the original insert.
-                            <br/>The distribution of the number of repeats is stratified by read type.
+                            This histogram shows the number of repeats in each processed read by read type. A repeat is defined as the base subunit of a concatemeric read, typically corresponding to the original insert. For PCR panel workflows, these read types differ only in calibration and have no biological significance.
+                            <br/>A predominance of low repeat numbers may indicate that concatemers are too short to generate consensus reads, suggesting an issue with RCA.
                         </div>
                     </div>
-                    <div id="plots-mapped-bases-histogram-type" class="plot-card">
+                    <div id="plots-mapped-bases-histogram-group" class="plot-card">
                         <div id="help-mapped-bases" class="section-help-box">
-                        This section shows the fraction of mapped bases per read. That is, for each read, the number of bases that successfully mapped to the reference, over the total read length.
-                        <br/>The distribution of mapped fractions is stratified by read type.
-                    </div>
+                            This histogram shows the fraction of mapped bases per read by read type. That is, for each read, the number of bases that successfully mapped to the reference, over the total read length. For PCR panel workflows, these read types differ only in calibration and have no biological significance.
+                            <br/>A lower mapped fraction may indicate an inappropriate reference, or unexpected read inserts, like contaminations or primer dimers.
+                        </div>
                     </div>
             </div>
         </div>
@@ -564,20 +566,20 @@
 
             <div class="plot-container">
                 <div class="plot-tabs">
-                    <button class="plot-tab-btn active" onclick="switchPlot(this, 'plots-consensus-read-average-quality-scores-histogram-type')">Consensus read Q-Scores</button>
-                    <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-raw-read-average-quality-scores-histogram-type')">Raw read Q-Scores</button>
+                    <button class="plot-tab-btn active" onclick="switchPlot(this, 'plots-consensus-read-average-quality-scores-histogram-group')">Consensus read Q-Scores</button>
+                    <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-raw-read-average-quality-scores-histogram-group')">Raw read Q-Scores</button>
 
                 </div>
 
-                <div id="plots-consensus-read-average-quality-scores-histogram-type" class="plot-card active">
+                <div id="plots-consensus-read-average-quality-scores-histogram-group" class="plot-card active">
                     <div id="help-consensus-q" class="section-help-box">
-                        This histogram shows the distribution of consensus read Q-Scores stratified by read type.
+                        This histogram shows the distribution of consensus read Q-Scores by read type. For PCR panel workflows, these read types differ only in calibration and have no biological significance.
                     </div>
                 </div>
 
-                <div id="plots-raw-read-average-quality-scores-histogram-type" class="plot-card">
+                <div id="plots-raw-read-average-quality-scores-histogram-group" class="plot-card">
                     <div id="help-raw-q" class="section-help-box">
-                        This histogram shows the distribution of raw read Q-Scores stratified by read type.
+                        This histogram shows the distribution of raw read Q-Scores by read type. For PCR panel workflows, these read types differ only in calibration and have no biological significance.
                     </div>
                 </div>
     </main>
@@ -602,14 +604,15 @@ function showSection(sectionId, btn) {
 const PLOT_SECTION_MAP = {
     "Depth per amplicon": "plots-amplicon-depth",
     "Reads per sample": "plots-qc",
-    "read_counts/sankey": "plots-read-counts-sankey",
-    "raw_length/histogram_type": "plots-raw-length-histogram-type",
-    "raw_length/sankey": "plots-raw-length-sankey",
-    "raw_read_average_quality_scores/histogram_type": "plots-raw-read-average-quality-scores-histogram-type",
-    "mapped_bases/histogram_type": "plots-mapped-bases-histogram-type",
-    "consensus_length/histogram_type": "plots-consensus-length-histogram-type",
-    "consensus_length/sankey": "plots-consensus-length-sankey",
-    "consensus_read_average_quality_scores/histogram_type": "plots-consensus-read-average-quality-scores-histogram-type",
+    "read_counts/sankey_group": "plots-read-counts-sankey-group",
+    "raw_length/histogram_group": "plots-raw-length-histogram-group",
+    "raw_length/sankey_group": "plots-raw-length-sankey-group",
+    "raw_read_average_quality_scores/histogram_group": "plots-raw-read-average-quality-scores-histogram-group",
+    "num_repeats/histogram_group": "plots-num-repeats-histogram-group",
+    "mapped_bases/histogram_group": "plots-mapped-bases-histogram-group",
+    "consensus_length/histogram_group": "plots-consensus-length-histogram-group",
+    "consensus_length/sankey_group": "plots-consensus-length-sankey-group",
+    "consensus_read_average_quality_scores/histogram_group": "plots-consensus-read-average-quality-scores-histogram-group",
 };
 
 function switchPlot(buttonElement, targetPlotId) {
