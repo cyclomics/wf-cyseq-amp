@@ -102,25 +102,25 @@ def save_metric_cards(report: Report) -> None:
 
     Path("cards").mkdir(exist_ok=True)
 
-    metrics = report.metrics
-
-    read_counts = getattr(metrics.get("read_counts"), "data", {})
-    raw_length = getattr(metrics.get("raw_length"), "data", {})
-    num_repeats = getattr(metrics.get("num_repeats"), "data", {})
-    mapped_bases = getattr(metrics.get("mapped_bases"), "data", {})
-    consensus = getattr(metrics.get("consensus_length"), "data", {})
+    read_counts = report.get_stats("read_counts")
+    raw_length = report.get_stats("raw_length")
+    num_repeats = report.get_stats("num_repeats")
+    mapped_bases = report.get_stats("mapped_bases")
+    consensus = report.get_stats("consensus_length")
 
     cards = {
         "cards": {
-            "n_raw_reads": read_counts.get("run"),
+            "n_raw_reads": _get_nested(read_counts, "run", "n"),
             "median_read_length_raw": _get_nested(raw_length, "run", "median"),
             "median_repeats": _get_nested(num_repeats, "run", "median"),
-            "n_mapped_raw": _get_nested(mapped_bases, "success", "grouped", "n")
-            - _get_nested(mapped_bases, "fail", "Read has zero alignments", "n"),
+            "n_mapped_raw": _get_nested(mapped_bases, "run", "n")
+            - _get_nested(mapped_bases, "Read has zero alignments", "n"),
             "median_mappability_raw": _get_nested(mapped_bases, "run", "median"),
-            "n_consensus_reads": _get_nested(read_counts, "success", "grouped"),
+            "n_consensus_reads": _get_nested(read_counts, "success", "n"),
             "median_read_length_consensus": _get_nested(
-                consensus, "success", "grouped", "median"
+                consensus,
+                "success",
+                "median",
             ),
         }
     }
