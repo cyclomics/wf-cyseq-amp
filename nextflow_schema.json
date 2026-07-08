@@ -112,16 +112,16 @@
             "fa_icon": "fas fa-cogs",
             "description": "System-level parameters to adjust resource usage behaviour.",
             "properties": {
-                "executor.cpus": {
+                "max_cpus": {
                     "title": "CPUs",
                     "type": "integer",
                     "default": 16,
                     "description": "Total number of CPUs available to the entire workflow to use simultaneously."
                 },
-                "executor.memory": {
+                "max_memory": {
                     "title": "Memory",
-                    "type": "string",
-                    "default": "32 GB",
+                    "type": "integer",
+                    "default": 32,
                     "description": "Total RAM available to the workflow."
                 }
             }
