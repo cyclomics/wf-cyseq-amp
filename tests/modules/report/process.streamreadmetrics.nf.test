@@ -27,7 +27,7 @@ nextflow_process {
             assert process.out[0][0].size() == 5
 
             // Number of plot files
-            assert process.out[0][0][4].size() == 15
+            assert process.out[0][0][4].size() == 33
             
 
             def yml = path(process.out[0][0][4][0]).yaml
