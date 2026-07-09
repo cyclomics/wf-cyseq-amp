@@ -27,8 +27,8 @@ nextflow_workflow {
 
         then {
             assert workflow.success
-            // Expect the workflow to emit consensus_fastq and consensus_folder outputs
-            assert workflow.out.consensus_fastq != null
+            // Expect the workflow to emit consensus_sam and consensus_folder outputs
+            assert workflow.out.consensus_sam != null
             assert workflow.out.consensus_folder != null
         }
     }
