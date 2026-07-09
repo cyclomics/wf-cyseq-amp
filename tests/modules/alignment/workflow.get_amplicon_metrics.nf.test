@@ -1,8 +1,8 @@
 nextflow_workflow {
 
-    name "Test workflow: align_consensus"
+    name "Test workflow: get_amplicon_metrics"
     script "modules/alignment.nf"
-    workflow "align_consensus"
+    workflow "get_amplicon_metrics"
 
     test("Aligns consensus reads and computes on-target metrics") {
         tag "workflow"
@@ -16,19 +16,10 @@ nextflow_workflow {
                     "file_1",
                     file("${projectDir}/tests/data/simple/dummy.fastq")
                 ])
-
-                ch_reference = Channel.of([
-                    file("${projectDir}/tests/data/simple/tiny_ref.fasta"),
-                    file("${projectDir}/tests/data/simple/tiny_ref.fasta")
-                ])
-
                 ch_regions = Channel.of(file("${projectDir}/tests/fixtures/small.bed"))
-                ch_mode = Channel.of("sr")
 
                 input[0] = ch_consensus_reads
-                input[1] = ch_reference
-                input[2] = ch_regions
-                input[3] = ch_mode
+                input[1] = ch_regions
                 """
             }
         }
