@@ -1,8 +1,8 @@
 nextflow_process {
 
-    name "Test Process SplitReadFilesOnNumberOfReads"
-    script "modules/common.nf"
-    process "SplitReadFilesOnNumberOfReads"
+    name "Test Process SplitFastq"
+    script "modules/ingress.nf"
+    process "SplitFastq"
 
     test("Splits a FASTQ file into chunks") {
         tag "unit-test"
