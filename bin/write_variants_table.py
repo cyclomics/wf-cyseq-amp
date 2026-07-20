@@ -1,8 +1,22 @@
 #!/usr/bin/env python
+"""Flatten a SnpEff-annotated VCF into a variant table (TSV + JSON).
+
+This expects VCF records annotated by SnpEff, where:
+  * INFO/ANN carries the functional annotation as pipe-delimited fields,
+    with one comma-separated entry per affected transcript. SnpEff orders
+    these entries from most to least severe impact, so we keep the first
+    entry as the variant's "primary" annotation.
+  * VAF and depth live on the sample genotype column (FORMAT/DP,
+    FORMAT/VAF) rather than in INFO.
+
+The output schema (variant-table columns) is unchanged from the previous
+version of this script, so downstream consumers don't need to change.
+"""
+
 import argparse
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 import pandas as pd
 
@@ -36,8 +50,31 @@ COLUMN_SCHEMA = {
     },
     "Type": {
         "type": "dropdown",
-    }
+    },
 }
+
+# Order of the pipe-delimited subfields inside INFO/ANN. This mirrors the
+# ##INFO=<ID=ANN,...> header line SnpEff writes into the VCF, so if the
+# annotator's output format ever changes, that header is the place to check.
+ANN_FIELDS = [
+    "allele",
+    "annotation",
+    "annotation_impact",
+    "gene_name",
+    "gene_id",
+    "feature_type",
+    "feature_id",
+    "transcript_biotype",
+    "rank",
+    "hgvs_c",
+    "hgvs_p",
+    "cdna_pos_len",
+    "cds_pos_len",
+    "aa_pos_len",
+    "distance",
+    "errors_warnings_info",
+]
+
 
 def human_format(num: Any) -> str:
     try:
@@ -52,19 +89,26 @@ def human_format(num: Any) -> str:
     formatted_num = f"{num:.2f}".rstrip("0").rstrip(".")
     return f"{formatted_num}{suffixes[magnitude]}"
 
-def to_float(value):
+
+def to_float(value: Any) -> Optional[float]:
     try:
         return float(value)
     except (TypeError, ValueError):
         return None
 
+
 def load_vcf(vcf_file: Path) -> pd.DataFrame:
     skip_rows = 0
     with open(vcf_file, "r", encoding="utf-8") as fh:
         for line in fh:
-            if line.startswith("##"): skip_rows += 1
-            else: break
-    return pd.read_csv(vcf_file, sep="\t", skiprows=skip_rows, dtype=str).rename(columns={"#CHROM": "CHROM"})
+            if line.startswith("##"):
+                skip_rows += 1
+            else:
+                break
+    return pd.read_csv(vcf_file, sep="\t", skiprows=skip_rows, dtype=str).rename(
+        columns={"#CHROM": "CHROM"}
+    )
+
 
 def _parse_info_field(info: str) -> dict:
     if not isinstance(info, str):
@@ -72,64 +116,94 @@ def _parse_info_field(info: str) -> dict:
 
     result = {}
     for entry in info.split(";"):
-        if "=" in entry:
-            k, v = entry.split("=", 1)
-            result[k] = v
-        else:
-            result[entry] = True
+        key, sep, value = entry.partition("=")
+        result[key] = value if sep else True
     return result
+
+
+def _parse_primary_ann(ann_value: Any) -> dict:
+    """Return the primary (first, most severe) SnpEff annotation as a dict.
+
+    A variant can hit several transcripts, each reported as its own
+    pipe-delimited entry, comma-separated. We surface only the first entry
+    here to keep one row per variant; the full annotation is still in the
+    source VCF for anyone who needs every transcript.
+    """
+    if not isinstance(ann_value, str) or not ann_value:
+        return {}
+
+    first_entry = ann_value.split(",", 1)[0]
+    return dict(zip(ANN_FIELDS, first_entry.split("|")))
+
+
+def _get_sample_column(df: pd.DataFrame) -> str:
+    """Return the name of the (single) sample genotype column after FORMAT."""
+    sample_columns = list(df.columns[df.columns.get_loc("FORMAT") + 1 :])
+    if not sample_columns:
+        raise ValueError("VCF has a FORMAT column but no sample genotype column")
+    if len(sample_columns) > 1:
+        raise ValueError(
+            "Expected a single-sample VCF, but found multiple sample columns: "
+            f"{sample_columns}"
+        )
+    return sample_columns[0]
+
+
+def _parse_genotype(format_field: str, sample_field: str) -> dict:
+    """Zip a VCF FORMAT column (e.g. 'DP:VAF') with its sample values."""
+    if not isinstance(format_field, str) or not isinstance(sample_field, str):
+        return {}
+    return dict(zip(format_field.split(":"), sample_field.split(":")))
+
 
 def restructure_annotations(df: pd.DataFrame) -> pd.DataFrame:
     if df.empty:
         return pd.DataFrame(columns=list(COLUMN_SCHEMA.keys()))
 
-    info = df["INFO"].apply(_parse_info_field)
+    sample_col = _get_sample_column(df)
 
-    def get(key):
-        return info.apply(lambda d: d.get(key))
+    ann = (
+        df["INFO"]
+        .apply(_parse_info_field)
+        .apply(lambda d: d.get("ANN", ""))
+        .apply(_parse_primary_ann)
+    )
+    genotype = df.apply(
+        lambda row: _parse_genotype(row["FORMAT"], row[sample_col]), axis=1
+    )
 
     out = {}
 
     # Genomic change (pure string)
     out["Genomic change"] = (
-        df["CHROM"] + ":" +
-        df["POS"] + ":" +
-        df["REF"] + ">" +
-        df["ALT"]
+        df["CHROM"] + ":" + df["POS"] + ":" + df["REF"] + ">" + df["ALT"]
     )
 
-    # Text fields
-    out["Codon change"] = (
-        get("hgvsc")
-        .str.split(":", n=1)
-        .str[-1]
-    )
-    out["Amino acid change"] = (
-        get("hgvsp")
-        .str.split(":", n=1)
-        .str[-1]
-    )
+    # Text fields, straight off the primary ANN entry
+    out["Codon change"] = ann.apply(lambda d: d.get("hgvs_c"))
+    out["Amino acid change"] = ann.apply(lambda d: d.get("hgvs_p"))
 
-    # Numeric: VAF
-    out["VAF (%)"] = get("AF").apply(to_float).apply(
+    # Numeric: VAF is already a fraction on the sample genotype column
+    out["VAF (%)"] = genotype.apply(lambda d: to_float(d.get("VAF"))).apply(
         lambda x: round(x * 100, 2) if x is not None else None
     )
 
-    # Numeric: Coverage
-    out["Coverage"] = get("DP").apply(to_float)
+    # Numeric: Coverage, also from the sample genotype column
+    out["Coverage"] = genotype.apply(lambda d: to_float(d.get("DP")))
 
     # Categorical
-    out["Symbol"] = get("gene")
-    out["Type"] = get("variant_class")
+    out["Symbol"] = ann.apply(lambda d: d.get("gene_name"))
+    out["Type"] = ann.apply(lambda d: d.get("annotation"))
 
     annotation_df = pd.DataFrame(out)
 
     annotation_df = annotation_df.replace(
         ["", "None", "nan", "NaN"],
-        pd.NA
+        pd.NA,
     )
 
     return annotation_df
+
 
 def main(vcf_file: Path, variants_tsv: Path, variants_json: Path) -> None:
     json_obj = {
@@ -137,7 +211,7 @@ def main(vcf_file: Path, variants_tsv: Path, variants_json: Path) -> None:
             "name": TAB_NAME,
             "data": [],
             "columns": [],
-            "column_types": {}
+            "column_types": {},
         }
     }
 
@@ -148,16 +222,33 @@ def main(vcf_file: Path, variants_tsv: Path, variants_json: Path) -> None:
         processed_df.to_csv(fh, sep="\t", index=False)
 
     json_obj[TAB_NAME]["columns"] = processed_df.columns.tolist()
-    json_obj[TAB_NAME]["data"] = processed_df.to_dict(orient="records")
+
+    json_df = processed_df.astype(object).where(
+        pd.notna(processed_df),
+        None,
+    )
+
+    json_obj[TAB_NAME]["data"] = json_df.to_dict(orient="records")
     json_obj[TAB_NAME]["column_types"] = COLUMN_SCHEMA
 
     with open(variants_json, "w", encoding="utf-8") as fh:
-        json.dump(json_obj, fh, indent=2)
+        json.dump(json_obj, fh, indent=2, allow_nan=False)
+
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("vcf_file", type=Path)
-    parser.add_argument("variants_tsv", type=Path)
-    parser.add_argument("variants_json", type=Path)
-    args = parser.parse_args()
-    main(args.vcf_file, args.variants_tsv, args.variants_json)
+    DEV = False
+    if not DEV:
+        parser = argparse.ArgumentParser()
+        parser.add_argument("vcf_file", type=Path)
+        parser.add_argument("variants_tsv", type=Path)
+        parser.add_argument("variants_json", type=Path)
+        args = parser.parse_args()
+        main(args.vcf_file, args.variants_tsv, args.variants_json)
+    else:
+        # For development, hardcode paths to a test VCF and output files
+        test_vcf = Path(
+            "/scratch/tmp/nxf_work/rodrigo/c9/6220e7769c9698a85f0ea51538691f/PCC3_Cancer_dKoXgED.ann.vcf"
+        )
+        test_tsv = Path("./test_variants.tsv")
+        test_json = Path("./test_variants.json")
+        main(test_vcf, test_tsv, test_json)

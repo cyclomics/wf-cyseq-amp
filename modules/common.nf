@@ -26,6 +26,27 @@ workflow common_workflow {
     PROCESSES
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+process PrepareGenome {
+    // storeDir "/db/genomes"
+    container params.containers.alnutils
+    cpus 1
+    memory 1.GB
+
+    input:
+    val genome
+
+    output:
+    tuple path("genome.fa"), path("genome.fa.fai")
+
+    script:
+    def genome_url = genome.fasta
+    """
+    wget -c -O genome.fa.gz '${genome_url}'
+    gunzip genome.fa.gz
+    samtools faidx genome.fa
+    """
+}
+
 process IndexReference {
     container params.containers.samtools
     cpus 1

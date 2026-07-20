@@ -13,10 +13,12 @@ workflow call_variants {
     main:
         FilterAlignments(reads_aligned)
         CallVariantsLofreq(FilterAlignments.out, reference, regions)
-        AnnotateVariants(CallVariantsLofreq.out)
-        WriteVariantTable(AnnotateVariants.out)
+        FilterVcf(CallVariantsLofreq.out)
+        ReformatVcf(FilterVcf.out)
+        AnnotateSnpEff(ReformatVcf.out)
+        WriteVariantTable(AnnotateSnpEff.out)
     emit:
-        variants = AnnotateVariants.out
+        variants = AnnotateSnpEff.out
         variant_table = WriteVariantTable.out.map { sample_id, _tsv, json -> tuple(sample_id, json) }
 }
 
@@ -73,6 +75,45 @@ process CallVariantsLofreq {
         """
 }
 
+process FilterVcf {
+    container params.containers.lofreq
+    maxForks 1
+    cpus 1
+    memory 200.MB
+
+    input:
+        tuple val(sample_id), val(file_id), path(vcf)
+
+    output:
+        tuple val(sample_id), val(file_id), path("${file_id}.filtered.vcf")
+
+    script:
+        """
+        lofreq filter \
+        --af-min 0.001 \
+        -i ${vcf} \
+        -o ${file_id}.filtered.vcf 
+        """
+}
+
+process ReformatVcf {
+    container params.containers.alnutils
+    maxForks 1
+    cpus 1
+    memory 200.MB
+
+    input:
+        tuple val(sample_id), val(file_id), path(vcf)
+
+    output:
+        tuple val(sample_id), val(file_id), path("${file_id}.reformatted.vcf")
+
+    script:
+        """
+        reformat_vcf.py lofreq ${vcf} ${file_id}.reformatted.vcf
+        """
+}
+
 process AnnotateVariants {
     publishDir { "${params.output_dir}/${sample_id}/variants" }, mode: 'copy'
     container params.containers.alnutils
@@ -89,6 +130,25 @@ process AnnotateVariants {
     script:
         """
         annotate_vcf.py ${vcf} ${file_id}.annotated.vcf
+        """
+}
+
+process AnnotateSnpEff {
+    publishDir { "${params.output_dir}/${sample_id}/variants" }, mode: 'copy', pattern: "*.vcf"
+    container params.containers.snpeff
+    cpus 1
+    memory 8.GB
+
+    input:
+        tuple val(sample_id), val(file_id), path(vcf)
+
+    output:
+        tuple val(sample_id), val(file_id), path("${file_id}.ann.vcf")
+
+    script:
+        """
+        snpEff download -dataDir \${PWD}/snpeff_data ${params.reference}
+        snpEff ann -v -dataDir \${PWD}/snpeff_data ${params.reference} ${vcf} > ${file_id}.ann.vcf
         """
 }
 
