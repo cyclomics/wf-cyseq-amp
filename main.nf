@@ -18,6 +18,7 @@ nextflow.preview.recursion = true
 include { ingress } from './modules/ingress'
 include {
     PrepareGenome;
+    SubsetGenome;
     IndexReference;
     GetAmpliconDepth;
     } from './modules/common'
@@ -57,11 +58,21 @@ workflow {
         ? "${params.input_dir}${params.stop_pattern}"
         : "${params.input_dir}/${params.stop_pattern}"
 
-    PrepareGenome(genome_info)
-    def ch_reference = PrepareGenome.out.collect()
     def minimap2_mode = params.minimap2.mode
     def ch_regions = channel.value(file(params.regions)).collect()
 
+    PrepareGenome(genome_info)
+
+    ch_for_subset = params.skip_reference_subset
+        ? channel.empty()
+        : PrepareGenome.out
+
+    SubsetGenome(ch_for_subset, ch_regions)
+
+    ch_reference = params.skip_reference_subset
+        ? PrepareGenome.out.collect()
+        : SubsetGenome.out.collect()
+    
     // Start ingress workflow
     ingress(read_pattern, stop_pattern)
     raw_fastq = ingress.out.ingested_fastq
