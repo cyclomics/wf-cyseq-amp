@@ -3,7 +3,6 @@
 import argparse
 import io
 from pathlib import Path
-from typing import Dict, List, Tuple
 
 import pandas as pd
 
@@ -50,19 +49,28 @@ class VcfFile:
         self.vcf = self.read_vcf(vcf_file)
 
     def read_vcf(self, path: Path) -> pd.DataFrame:
-        """Read in a VCF file and return it as Pandas DataFrame"""
+        """Read in a VCF file and return as a Pandas DataFrame."""
         with open(path, "r") as f:
             header = []
+            column_header = None
             lines = []
-            for l in f:
-                if l.startswith("##"):
-                    header.append(l)
+
+            for line in f:
+                if line.startswith("##"):
+                    header.append(line)
+                elif line.startswith("#CHROM"):
+                    column_header = line.rstrip("\n").split("\t")
                 else:
-                    lines.append(l)
+                    lines.append(line)
 
         self.vcf_header = header
+
+        if not lines:
+            return pd.DataFrame(columns=column_header)
+
         df = pd.read_csv(
             io.StringIO("".join(lines)),
+            names=column_header,
             dtype={
                 "#CHROM": str,
                 "POS": int,
@@ -77,7 +85,6 @@ class VcfFile:
             },
             sep="\t",
         ).rename(columns={"#CHROM": "CHROM"})
-
         return df
 
     def write_vcf(self, output_path: Path):
@@ -87,8 +94,7 @@ class VcfFile:
             new_header = [i for i in self.vcf_header if not i.startswith("##INFO")]
             new_header += FORMAT_HEADERS
             self.vcf_header = new_header
-            for line in self.vcf_header:
-                new_vcf.write(line)
+            new_vcf.writelines(self.vcf_header)
 
             writeable_vcf = self.vcf.rename(columns={"CHROM": "#CHROM"})
             writeable_vcf = writeable_vcf[
@@ -110,7 +116,7 @@ class VcfFile:
             new_vcf.writelines(writeable_vcf.to_csv(sep="\t", index=False))
 
     @staticmethod
-    def extract_info_lofreq(info_str: str) -> Dict[str, str]:
+    def extract_info_lofreq(info_str: str) -> dict[str, str]:
         """Parse LoFreq INFO field and compute derived annotations.
 
         Args:
@@ -119,7 +125,7 @@ class VcfFile:
         Returns:
             Dictionary mapping FORMAT keys to string values.
         """
-        raw: Dict[str, str] = {}
+        raw: dict[str, str] = {}
         for item in info_str.split(";"):
             if "=" in item:
                 k, v = item.split("=", 1)
@@ -165,55 +171,54 @@ class VcfFile:
     def parse_columns(self, caller: str) -> pd.DataFrame:
         df = self.vcf.copy()
 
-        if df.empty:
-            return df
-
         if caller != "lofreq":
             return df
 
-        def transform_row(info_str: str) -> Tuple[str, str, str]:
+        format_str = ":".join(FORMAT)
+
+        def transform_row(info_str: str) -> tuple[str, str, str]:
             vals = self.extract_info_lofreq(info_str)
 
-            # FORMAT is fixed
-            format_str = ":".join(FORMAT)
+            return ":".join(vals.get(key, ".") for key in FORMAT)
 
-            # SAMPLE1 follows FORMAT order
-            sample_vals: List[str] = [vals.get(k, ".") for k in FORMAT]
-            sample_str = ":".join(sample_vals)
-
-            return ".", format_str, sample_str
-
-        new_cols = df["INFO"].apply(
-            lambda s: pd.Series(transform_row(s), index=["INFO", "FORMAT", "SAMPLE1"])
-        )
-
-        df[["INFO", "FORMAT", "SAMPLE1"]] = new_cols
+        df["INFO"] = "."
+        df["FORMAT"] = format_str
+        df["SAMPLE1"] = self.vcf["INFO"].apply(transform_row)
 
         self.vcf = df
+        return df
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Reformat VCF file to standardize annotations."
-    )
-    parser.add_argument(
-        "caller",
-        type=str,
-        choices=["lofreq"],
-        help="Variant caller used to generate the VCF file.",
-    )
-    parser.add_argument(
-        "input_vcf",
-        type=Path,
-        help="Path to the input VCF file.",
-    )
-    parser.add_argument(
-        "output_vcf",
-        type=Path,
-        help="Path to the output reformatted VCF file.",
-    )
-    args = parser.parse_args()
+    DEV = True
+    if not DEV:
+        parser = argparse.ArgumentParser(
+            description="Reformat VCF file to standardize annotations."
+        )
+        parser.add_argument(
+            "caller",
+            type=str,
+            choices=["lofreq"],
+            help="Variant caller used to generate the VCF file.",
+        )
+        parser.add_argument(
+            "input_vcf",
+            type=Path,
+            help="Path to the input VCF file.",
+        )
+        parser.add_argument(
+            "output_vcf",
+            type=Path,
+            help="Path to the output reformatted VCF file.",
+        )
+        args = parser.parse_args()
 
-    vcf = VcfFile(args.input_vcf)
-    vcf.parse_columns(args.caller)
-    vcf.write_vcf(args.output_vcf)
+        vcf = VcfFile(args.input_vcf)
+        vcf.parse_columns(args.caller)
+        vcf.write_vcf(args.output_vcf)
+    else:
+        vcf = VcfFile(
+            "/home/rodrigo/cauldron/wf-cyseq-amp/output/CYC000735_barcode01_tiny5/OS_panel_rebalance_IS2WJC2_barcode01/variants/OS_panel_rebalance_IS2WJC2_barcode01.filtered.vcf"
+        )
+        vcf.parse_columns("lofreq")
+        vcf.write_vcf("test.vcf")
