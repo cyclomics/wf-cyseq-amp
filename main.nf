@@ -17,6 +17,8 @@ nextflow.preview.recursion = true
 */
 include { ingress } from './modules/ingress'
 include {
+    PrepareGenome;
+    SubsetGenome;
     IndexReference;
     GetAmpliconDepth;
     } from './modules/common'
@@ -38,8 +40,11 @@ include {
 */
 workflow {
     assert params.input_dir : "--input_dir cannot be empty. Please provide a folder containing input FASTQ files or containing a subfolder with input FASTQ files."
-    assert params.reference : "--reference cannot be empty. Please provide a reference genome in FASTA format. Variant annotation is only compatible with GRCh38."
+    
+    def genome_info = params.genomes[params.reference]
+    assert genome_info: "--reference must be one of: ${params.genomes.keySet().join(', ')} (got '${params.reference}')."
     assert params.regions   : "--regions cannot be empty. Please provide an input BED file with loci of interest."
+
 
     def allowed_modes = ["map-ont", "sr"]
     assert params.minimap2?.mode in allowed_modes :
@@ -53,10 +58,21 @@ workflow {
         ? "${params.input_dir}${params.stop_pattern}"
         : "${params.input_dir}/${params.stop_pattern}"
 
-    def ch_reference = IndexReference(channel.fromPath(params.reference)).collect()
     def minimap2_mode = params.minimap2.mode
     def ch_regions = channel.value(file(params.regions)).collect()
 
+    PrepareGenome(genome_info)
+
+    ch_for_subset = params.skip_reference_subset
+        ? channel.empty()
+        : PrepareGenome.out
+
+    SubsetGenome(ch_for_subset, ch_regions)
+
+    ch_reference = params.skip_reference_subset
+        ? PrepareGenome.out.collect()
+        : SubsetGenome.out.collect()
+    
     // Start ingress workflow
     ingress(read_pattern, stop_pattern)
     raw_fastq = ingress.out.ingested_fastq

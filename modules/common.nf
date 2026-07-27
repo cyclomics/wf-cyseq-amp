@@ -26,6 +26,54 @@ workflow common_workflow {
     PROCESSES
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+process PrepareGenome {
+    storeDir "${workDir}/cache/genome/${params.reference}"
+    // storeDir "${params.genome_cache_dir}/${params.reference}"
+    container params.containers.alnutils
+    cpus 1
+    memory 1.GB
+
+    input:
+    val genome
+
+    output:
+    tuple path("genome.fa"), path("genome.fa.fai")
+
+    script:
+    def genome_url = genome.fasta
+    """
+    wget -c -O genome.fa.gz '${genome_url}'
+    gunzip genome.fa.gz
+    samtools faidx genome.fa
+    """
+}
+
+process SubsetGenome {
+    publishDir { "${params.output_dir}/genome_subset" }, mode: 'copy'
+    storeDir "${workDir}/cache/genome/${params.reference}"
+    container params.containers.alnutils
+    cpus 1
+    memory 1.GB
+
+    input:
+    tuple path(fasta), path(fai)
+    path bed
+
+    output:
+    tuple path("genome.subset.fa"), path("genome.subset.fa.fai")
+
+    script:
+    """
+    cut -f1 '${bed}' | sort -u > chromosomes.txt
+
+    samtools faidx ${fasta} \\
+        \$(cat chromosomes.txt) \\
+        > genome.subset.fa
+
+    samtools faidx genome.subset.fa
+    """
+}
+
 process IndexReference {
     container params.containers.samtools
     cpus 1
