@@ -47,9 +47,34 @@ nextflow_function {
         }
     }
 
-    test("Function getMinKnowBarcodeFolderPattern: Test") {
-        // This is a simple anonymous function 
+    test("Function getMinKnowBarcodeFolderPattern: Selected barcodes") {
         function "getMinKnowBarcodeFolderPattern"
+        tag "unit-test"
+        tag "function"
+
+        when {
+            function {
+                """
+                input[0] = "barcode01,barcode18"
+                """
+            }
+        }
+
+        then {
+            assert function.success
+
+            assert 'barcode01' ==~ function.result
+            assert 'barcode18' ==~ function.result
+
+            assert !('barcode02' ==~ function.result)
+            assert !('barcode99' ==~ function.result)
+            assert !('unclassified' ==~ function.result)
+        }
+    }
+    
+    test("Function getMinKnowAutoRunFolderPattern: Test") {
+        // This is a simple anonymous function 
+        function "getMinKnowAutoRunFolderPattern"
         tag "unit-test"
         tag "function"
         when {
@@ -59,14 +84,9 @@ nextflow_function {
         }
         then {
             assert function.success
-            assert 'barcode01' ==~ function.result
-            assert 'barcode18' ==~ function.result
-            assert 'barcode99' ==~ function.result
-            assert 'barcode257' ==~ function.result
-            assert 'unclassified' ==~ function.result
-            // also test some misses
-            assert !('barcode1234' ==~ function.result)
-            assert !('my_sample_name' ==~ function.result)
+            assert '20240918_1535_P2S-01772-A_PAW58321_a3846868' ==~ function.result
+            assert '20240101_0000_runname' ==~ function.result
+            assert !('20240101_runname' ==~ function.result)
         }
     }
     
