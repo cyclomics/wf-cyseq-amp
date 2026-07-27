@@ -16,7 +16,7 @@ version of this script, so downstream consumers don't need to change.
 import argparse
 import json
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import pandas as pd
 
@@ -90,7 +90,7 @@ def human_format(num: Any) -> str:
     return f"{formatted_num}{suffixes[magnitude]}"
 
 
-def to_float(value: Any) -> Optional[float]:
+def to_float(value: Any) -> float | None:
     try:
         return float(value)
     except (TypeError, ValueError):
@@ -236,19 +236,9 @@ def main(vcf_file: Path, variants_tsv: Path, variants_json: Path) -> None:
 
 
 if __name__ == "__main__":
-    DEV = False
-    if not DEV:
-        parser = argparse.ArgumentParser()
-        parser.add_argument("vcf_file", type=Path)
-        parser.add_argument("variants_tsv", type=Path)
-        parser.add_argument("variants_json", type=Path)
-        args = parser.parse_args()
-        main(args.vcf_file, args.variants_tsv, args.variants_json)
-    else:
-        # For development, hardcode paths to a test VCF and output files
-        test_vcf = Path(
-            "/scratch/tmp/nxf_work/rodrigo/c9/6220e7769c9698a85f0ea51538691f/PCC3_Cancer_dKoXgED.ann.vcf"
-        )
-        test_tsv = Path("./test_variants.tsv")
-        test_json = Path("./test_variants.json")
-        main(test_vcf, test_tsv, test_json)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("vcf_file", type=Path)
+    parser.add_argument("variants_tsv", type=Path)
+    parser.add_argument("variants_json", type=Path)
+    args = parser.parse_args()
+    main(args.vcf_file, args.variants_tsv, args.variants_json)

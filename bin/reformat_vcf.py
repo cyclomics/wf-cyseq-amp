@@ -190,35 +190,27 @@ class VcfFile:
 
 
 if __name__ == "__main__":
-    DEV = True
-    if not DEV:
-        parser = argparse.ArgumentParser(
-            description="Reformat VCF file to standardize annotations."
-        )
-        parser.add_argument(
-            "caller",
-            type=str,
-            choices=["lofreq"],
-            help="Variant caller used to generate the VCF file.",
-        )
-        parser.add_argument(
-            "input_vcf",
-            type=Path,
-            help="Path to the input VCF file.",
-        )
-        parser.add_argument(
-            "output_vcf",
-            type=Path,
-            help="Path to the output reformatted VCF file.",
-        )
-        args = parser.parse_args()
+    parser = argparse.ArgumentParser(
+        description="Reformat VCF file to standardize annotations."
+    )
+    parser.add_argument(
+        "caller",
+        type=str,
+        choices=["lofreq"],
+        help="Variant caller used to generate the VCF file.",
+    )
+    parser.add_argument(
+        "input_vcf",
+        type=Path,
+        help="Path to the input VCF file.",
+    )
+    parser.add_argument(
+        "output_vcf",
+        type=Path,
+        help="Path to the output reformatted VCF file.",
+    )
+    args = parser.parse_args()
 
-        vcf = VcfFile(args.input_vcf)
-        vcf.parse_columns(args.caller)
-        vcf.write_vcf(args.output_vcf)
-    else:
-        vcf = VcfFile(
-            "/home/rodrigo/cauldron/wf-cyseq-amp/output/CYC000735_barcode01_tiny5/OS_panel_rebalance_IS2WJC2_barcode01/variants/OS_panel_rebalance_IS2WJC2_barcode01.filtered.vcf"
-        )
-        vcf.parse_columns("lofreq")
-        vcf.write_vcf("test.vcf")
+    vcf = VcfFile(args.input_vcf)
+    vcf.parse_columns(args.caller)
+    vcf.write_vcf(args.output_vcf)
