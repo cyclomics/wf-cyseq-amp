@@ -26,6 +26,13 @@
                     "description": "A MinKnow sequencing output folder containing the `fastq_pass` subfolder, which may optionally contain `barcode` subfolders.",
                     "help_text": "This provided output folder is the same folder where MinKnow will write the sequencing summary file, which is necessary to flag the end of the real-time file ingestion."
                 },
+                "barcodes": {
+                    "title": "Barcodes used in the run",
+                    "type": "string",
+                    "pattern": "^(barcode\\d{2})(,barcode\\d{2})*$",
+                    "description": "Comma-separated list of barcodes to analyze",
+                    "help_text": "Specify which barcodes to include, e.g. 'barcode01,barcode02,barcode03'. Leave empty to analyse all available barcodes, including unclassified reads."
+                },
                 "reference": {
                     "title": "Reference genome FASTA file",
                     "type": "string",
