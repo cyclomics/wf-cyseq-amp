@@ -140,7 +140,7 @@ process ReformatVcf {
 
 process DownloadSnpEffDb {
     // storeDir "${params.snpeff_cache_dir}/${db_name}"
-    storeDir "${workDir}/cache/snpeff/${db_name}"
+    storeDir "${workDir}/cache"
     container params.containers.snpeff
     cpus 1
     memory 4.GB
@@ -150,11 +150,11 @@ process DownloadSnpEffDb {
     val db_name
 
     output:
-    path "snpeff_data", emit: cache
+    path "snpeff", emit: cache
 
     script:
     """
-    snpEff download -dataDir \${PWD}/snpeff_data ${db_name}
+    snpEff download -dataDir \${PWD}/snpeff ${db_name}
     """
 }
 
