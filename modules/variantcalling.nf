@@ -40,7 +40,7 @@ workflow call_variants {
         WriteVariantTable(ch_annotated)
 
     emit:
-        variants = AnnotateSnpEff.out
+        variants = ch_annotated
         variant_table = WriteVariantTable.out.map { sample_id, _tsv, json -> tuple(sample_id, json) }
 }
 
