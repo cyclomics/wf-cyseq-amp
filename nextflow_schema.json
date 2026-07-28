@@ -34,11 +34,11 @@
                     "help_text": "Specify which barcodes to include, e.g. 'barcode01,barcode02,barcode03'. Leave empty to analyse all available barcodes, including unclassified reads."
                 },
                 "reference": {
-                    "title": "Reference genome FASTA file",
+                    "title": "Reference genome",
                     "type": "string",
-                    "format": "file-path",
-                    "description": "Reference genome FASTA.",
-                    "help_text": "Reference genome to be used for consensus, alignment and variant calling.\nWe suggest GRCh38.p14, since this has been tested to work with the variant effect prediction API. Please see the README for instructions to obtain this reference genome."
+                    "enum": ["GRCh38.p14", "GRCh37.p13", "Lambda"],
+                    "description": "Select the reference genome.",
+                    "help_text": "Reference genome to be used for consensus, alignment and variant calling.\nThe selected genome data will be downloaded automatically Additionally, options ‘Lambda’ will download the Escherichia Lambda phage genome reference, and will inactivate variant annotation."
                 },
                 "regions": {
                     "title": "Regions of interest BED file",
