@@ -28,7 +28,7 @@ The following inputs are mandatory:
 | ----- | ------ | ----------- |
 | Sample name | Text | Required for EPI2ME runs only. A descriptive name for your analysis run, relating to the sample being analysed. |
 | Input data folder | Directory | A MinKNOW sequencing output folder containing the `fastq_pass` subfolder, which may optionally contain `barcode` subfolders. This provided output folder is the same folder where MinKNOW will write the sequencing summary file, which is necessary to flag the end of the real-time file ingestion. |
-| Reference genome | FASTA | FASTA human reference genome version GRCh38.p14, [ideally NCBI's major release for alignment pipelines provided here](https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/405/GCF_000001405.40_GRCh38.p14/GRCh38_major_release_seqs_for_alignment_pipelines/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna.gz). This file must be unzipped. |
+| Reference genome | FASTA | The reference genome is used to align consensus reads and identify sequence variants. Currently supported human genomes are ‘GRCh38.p14’ and ‘GRCh37.p13’. The selected genome data will be downloaded automatically Additionally, options ‘Lambda’ and ‘dev’ will download the Escherichia Lambda phage genome reference, and will inactivate variant annotation. |
 | Genomic loci | BED | BED file with the genomic loci of interest, in relation to the above reference. |
 
 ## Software requirements
