@@ -50,7 +50,7 @@ process PrepareGenome {
 
 process SubsetGenome {
     publishDir { "${params.output_dir}/genome_subset" }, mode: 'copy'
-    storeDir "${workDir}/cache/genome/${params.reference}"
+    storeDir "${workDir}/cache/genome/${params.reference}_${bed.baseName}"
     container params.containers.alnutils
     cpus 1
     memory 1.GB
