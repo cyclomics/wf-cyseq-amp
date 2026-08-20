@@ -61,6 +61,7 @@ process Minimap2Align {
         """
         minimap2 -ax ${mode} \\
             -t ${task.cpus} \\
+            -k15 -w5 -m20 -n3 \\
             $reference \\
             $fq > ${file_id}.sam
         """
