@@ -1,0 +1,5 @@
+chrom   chromStart  chromEnd    name    score   strand
+NC_001416.1	43000	43500	amplicon1   0   .
+NC_001416.1	48259	48294	amplicon2   0   .
+NC_001416.1	48300	48349	amplicon3   0   .
+NC_001416.1	49200	49294	amplicon4   0   .

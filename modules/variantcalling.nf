@@ -86,12 +86,14 @@ process CallVariantsLofreq {
         """
         lofreq faidx ${reference}
 
+        awk 'NR > 1' $bed > bed_no_header.bed
+
         lofreq call-parallel \
             --pp-threads ${task.cpus} \
             --call-indels \
-            -m 20 -d 100000 \
+            -m 20 -d 100000000 \
             -f ${reference} \
-            -l ${bed} \
+            -l bed_no_header.bed \
             -o ${file_id}.vcf \
             ${bam}
         """
@@ -113,7 +115,7 @@ process FilterVcf {
     script:
         """
         lofreq filter \
-        --af-min 0.001 \
+        --af-min 0.00001 \
         -i ${vcf} \
         -o ${file_id}.filtered.vcf 
         """
@@ -140,7 +142,7 @@ process ReformatVcf {
 
 process DownloadSnpEffDb {
     // storeDir "${params.snpeff_cache_dir}/${db_name}"
-    storeDir "${workDir}/cache"
+    storeDir "${workDir}/cache/${db_name}"
     container params.containers.snpeff
     cpus 1
     memory 4.GB

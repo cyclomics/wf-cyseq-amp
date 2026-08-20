@@ -78,7 +78,7 @@ workflow {
     raw_fastq = ingress.out.ingested_fastq
 
     // 1. Consensus
-    make_consensus(raw_fastq, ch_reference)
+    make_consensus(raw_fastq, ch_reference, ch_regions)
     consensus_sam = make_consensus.out.consensus_sam
     consensus_folder = make_consensus.out.consensus_folder
 

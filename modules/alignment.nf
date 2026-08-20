@@ -100,7 +100,8 @@ process GetOnTargetRate {
 
     script:
         """
-        get_on_target_rate.sh ${bam} ${bed} ${sample_id}_on_target_rate.yml
+        awk 'NR > 1' $bed > bed_no_header.bed
+        get_on_target_rate.sh ${bam} bed_no_header.bed ${sample_id}_on_target_rate.yml
         """
 }
 
@@ -118,8 +119,10 @@ process GetAmpliconDepth {
 
     script:
         """
-        samtools depth -a -J -b $bed $bam > ${sample_id}_depth.tsv
-        get_amplicon_depth.py ${sample_id}_depth.tsv $bed ${sample_id}_amplicon_depth.yml
+        awk 'NR > 1' $bed > bed_no_header.bed
+
+        samtools depth -a -J -b bed_no_header.bed $bam > ${sample_id}_depth.tsv
+        get_amplicon_depth.py ${sample_id}_depth.tsv bed_no_header.bed ${sample_id}_amplicon_depth.yml
         """
 }
 

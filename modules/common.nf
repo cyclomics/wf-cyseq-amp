@@ -64,8 +64,8 @@ process SubsetGenome {
 
     script:
     """
-    cut -f1 '${bed}' | sort -u > chromosomes.txt
-
+    awk 'NR > 1' $bed | cut -f1 | sort -u > chromosomes.txt
+    
     samtools faidx ${fasta} \\
         \$(cat chromosomes.txt) \\
         > genome.subset.fa
@@ -142,8 +142,10 @@ process GetAmpliconDepth {
 
     script:
         """
-        samtools depth -a -J -b $bed $bam > ${sample_id}_depth.tsv
-        get_amplicon_depth.py ${sample_id}_depth.tsv $bed ${sample_id}_amplicon_depth.yml
+        awk 'NR > 1' $bed > bed_no_header.bed
+
+        samtools depth -a -J -b bed_no_header.bed $bam > ${sample_id}_depth.tsv
+        get_amplicon_depth.py ${sample_id}_depth.tsv bed_no_header.bed ${sample_id}_amplicon_depth.yml
         """
 }
 
