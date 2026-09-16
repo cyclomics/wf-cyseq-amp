@@ -232,7 +232,7 @@ process WriteVariantTable {
     publishDir { "${params.output_dir}/${sample_id}/variants" }, mode: 'copy'
     container params.containers.alnutils
     cpus 1
-    memory 50.MB
+    memory 1.GB
 
     input:
     tuple val(sample_id), val(file_id), path(vcf_file)
