@@ -51,6 +51,9 @@ COLUMN_SCHEMA = {
     "Type": {
         "type": "dropdown",
     },
+    "Target": {
+        "type": "boolean",
+    }
 }
 
 # Order of the pipe-delimited subfields inside INFO/ANN. This mirrors the
@@ -162,6 +165,7 @@ def restructure_annotations(df: pd.DataFrame) -> pd.DataFrame:
 
     sample_col = _get_sample_column(df)
 
+    
     ann = (
         df["INFO"]
         .apply(_parse_info_field)
@@ -194,6 +198,7 @@ def restructure_annotations(df: pd.DataFrame) -> pd.DataFrame:
     # Categorical
     out["Symbol"] = ann.apply(lambda d: d.get("gene_name"))
     out["Type"] = ann.apply(lambda d: d.get("annotation"))
+    out["Target"] = df["INFO"].str.contains("TARGET", na=False)
 
     annotation_df = pd.DataFrame(out)
 
@@ -236,9 +241,17 @@ def main(vcf_file: Path, variants_tsv: Path, variants_json: Path) -> None:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("vcf_file", type=Path)
-    parser.add_argument("variants_tsv", type=Path)
-    parser.add_argument("variants_json", type=Path)
-    args = parser.parse_args()
-    main(args.vcf_file, args.variants_tsv, args.variants_json)
+    DEV = False
+    
+    if not DEV:
+        parser = argparse.ArgumentParser()
+        parser.add_argument("vcf_file", type=Path)
+        parser.add_argument("variants_tsv", type=Path)
+        parser.add_argument("variants_json", type=Path)
+        args = parser.parse_args()
+        main(args.vcf_file, args.variants_tsv, args.variants_json)
+    else:
+        vcf_file = "/home/rodrigo/cauldron/wf-cyseq-amp/output/CYC000735_barcode01_tiny11/OS_panel_rebalance_L3FJikl_barcode01/variants/OS_panel_rebalance_L3FJikl_barcode01.ann.vcf"
+        variants_tsv = "test.tsv"
+        variants_json = "test.json"
+        main(Path(vcf_file), Path(variants_tsv), Path(variants_json))

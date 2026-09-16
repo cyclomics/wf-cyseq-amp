@@ -16,7 +16,17 @@ workflow call_variants {
         CallVariantsLofreq(FilterAlignments.out, reference, regions)
         FilterVcf(CallVariantsLofreq.out)
         ReformatVcf(FilterVcf.out)
-        ch_variants = ReformatVcf.out
+
+        ch_target_vcf = params.target_vcf
+            ? channel.fromPath(params.target_vcf, checkIfExists: true).collect()
+            : channel.value([])
+
+        ch_reject_vcf = params.reject_vcf
+            ? channel.fromPath(params.reject_vcf, checkIfExists: true).collect()
+            : channel.value([])
+
+        TagFilterVcf(reference, ReformatVcf.out, ch_target_vcf, ch_reject_vcf)
+        ch_variants = TagFilterVcf.out
 
         DownloadSnpEffDb(params.reference)
         ch_snpeff_cache = DownloadSnpEffDb.out.cache.ifEmpty(null)
@@ -193,6 +203,27 @@ process CopyVcf {
     """
     cp ${vcf} ${file_id}.ann.vcf
     """
+}
+
+process TagFilterVcf {
+    publishDir { "${params.output_dir}/${sample_id}/variants" }, mode: 'copy', pattern: "*.vcf"
+    container params.containers.bcftools
+    cpus 1
+    memory 500.MB
+
+    input:
+        tuple path(reference), val(reference_idx)
+        tuple val(sample_id), val(file_id), path(vcf)
+        path target_vcf
+        path reject_vcf
+
+    output:
+        tuple val(sample_id), val(file_id), path("${file_id}.tagged.vcf")
+
+    script:
+        """
+        tag_filter_vcf.sh -f ${reference_idx} -v ${vcf} -a ${target_vcf} -r ${reject_vcf} -o ${file_id}.tagged.vcf
+        """
 }
 
 process WriteVariantTable {
