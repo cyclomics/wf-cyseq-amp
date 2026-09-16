@@ -32,7 +32,8 @@ workflow ingress {
         log.info "Stop filename regex: ${stop_name_pattern}"
 
         // Check if stop signal already exists
-        stop_already_exists = !file(stop_pattern).isEmpty()
+        def stop_pattern_recursive = stop_pattern.toString().replaceFirst(/([^\/]+)$/, '**$1')
+        stop_already_exists = !file(stop_pattern_recursive).isEmpty()
 
         if (stop_already_exists) {
             log.info "Stop signal already present, processing existing files."
@@ -95,7 +96,7 @@ workflow ingress {
         }
 
         if (params.split_fastq_by_size == true) {
-            log.info "Splitting FASTQ files into chunks of size: ${params.max_fastq_size} bytes"
+            log.info "Splitting FASTQ files into chunks of size: ${params.max_fastq_size} reads"
             ingested_fastq = SplitFastq(read_fastq)
                 .flatMap { sample_id, file_id, file_list ->
                     def files = file_list instanceof List ? file_list : [file_list]
