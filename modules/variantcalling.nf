@@ -79,7 +79,7 @@ process FilterAlignments {
 }
 
 process CallVariantsLofreq {
-    publishDir { "${params.output_dir}/${sample_id}/variants" }, mode: 'copy'
+    // publishDir { "${params.output_dir}/${sample_id}/variants" }, mode: 'copy'
     container params.containers.lofreq
     cpus 8
     memory 5.GB
@@ -108,7 +108,7 @@ process CallVariantsLofreq {
 }
 
 process FilterVcf {
-    publishDir { "${params.output_dir}/${sample_id}/variants" }, mode: 'copy', pattern: "*.vcf"
+    // publishDir { "${params.output_dir}/${sample_id}/variants" }, mode: 'copy', pattern: "*.vcf"
     container params.containers.lofreq
     maxForks 1
     cpus 1
@@ -130,7 +130,7 @@ process FilterVcf {
 }
 
 process ReformatVcf {
-    publishDir { "${params.output_dir}/${sample_id}/variants" }, mode: 'copy', pattern: "*.vcf"
+    // publishDir { "${params.output_dir}/${sample_id}/variants" }, mode: 'copy', pattern: "*.vcf"
     container params.containers.alnutils
     maxForks 1
     cpus 1
@@ -206,7 +206,7 @@ process CopyVcf {
 }
 
 process TagFilterVcf {
-    publishDir { "${params.output_dir}/${sample_id}/variants" }, mode: 'copy', pattern: "*.vcf"
+    // publishDir { "${params.output_dir}/${sample_id}/variants" }, mode: 'copy', pattern: "*.vcf"
     container params.containers.bcftools
     cpus 1
     memory 500.MB
@@ -221,8 +221,10 @@ process TagFilterVcf {
         tuple val(sample_id), val(file_id), path("${file_id}.tagged.vcf")
 
     script:
+        def target_arg = target_vcf ? "-a ${target_vcf}" : ""
+        def reject_arg = reject_vcf ? "-r ${reject_vcf}" : ""
         """
-        tag_filter_vcf.sh -f ${reference_idx} -v ${vcf} -a ${target_vcf} -r ${reject_vcf} -o ${file_id}.tagged.vcf
+        tag_filter_vcf.sh -f ${reference_idx} -v ${vcf} ${target_arg} ${reject_arg} -o ${file_id}.tagged.vcf
         """
 }
 
