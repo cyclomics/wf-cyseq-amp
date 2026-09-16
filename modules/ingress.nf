@@ -32,7 +32,8 @@ workflow ingress {
         log.info "Stop filename regex: ${stop_name_pattern}"
 
         // Check if stop signal already exists
-        stop_already_exists = !file(stop_pattern).isEmpty()
+        def stop_pattern_recursive = stop_pattern.toString().replaceFirst(/([^\/]+)$/, '**$1')
+        stop_already_exists = !file(stop_pattern_recursive).isEmpty()
 
         if (stop_already_exists) {
             log.info "Stop signal already present, processing existing files."
@@ -63,14 +64,29 @@ workflow ingress {
             read_fastq_raw = initial_fastq_files.concat(rt_fastq_files)
         }
 
+        def barcodesSpecified = params.barcodes?.trim() ? true : false
+
         // Tag samples
         read_fastq = read_fastq_raw
             .map { _parent_name, file_name, f ->
                 def (barcode, sample_id) = extractSampleInfo(
                     f.parent, invalid_parents, barcodePattern, runFolderPattern
                 )
-                sample_id = formatSampleId(sample_id, barcode, RUN_UID)
-                tuple(sample_id, file_name, f)
+                tuple(barcode, sample_id, file_name, f)
+            }
+            // Only keep files whose folder matched the requested barcode pattern.
+            // (Empty barcode = file wasn't under a barcode folder — decide if you want to keep those.)
+            .filter { barcode, _sample, _fname, _f ->
+                if (barcodesSpecified) {
+                    // user picked specific barcodes.
+                    return barcode != ""
+                }
+                // no selection -> keep everything
+                return true
+            }
+            .map { barcode, sample_id, file_name, f ->
+                def final_id = formatSampleId(sample_id, barcode, RUN_UID)
+                tuple(final_id, file_name, f)
             }
 
         // Filter out files in excluded folders (e.g. fastq_fail, fail)
@@ -80,7 +96,7 @@ workflow ingress {
         }
 
         if (params.split_fastq_by_size == true) {
-            log.info "Splitting FASTQ files into chunks of size: ${params.max_fastq_size} bytes"
+            log.info "Splitting FASTQ files into chunks of size: ${params.max_fastq_size} reads"
             ingested_fastq = SplitFastq(read_fastq)
                 .flatMap { sample_id, file_id, file_list ->
                     def files = file_list instanceof List ? file_list : [file_list]
@@ -213,6 +229,10 @@ def findValidParentDir(dir, invalidList, barcodePattern, runFolderPattern) {
     Returns:
     - The valid parent directory path, or / if no valid parent is found.
     */
+    if (dir == null) {
+        return null
+    }
+
     def folder_name = dir.simpleName
 
     def invalidFolderName = invalidList.contains(folder_name) || 
@@ -221,7 +241,7 @@ def findValidParentDir(dir, invalidList, barcodePattern, runFolderPattern) {
     
     // look one level up if current position is invalid, otherwise return current position
     if (invalidFolderName) {
-        return findValidParentDir(dir.Parent, invalidList, barcodePattern, runFolderPattern)
+        return findValidParentDir(dir.parent, invalidList, barcodePattern, runFolderPattern)
     }
     return dir
 }

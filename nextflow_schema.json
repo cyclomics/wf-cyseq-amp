@@ -23,8 +23,8 @@
                     "title": "Input read directory",
                     "type": "string",
                     "format": "path",
-                    "description": "A MinKnow sequencing output folder containing the `fastq_pass` subfolder, which may optionally contain `barcode` subfolders.",
-                    "help_text": "This provided output folder is the same folder where MinKnow will write the sequencing summary file, which is necessary to flag the end of the real-time file ingestion."
+                    "description": "Override the sample name used in the pipeline.",
+                    "help_text": "This option will override automated sample name detection and use the provided value instead."
                 },
                 "barcodes": {
                     "title": "Barcodes used in the run",
@@ -46,6 +46,20 @@
                     "format": "file-path",
                     "description": "Path to a file in BED format with the amplicon target loci, relative to the reference used (GRCh38.p14).",
                     "help_text": "Only locations in the BED file will be examined in the variant identification process."
+                },
+                "target_vcf": {
+                    "title": "VCF file with target mutations (Optional)",
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Path to a VCF file with the target mutations, relative to the reference used.",
+                    "help_text": "If provided, the workflow will compare the identified variants to those in the target VCF file and annotate variant calls with whether they match the target mutations. If not provided, no comparison will be made."
+                },
+                "reject_vcf": {
+                    "title": "VCF file with reject mutations (Optional)",
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Path to a VCF file with the reject mutations, relative to the reference used.",
+                    "help_text": "If provided, the workflow will compare the identified variants to those in the reject VCF file and remove them from the variant calling results. For example, this can be used to remove known contaminants. If not provided, no comparison will be made."
                 },
                 "target_depth": {
                     "title": "Target read depth per amplicon (Optional)",

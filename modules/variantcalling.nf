@@ -16,7 +16,17 @@ workflow call_variants {
         CallVariantsLofreq(FilterAlignments.out, reference, regions)
         FilterVcf(CallVariantsLofreq.out)
         ReformatVcf(FilterVcf.out)
-        ch_variants = ReformatVcf.out
+
+        ch_target_vcf = params.target_vcf
+            ? channel.fromPath(params.target_vcf, checkIfExists: true).collect()
+            : channel.value([])
+
+        ch_reject_vcf = params.reject_vcf
+            ? channel.fromPath(params.reject_vcf, checkIfExists: true).collect()
+            : channel.value([])
+
+        TagFilterVcf(reference, ReformatVcf.out, ch_target_vcf, ch_reject_vcf)
+        ch_variants = TagFilterVcf.out
 
         DownloadSnpEffDb(params.reference)
         ch_snpeff_cache = DownloadSnpEffDb.out.cache.ifEmpty(null)
@@ -69,7 +79,7 @@ process FilterAlignments {
 }
 
 process CallVariantsLofreq {
-    publishDir { "${params.output_dir}/${sample_id}/variants" }, mode: 'copy'
+    // publishDir { "${params.output_dir}/${sample_id}/variants" }, mode: 'copy'
     container params.containers.lofreq
     cpus 8
     memory 5.GB
@@ -98,7 +108,7 @@ process CallVariantsLofreq {
 }
 
 process FilterVcf {
-    publishDir { "${params.output_dir}/${sample_id}/variants" }, mode: 'copy', pattern: "*.vcf"
+    // publishDir { "${params.output_dir}/${sample_id}/variants" }, mode: 'copy', pattern: "*.vcf"
     container params.containers.lofreq
     maxForks 1
     cpus 1
@@ -120,7 +130,7 @@ process FilterVcf {
 }
 
 process ReformatVcf {
-    publishDir { "${params.output_dir}/${sample_id}/variants" }, mode: 'copy', pattern: "*.vcf"
+    // publishDir { "${params.output_dir}/${sample_id}/variants" }, mode: 'copy', pattern: "*.vcf"
     container params.containers.alnutils
     maxForks 1
     cpus 1
@@ -195,11 +205,34 @@ process CopyVcf {
     """
 }
 
+process TagFilterVcf {
+    // publishDir { "${params.output_dir}/${sample_id}/variants" }, mode: 'copy', pattern: "*.vcf"
+    container params.containers.bcftools
+    cpus 1
+    memory 500.MB
+
+    input:
+        tuple path(reference), val(reference_idx)
+        tuple val(sample_id), val(file_id), path(vcf)
+        path target_vcf
+        path reject_vcf
+
+    output:
+        tuple val(sample_id), val(file_id), path("${file_id}.tagged.vcf")
+
+    script:
+        def target_arg = target_vcf ? "-a ${target_vcf}" : ""
+        def reject_arg = reject_vcf ? "-r ${reject_vcf}" : ""
+        """
+        tag_filter_vcf.sh -f ${reference_idx} -v ${vcf} ${target_arg} ${reject_arg} -o ${file_id}.tagged.vcf
+        """
+}
+
 process WriteVariantTable {
     publishDir { "${params.output_dir}/${sample_id}/variants" }, mode: 'copy'
     container params.containers.alnutils
     cpus 1
-    memory 50.MB
+    memory 1.GB
 
     input:
     tuple val(sample_id), val(file_id), path(vcf_file)

@@ -11,6 +11,10 @@ nextflow_workflow {
         tag "integration-test"
 
         when {
+            params {
+                target_vcf = null
+                reject_vcf = null
+            }
             workflow {
                 """
                 ch_reads_aligned = Channel.of(

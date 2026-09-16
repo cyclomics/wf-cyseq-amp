@@ -24,12 +24,16 @@ This workflow uses concatemeric CySeq reads of specific amplicon targets as inpu
 
 The following inputs are mandatory:
 
-| Input | Format | Description |
-| ----- | ------ | ----------- |
-| Sample name | Text | Required for EPI2ME runs only. A descriptive name for your analysis run, relating to the sample being analysed. |
-| Input data folder | Directory | A MinKNOW sequencing output folder containing the `fastq_pass` subfolder, which may optionally contain `barcode` subfolders. This provided output folder is the same folder where MinKNOW will write the sequencing summary file, which is necessary to flag the end of the real-time file ingestion. |
-| Reference genome | FASTA | The reference genome is used to align consensus reads and identify sequence variants. Currently supported human genomes are ‘GRCh38.p14’ and ‘GRCh37.p13’. The selected genome data will be downloaded automatically Additionally, options ‘Lambda’ and ‘dev’ will download the Escherichia Lambda phage genome reference, and will inactivate variant annotation. |
-| Genomic loci | BED | BED file with the genomic loci of interest, in relation to the above reference. |
+| Input | Format | Required | Description |
+| ----- | ------ | -------- | ----------- |
+| Sample name | Text | NO in CLI, YES in EPI2ME | Required for EPI2ME runs only. A descriptive name for your analysis run, relating to the sample being analysed. |
+| Input data folder | Directory | YES | A MinKNOW sequencing output folder or any of its subdirectories. Within the directory or its subdirectories, MinKNOW will write the `fastq_pass` subfolder, whcih may optionally contain `barcode` subfolders, and the sequencing summary file, which is necessary to flag the end of the real time file ingestion. |
+| Reference genome | FASTA | YES | The reference genome is used to align consensus reads and identify sequence variants. Currently supported human genomes are ‘GRCh38.p14’ and ‘GRCh37.p13’. The selected genome data will be downloaded automatically Additionally, options ‘Lambda’ and ‘dev’ will download the Escherichia Lambda phage genome reference, and will inactivate variant annotation. |
+| Genomic loci | BED | YES | BED file with the genomic loci of interest, in relation to the above reference. |
+| Barcodes | Text | NO | Comma-delimited list of barcodes to be analysed. In the case of a barcoded run, a list of relevant barcodes may be provided (e.g. `barcode01,barcode02,barcode03`). If no list is provided, all detected barcodes will be analysed. If the run is not barcoded, this argument should not be provided. |
+| Output folder | Directory | NO | The desired output folder name. If the folder does not yet exist, it will be created. Default: `output`. |
+| Target VCF | VCF | NO | If provided, the workflow will compare the identified variants to those in the target VCF file and annotate variant calls with whether they match the target mutations. If not provided, no comparison will be made. |
+| Reject VCF | VCF | NO | If provided, the workflow will compare the identified variants to those in the reject VCF file and remove them from the variant calling results. For example, this can be used to remove known contaminants. If not provided, no comparison will be made. |
 
 ## Software requirements
 
@@ -78,7 +82,7 @@ We recommend at least 64 CPUs and 160 GB of RAM to decrease the runtime signific
   ```bash
   nextflow run cyclomics/wf-cyseq-amp \
     --input_dir /path/to/run_directory \
-    --reference /path/to/reference.fasta \
+    --reference GRCh38.p14 \
     --regions /path/to/targets.bed \
     --output_dir /path/to/results
   ```

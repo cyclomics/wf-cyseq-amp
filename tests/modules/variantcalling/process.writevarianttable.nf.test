@@ -31,8 +31,8 @@ nextflow_process {
             def table = path(process.out[0][0][2]).json
             assert table.'variant-table'.name == 'variant-table'
             assert table.'variant-table'.data.size() == 3
-            assert table.'variant-table'.data[0].size() == 7
-            assert table.'variant-table'.columns == ['Genomic change', 'Codon change', 'Amino acid change', 'VAF (%)', 'Coverage', 'Symbol', 'Type']
+            assert table.'variant-table'.data[0].size() == 8
+            assert table.'variant-table'.columns == ['Genomic change', 'Codon change', 'Amino acid change', 'VAF (%)', 'Coverage', 'Symbol', 'Type', 'Target']
             assert table.'variant-table'.data[0].keySet() as Set == table.'variant-table'.columns as Set
         }
     }
