@@ -22,7 +22,6 @@ workflow ingress {
 
         // Resolve input dir to absolute
         def input_dir = file(params.input_dir).toAbsolutePath().toString()
-        def stop_signal = stop_pattern
 
         // Extract the stop file name pattern (glob -> regex)
         stop_name_pattern = stop_pattern.toString().split('/')[-1]
@@ -33,7 +32,7 @@ workflow ingress {
         log.info "Stop filename regex: ${stop_name_pattern}"
 
         // Check if stop signal already exists
-        def stop_pattern_recursive = stop_signal.toString().replaceFirst(/([^\/]+)$/, '**$1')
+        stop_pattern_recursive = stop_pattern.toString().replaceFirst(/([^\/]+)$/, '**$1')
         stop_already_exists = !file(stop_pattern_recursive).isEmpty()
 
         if (stop_already_exists) {
