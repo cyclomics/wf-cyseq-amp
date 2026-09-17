@@ -71,20 +71,28 @@ def save_metric_plots(report: Report) -> None:
 
     Path("plots").mkdir(exist_ok=True)
     for plot in report.available_plots:
-        fig = report.plot(plot)
+        try:
+            fig = report.plot(plot)
 
-        # Update layout
-        for trace in fig.data:
-            if hasattr(trace, "name") and trace.name:
-                # Breaks text into an array of strings every 30 characters
-                trace.name = "<br>".join(wrap(trace.name, width=30))
+            # Update layout
+            for trace in fig.data:
+                if hasattr(trace, "name") and trace.name:
+                    # Breaks text into an array of strings every 30 characters
+                    trace.name = "<br>".join(wrap(trace.name, width=30))
 
-        fig.update_layout(
-            template="simple_white", height=450, autosize=True, legend={"valign": "top"}
-        )
+            fig.update_layout(
+                template="simple_white", height=450, autosize=True, legend={"valign": "top"}
+            )
 
-        fig_json = json.loads(json.dumps(fig.to_plotly_json(), cls=PlotlyJSONEncoder))
-        fig_json["name"] = plot
+            fig_json = json.loads(json.dumps(fig.to_plotly_json(), cls=PlotlyJSONEncoder))
+            
+            fig_json["name"] = plot
+            
+        except IndexError:
+            # Skip plots that cannot be generated due to lack of data
+            fig_json = {"name": plot, "data": [], "layout": {}}
+            continue
+        
         _write_yaml(fig_json, Path(f"plots/{plot.replace('/', '_')}.yaml"))
 
 
