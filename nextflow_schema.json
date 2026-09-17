@@ -23,8 +23,8 @@
                     "title": "Input read directory",
                     "type": "string",
                     "format": "path",
-                    "description": "Override the sample name used in the pipeline.",
-                    "help_text": "This option will override automated sample name detection and use the provided value instead."
+                    "description": "A MinKNOW sequencing output folder or any of its subdirectories.",
+                    "help_text": "Within the directory or its subdirectories, MinKNOW will write the `fastq_pass` subfolder, whcih may optionally contain `barcode` subfolders, and the sequencing summary file, which is necessary to flag the end of the real time file ingestion."
                 },
                 "barcodes": {
                     "title": "Barcodes used in the run",
