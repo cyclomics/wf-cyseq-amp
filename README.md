@@ -46,7 +46,7 @@ If you are executing this workflow through [EPI2ME](https://epi2me.nanoporetech.
 
 ## System requirements
 
-The workflow expects at least 16 CPUs to be available and 32 GB of RAM. Please ensure you have at least 50 GB of disk space available.
+The workflow expects at least 16 CPUs to be available and 32 GB of RAM (on EPI2ME, this is set by default to 20 GB RAM). Please ensure you have at least 50 GB of disk space available.
 
 We recommend at least 64 CPUs and 160 GB of RAM to decrease the runtime significantly. Primarily increasing the RAM allocation will allow the workflow to run more demanding processes in parallel, decreasing runtime. To further decrease runtime, allow 20 GB extra RAM for every 8 additional CPUs.
 

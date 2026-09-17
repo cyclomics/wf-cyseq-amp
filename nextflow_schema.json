@@ -142,7 +142,7 @@
                 "max_memory": {
                     "title": "Memory",
                     "type": "integer",
-                    "default": 32,
+                    "default": 20,
                     "description": "Total RAM available to the workflow."
                 }
             }
