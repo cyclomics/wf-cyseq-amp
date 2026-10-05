@@ -71,7 +71,9 @@ process MergeBamFiles {
     publishDir { "${params.output_dir}/${sample_id}/consensus_alignments" }, mode: 'copy'
     container params.containers.samtools
     cpus 1
-    memory 500.MB
+    memory 2.GB
+    errorStrategy { task.exitStatus in [137, 140] ? 'retry' : 'finish' }
+    maxRetries 3
 
     input:
         tuple val(sample_id), val(file_ids), path(bams_in)
