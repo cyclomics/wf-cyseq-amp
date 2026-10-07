@@ -11,9 +11,9 @@ workflow call_variants {
         regions
 
     main:
-        FilterAlignments(reads_aligned)
+        FilterBidirectionalAlignments(reads_aligned)
 
-        CallVariantsLofreq(FilterAlignments.out, reference, regions)
+        CallVariantsLofreq(FilterBidirectionalAlignments.out, reference, regions)
         FilterVcf(CallVariantsLofreq.out)
         ReformatVcf(FilterVcf.out)
 
@@ -60,7 +60,7 @@ workflow call_variants {
     PROCESSES
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-process FilterAlignments {
+process FilterBidirectionalAlignments {
     container params.containers.alnutils
     cpus 1
     memory 1.GB

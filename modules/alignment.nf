@@ -14,8 +14,11 @@ workflow get_amplicon_metrics {
         PosSortIndexAlignments(consensus_reads)
         aligned_consensus_bam = PosSortIndexAlignments.out
 
-        GetAmpliconDepth(aligned_consensus_bam, regions)
-        GetOnTargetRate(aligned_consensus_bam, regions)
+        FilterR1Alignments(aligned_consensus_bam)
+        filtered_consensus_bam = FilterR1Alignments.out
+
+        GetAmpliconDepth(filtered_consensus_bam, regions)
+        GetOnTargetRate(filtered_consensus_bam, regions)
         depth_table = GetAmpliconDepth.out
         on_target_rate = GetOnTargetRate.out
 
@@ -85,6 +88,24 @@ process MergeBamFiles {
         """
         samtools merge -p -c -O bam ${sample_id}.merged.bam \$(find . -name '*.bam')
         samtools index ${sample_id}.merged.bam
+        """
+}
+
+process FilterR1Alignments {
+    container params.containers.samtools
+    cpus 1
+    memory 1.GB
+
+    input:
+        tuple val(sample_id), val(file_id), path(bam), path(bai)
+
+    output:
+        tuple val(sample_id), val(file_id), path("${file_id}.filtered.bam"), path("${file_id}.filtered.bam.bai")
+
+    script:
+        """
+        samtools view -b -f 64 -F 3844 $bam > ${file_id}.filtered.bam
+        samtools index ${file_id}.filtered.bam
         """
 }
 
