@@ -149,8 +149,9 @@ process ReformatVcf {
 }
 
 process DownloadSnpEffDb {
+    storeDir "${workDir}/cache/snpeff/${db_name}"
     // storeDir "${params.snpeff_cache_dir}/${db_name}"
-    storeDir "${workDir}/cache"
+    // storeDir "${workDir}/cache"
     container params.containers.snpeff
     cpus 1
     memory 4.GB
