@@ -432,12 +432,12 @@
 
             <div class="plot-container">
                 <div class="plot-tabs">
-                    <button class="plot-tab-btn active" onclick="switchPlot(this, 'plots-read-counts-sankey-outcome')">All read counts</button>
+                    <button class="plot-tab-btn active" onclick="switchPlot(this, 'plots-amplicon-target-counts-sankey-group')">All read counts</button>
                     <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-consensus-length-sankey-outcome')">Consensus bases</button>
-                     <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-raw-length-sankey-outcome')">Raw bases</button>
+                    <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-raw-length-sankey-outcome')">Raw bases</button>
                 </div>
 
-                <div id="plots-read-counts-sankey-outcome" class="plot-card active">
+                <div id="plots-amplicon-target-counts-sankey-group" class="plot-card active">
                     <div id="help-run-stats" class="section-help-box">
                         This section summarizes the sequencing run, including the number of reads, total bases sequenced, and other key metrics. The interactive Sankey plot illustrates the flow of reads through consensus generation, showing which reads pass or fail consensus.
                         <br/>Low consensus yield may reflect poor sequencing performance or issues during amplification steps.
@@ -462,16 +462,53 @@
 
         <div id="amplicon-depth" class="section">
             <div class="section-title">
-                Depth per amplicon
+                Amplicon depth of coverage
             </div>
 
             <div class="plot-container">
-                <div id="plots-amplicon-depth", class="plot-card active">
+                <div class="plot-tabs">
+                    <button class="plot-tab-btn active" onclick="switchPlot(this, 'amplicon-target-counts-bar-on-target')">Target counts</button>
+                    <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-amplicon-positional-depth-heatmap-raw')">Absolute depth</button>
+                    <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-amplicon-positional-depth-heatmap-normalized')">Coverage homogeneity</button>
+                    <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-amplicon-positional-depth-line-assigned-reads')">Coverage completeness</button>
+                    <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-amplicon-coverage-violin-group')">Coverage distribution</button>            
+                </div>
+
+                <div id="amplicon-target-counts-bar-on-target", class="plot-card active">
                     <div id="help-amplicon-depth" class="section-help-box">
                         This section shows the median depth of coverage for each amplicon, calculated from the median read depth across its positions. If a target depth is specified, it is indicated by a dashed line, and amplicons meeting the target are highlighted in blue.
                         <br/>Uniform coverage suggests successful amplification, while consistently low-depth amplicons may indicate inefficient PCR amplification or low sequencing yield.
                     </div>
                 </div>
+
+                <div id="plots-amplicon-positional-depth-heatmap-raw", class="plot-card active">
+                    <div id="help-amplicon-depth" class="section-help-box">
+                        This section shows the median depth of coverage for each amplicon, calculated from the median read depth across its positions. If a target depth is specified, it is indicated by a dashed line, and amplicons meeting the target are highlighted in blue.
+                        <br/>Uniform coverage suggests successful amplification, while consistently low-depth amplicons may indicate inefficient PCR amplification or low sequencing yield.
+                    </div>
+                </div>
+
+                <div id="plots-amplicon-positional-depth-heatmap-normalized", class="plot-card active">
+                    <div id="help-amplicon-depth" class="section-help-box">
+                        This section shows the median depth of coverage for each amplicon, calculated from the median read depth across its positions. If a target depth is specified, it is indicated by a dashed line, and amplicons meeting the target are highlighted in blue.
+                        <br/>Uniform coverage suggests successful amplification, while consistently low-depth amplicons may indicate inefficient PCR amplification or low sequencing yield.
+                    </div>
+                </div>
+
+                <div id="plots-amplicon-positional-depth-line-assigned-reads", class="plot-card active">
+                    <div id="help-amplicon-depth" class="section-help-box">
+                        This section shows the median depth of coverage for each amplicon, calculated from the median read depth across its positions. If a target depth is specified, it is indicated by a dashed line, and amplicons meeting the target are highlighted in blue.
+                        <br/>Uniform coverage suggests successful amplification, while consistently low-depth amplicons may indicate inefficient PCR amplification or low sequencing yield.
+                    </div>
+                </div>
+
+                <div id="plots-amplicon-coverage-violin-group", class="plot-card active">
+                    <div id="help-amplicon-depth" class="section-help-box">
+                        This section shows the median depth of coverage for each amplicon, calculated from the median read depth across its positions. If a target depth is specified, it is indicated by a dashed line, and amplicons meeting the target are highlighted in blue.
+                        <br/>Uniform coverage suggests successful amplification, while consistently low-depth amplicons may indicate inefficient PCR amplification or low sequencing yield.
+                    </div>
+                </div>
+
             </div>
         </div>
 
@@ -566,12 +603,26 @@
 
             <div class="plot-container">
                 <div class="plot-tabs">
-                    <button class="plot-tab-btn active" onclick="switchPlot(this, 'plots-consensus-read-average-quality-scores-histogram-outcome')">Consensus read Q-Scores</button>
+                    <button class="plot-tab-btn active" onclick="switchPlot(this, 'plots-amplicon-consensus-quality-violin-group')">Consensus amplicon Q-Scores</button>
+                    <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-amplicon-raw-quality-violin-group')">Raw amplicon Q-Scores</button>
+                    <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-consensus-read-average-quality-scores-histogram-outcome')">Consensus read Q-Scores</button>
                     <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-raw-read-average-quality-scores-histogram-outcome')">Raw read Q-Scores</button>
 
                 </div>
 
-                <div id="plots-consensus-read-average-quality-scores-histogram-outcome" class="plot-card active">
+                <div id="plots-amplicon-consensus-quality-violin-group" class="plot-card active">
+                    <div id="help-consensus-q" class="section-help-box">
+                        This histogram shows the distribution of consensus read Q-Scores.
+                    </div>
+                </div>
+
+                <div id="plots-amplicon-raw-quality-violin-group" class="plot-card">
+                    <div id="help-raw-q" class="section-help-box">
+                        This histogram shows the distribution of raw read Q-Scores.
+                    </div>
+                </div>
+
+                <div id="plots-consensus-read-average-quality-scores-histogram-outcome" class="plot-card">
                     <div id="help-consensus-q" class="section-help-box">
                         This histogram shows the distribution of consensus read Q-Scores.
                     </div>
@@ -589,7 +640,6 @@
 {}
 </script>
 
-
 <script>
 // ── Section routing ──────────────────────────────────────────────
 function showSection(sectionId, btn) {
@@ -602,8 +652,18 @@ function showSection(sectionId, btn) {
 // ── Plot routing ─────────────────────────────────────────────────
 // Map plot names to section container IDs
 const PLOT_SECTION_MAP = {
-    "Depth per amplicon": "plots-amplicon-depth",
-    "Reads per sample": "plots-qc",
+    "amplicon_target_counts/sankey_group": "plots-amplicon-target-counts-sankey-group",
+    
+    "amplicon_target_counts/bar_on_target": "amplicon-target-counts-bar-on-target",
+    
+    "amplicon_positional_depth/line_assigned_reads": "plots-amplicon-positional-depth-line-assigned-reads",
+    "amplicon_positional_depth/heatmap_raw": "plots-amplicon-positional-depth-heatmap-raw",
+    "amplicon_positional_depth/heatmap_normalized": "plots-amplicon-positional-depth-heatmap-normalized",
+    "amplicon_coverage/violin_group": "plots-amplicon-coverage-violin-group",
+
+    "amplicon_consensus_quality/violin_group": "plots-amplicon-consensus-quality-violin-group",
+    "amplicon_raw_quality/violin_group": "plots-amplicon-raw-quality-violin-group",
+    
     "read_counts/sankey_outcome": "plots-read-counts-sankey-outcome",
     "raw_length/histogram_outcome": "plots-raw-length-histogram-outcome",
     "raw_length/sankey_outcome": "plots-raw-length-sankey-outcome",
