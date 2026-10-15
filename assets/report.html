@@ -440,7 +440,7 @@
                 <div id="plots-amplicon-target-counts-sankey-group" class="plot-card active">
                     <div id="help-run-stats" class="section-help-box">
                         This section summarizes the sequencing run, including the number of reads, total bases sequenced, and other key metrics. The interactive Sankey plot illustrates the flow of reads through consensus generation, showing which reads pass or fail consensus.
-                        <br/>Low consensus yield may reflect poor sequencing performance or issues during amplification steps.
+                        <br/>Successful reads will be separated by wether they one or more target regions. Low consensus yield may reflect poor sequencing performance or issues during amplification steps.
                     </div>
                 </div>
                 <div id="plots-consensus-length-sankey-outcome" class="plot-card">
@@ -467,44 +467,44 @@
 
             <div class="plot-container">
                 <div class="plot-tabs">
-                    <button class="plot-tab-btn active" onclick="switchPlot(this, 'amplicon-target-counts-bar-on-target')">Target counts</button>
+                    <button class="plot-tab-btn active" onclick="switchPlot(this, 'plots-amplicon-target-counts-bar-on-target')">Target counts</button>
+                    <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-amplicon-target-counts-bar-multi-target')">Multi-target counts</button>
                     <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-amplicon-positional-depth-heatmap-raw')">Absolute depth</button>
                     <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-amplicon-positional-depth-heatmap-normalized')">Coverage homogeneity</button>
                     <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-amplicon-positional-depth-line-assigned-reads')">Coverage completeness</button>
                     <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-amplicon-coverage-violin-group')">Coverage distribution</button>            
                 </div>
 
-                <div id="amplicon-target-counts-bar-on-target", class="plot-card active">
+                <div id="plots-amplicon-target-counts-bar-on-target", class="plot-card active">
                     <div id="help-amplicon-depth" class="section-help-box">
-                        This section shows the median depth of coverage for each amplicon, calculated from the median read depth across its positions. If a target depth is specified, it is indicated by a dashed line, and amplicons meeting the target are highlighted in blue.
+                        This section shows the number of reads assigned to each region. The x-axis can be scaled through the dropdown menu on the right side. Some reads may by assigned to multiple regions -- these can assessed on the "Multi-Target Counts" tab.
                         <br/>Uniform coverage suggests successful amplification, while consistently low-depth amplicons may indicate inefficient PCR amplification or low sequencing yield.
                     </div>
                 </div>
 
-                <div id="plots-amplicon-positional-depth-heatmap-raw", class="plot-card active">
+                <div id="plots-amplicon-target-counts-bar-multi-target", class="plot-card">
                     <div id="help-amplicon-depth" class="section-help-box">
-                        This section shows the median depth of coverage for each amplicon, calculated from the median read depth across its positions. If a target depth is specified, it is indicated by a dashed line, and amplicons meeting the target are highlighted in blue.
-                        <br/>Uniform coverage suggests successful amplification, while consistently low-depth amplicons may indicate inefficient PCR amplification or low sequencing yield.
+                        This section shows the assignment of reads that are aligned to multiple regions. The x-axis can be scaled through the dropdown menu on the right side.
                     </div>
                 </div>
 
-                <div id="plots-amplicon-positional-depth-heatmap-normalized", class="plot-card active">
+                <div id="plots-amplicon-positional-depth-heatmap-normalized", class="plot-card">
                     <div id="help-amplicon-depth" class="section-help-box">
-                        This section shows the median depth of coverage for each amplicon, calculated from the median read depth across its positions. If a target depth is specified, it is indicated by a dashed line, and amplicons meeting the target are highlighted in blue.
-                        <br/>Uniform coverage suggests successful amplification, while consistently low-depth amplicons may indicate inefficient PCR amplification or low sequencing yield.
+                        This section shows the coverage homogeneity within regions, calculated as the percentage of read depth at each position relative to the maximum depth for that region.
+                        <br/>The heatmap is colored according to the percentage of maximum depth, with darker colors indicating higher coverage.
                     </div>
                 </div>
 
-                <div id="plots-amplicon-positional-depth-line-assigned-reads", class="plot-card active">
+                <div id="plots-amplicon-positional-depth-line-assigned-reads", class="plot-card">
                     <div id="help-amplicon-depth" class="section-help-box">
-                        This section shows the median depth of coverage for each amplicon, calculated from the median read depth across its positions. If a target depth is specified, it is indicated by a dashed line, and amplicons meeting the target are highlighted in blue.
-                        <br/>Uniform coverage suggests successful amplification, while consistently low-depth amplicons may indicate inefficient PCR amplification or low sequencing yield.
+                        This section shows the coverage homogeneity within regions, calculated as the percentage of read depth at each position relative to the maximum depth for that region.
+                        <br/>The lineplot shows coverage for all amplicons, and individual amplicons or sets of amplicons can be selected either from the dropdown menu or by clicking on the legend.
                     </div>
                 </div>
 
-                <div id="plots-amplicon-coverage-violin-group", class="plot-card active">
+                <div id="plots-amplicon-coverage-violin-group", class="plot-card">
                     <div id="help-amplicon-depth" class="section-help-box">
-                        This section shows the median depth of coverage for each amplicon, calculated from the median read depth across its positions. If a target depth is specified, it is indicated by a dashed line, and amplicons meeting the target are highlighted in blue.
+                        This section shows coverage distribution across all amplicons, with each violin plot representing the distribution of read depth for a specific amplicon.
                         <br/>Uniform coverage suggests successful amplification, while consistently low-depth amplicons may indicate inefficient PCR amplification or low sequencing yield.
                     </div>
                 </div>
@@ -654,7 +654,8 @@ function showSection(sectionId, btn) {
 const PLOT_SECTION_MAP = {
     "amplicon_target_counts/sankey_group": "plots-amplicon-target-counts-sankey-group",
     
-    "amplicon_target_counts/bar_on_target": "amplicon-target-counts-bar-on-target",
+    "amplicon_target_counts/bar_on_target": "plots-amplicon-target-counts-bar-on-target",
+    "amplicon_target_counts/bar_multi_target": "plots-amplicon-target-counts-bar-multi-target",
     
     "amplicon_positional_depth/line_assigned_reads": "plots-amplicon-positional-depth-line-assigned-reads",
     "amplicon_positional_depth/heatmap_raw": "plots-amplicon-positional-depth-heatmap-raw",
