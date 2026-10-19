@@ -44,20 +44,27 @@ workflow {
     def genome_info = params.genomes[params.reference]
     assert genome_info: "--reference must be one of: ${params.genomes.keySet().join(', ')} (got '${params.reference}')."
 
-    if( params.panel ) {
-        log.info "Using panel: ${params.panel}"
-        def selected_panel = params.default_panels[params.panel]
-        assert selected_panel : "--panel must be one of: ${params.default_panels.keySet().join(', ')} (got '${params.panel}')."
-    }
-    else if( params.regions ) {
-        log.info "Using regions BED: ${params.regions}"
-        def selected_panel = params.regions
-        assert selected_panel : "--regions must be a valid BED file (got '${params.regions}')."
+    def selected_panel = null
+
+    if( !params.panel || params.panel == 'Custom' ) {
+        if( !params.regions ) {
+            error("--regions is required when --panel is 'Custom' or not provided. Please supply a BED file with the loci of interest, or choose one of: ${params.default_panels.keySet().join(', ')}.")
+        }
+        log.info "Using custom regions BED: ${params.regions}"
+        selected_panel = params.regions
     }
     else {
-        error("Either --panel or --regions must be provided. Please supply a panel name or an input BED file with loci of interest.")
+        selected_panel = params.default_panels[params.panel]
+        if( !selected_panel ) {
+            error("--panel must be one of: Custom, ${params.default_panels.keySet().join(', ')} (got '${params.panel}').")
+        }
+        if( params.regions ) {
+            log.warn "--regions is ignored because the predefined panel '${params.panel}' was selected."
+        }
+        log.info "Using panel: ${params.panel} (${selected_panel})"
     }
-    ch_regions = channel.value(selected_panel).collect()
+
+    ch_regions = channel.value(file(selected_panel, checkIfExists: true)).collect()
 
 
     def allowed_modes = ["map-ont", "sr"]
