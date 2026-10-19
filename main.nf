@@ -43,7 +43,21 @@ workflow {
     
     def genome_info = params.genomes[params.reference]
     assert genome_info: "--reference must be one of: ${params.genomes.keySet().join(', ')} (got '${params.reference}')."
-    assert params.regions   : "--regions cannot be empty. Please provide an input BED file with loci of interest."
+
+    if( params.panel ) {
+        log.info "Using panel: ${params.panel}"
+        def selected_panel = params.default_panels[params.panel]
+        assert selected_panel : "--panel must be one of: ${params.default_panels.keySet().join(', ')} (got '${params.panel}')."
+    }
+    else if( params.regions ) {
+        log.info "Using regions BED: ${params.regions}"
+        def selected_panel = params.regions
+        assert selected_panel : "--regions must be a valid BED file (got '${params.regions}')."
+    }
+    else {
+        error("Either --panel or --regions must be provided. Please supply a panel name or an input BED file with loci of interest.")
+    }
+    ch_regions = channel.value(selected_panel).collect()
 
 
     def allowed_modes = ["map-ont", "sr"]
@@ -51,15 +65,14 @@ workflow {
         "--minimap2.mode must be one of: ${allowed_modes.join(', ')}"
 
     def read_pattern = params.input_dir.endsWith("/")
-            ? "${params.input_dir}${params.read_pattern}"
-            : "${params.input_dir}/${params.read_pattern}"
+        ? "${params.input_dir}${params.read_pattern}"
+        : "${params.input_dir}/${params.read_pattern}"
         
     def stop_pattern = params.input_dir.endsWith("/")
         ? "${params.input_dir}${params.stop_pattern}"
         : "${params.input_dir}/${params.stop_pattern}"
 
     def minimap2_mode = params.minimap2.mode
-    def ch_regions = channel.value(file(params.regions)).collect()
 
     PrepareGenome(genome_info)
 
