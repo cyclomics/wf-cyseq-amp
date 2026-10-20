@@ -20,16 +20,8 @@ nextflow_workflow {
                 consensus_folder = Channel.of(
                     ["sample_1", "file_1", file("${projectDir}/tests/fixtures/report/.read_metrics2")]
                 )
-                depth_table = Channel.of(
-                    ["sample_1", "file_1", file("${projectDir}/tests/fixtures/report/depth/amplicon_depth.yml")]
-                )
-                on_target_rate = Channel.of(
-                    ["sample_1", "file_1", file("${projectDir}/tests/fixtures/report/depth/on_target_rate.yml")]
-                )
 
                 input[0] = consensus_folder
-                input[1] = depth_table
-                input[2] = on_target_rate
                 """
             }
         }

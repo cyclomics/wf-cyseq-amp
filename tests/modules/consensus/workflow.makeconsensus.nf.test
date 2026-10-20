@@ -21,6 +21,7 @@ nextflow_workflow {
                     file("${projectDir}/tests/fixtures/ref.fasta"),
                     "ref"
                 ])
+                input[2] = Channel.of(file("${projectDir}/tests/fixtures/small.bed"))
                 """
             }
         }
@@ -28,7 +29,7 @@ nextflow_workflow {
         then {
             assert workflow.success
             // Expect the workflow to emit consensus_sam and consensus_folder outputs
-            assert workflow.out.consensus_sam != null
+            assert workflow.out.consensus_bam != null
             assert workflow.out.consensus_folder != null
         }
     }

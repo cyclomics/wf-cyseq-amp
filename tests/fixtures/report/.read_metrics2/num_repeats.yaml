@@ -5,12 +5,17 @@ run:
   failed:
     'Failed: insufficient data': {}
     'Failed: no consensus alignment': {}
-    'Failed: unexpected read structure': {}
+    'Failed: unexpected read structure':
+      Prototype(s) do not match a known amplicon:
+        bins:
+          0: 1963
+        n: 1963
+        sum: 0
   success:
     dsDNA: {}
     ssDNA:
       1D:
         bins:
-          10: 2000
-        n: 2000
-        sum: 20000
+          10: 37
+        n: 37
+        sum: 370

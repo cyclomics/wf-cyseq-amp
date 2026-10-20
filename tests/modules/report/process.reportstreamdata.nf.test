@@ -18,8 +18,6 @@ nextflow_process {
                 input[0] = Channel.of([
                     "sample_1",
                     "file_1",
-                    file("${projectDir}/tests/fixtures/report/depth/amplicon_depth_live.yml"),
-                    file("${projectDir}/tests/fixtures/report/depth/on_target_rate_live.yml"),
                     file("${projectDir}/tests/fixtures/report/cards/cards.yaml"),
                     plot_files
                 ])
@@ -40,15 +38,6 @@ nextflow_process {
             assert json.final == false
             assert json.cards.size() > 0
             // assert json.plots.size() == 2
-
-            // def plotNames = json.plots.collect { it.name }
-            // assert plotNames.contains("Raw reads")
-            // assert plotNames.contains("Depth per amplicon")
-
-            // HTML has embedded data injected
-            // def html = path(process.out.report[0][1]).text
-            // assert html.contains('"final": false')
-            // assert html.contains("sample_1")
         }
     }
 
@@ -66,8 +55,6 @@ nextflow_process {
                 input[0] = Channel.of([
                     "my_sample",
                     "file_1",
-                    file("${projectDir}/tests/fixtures/report/depth/amplicon_depth_live.yml"),
-                    file("${projectDir}/tests/fixtures/report/depth/on_target_rate_live.yml"),
                     file("${projectDir}/tests/fixtures/report/cards/cards.yaml"),
                     plot_files
                 ])

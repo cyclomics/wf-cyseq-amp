@@ -1,5 +1,4 @@
-include { NameSortAlignments; PosSortIndexAlignments } from './common'
-include { Minimap2Align } from './alignment'
+include { Minimap2Align; NameSortAlignments; PosSortIndexAlignments } from './alignment'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -10,14 +9,19 @@ workflow make_consensus {
     take:
         read_fastq
         reference
+        regions
 
     main:
         Minimap2Align(read_fastq, reference, "map-ont")
         NameSortAlignments(Minimap2Align.out)
-        CyseqConsensus(NameSortAlignments.out, reference)
+        CyseqConsensus(NameSortAlignments.out, reference, regions)
+        consensus_sam = CyseqConsensus.out.map { it -> tuple(it[0], it[1], it[2]) }
+        PosSortIndexAlignments(consensus_sam)
+        PosSortIndexAlignments.out
+
 
     emit:
-        consensus_sam = CyseqConsensus.out.map { it -> tuple(it[0], it[1], it[2]) }
+        consensus_bam = PosSortIndexAlignments.out
         consensus_folder = CyseqConsensus.out.map { it -> tuple(it[0], it[1], it[3]) }
 }
 
@@ -45,6 +49,7 @@ process SamToFastq {
 }
 
 process CyseqConsensus {
+    publishDir { "${params.output_dir}/${sample_id}/consensus" }, mode: 'copy', overwrite: true
     container params.containers.cyseqtools
     cpus 8 // cpus = n + 4
     memory { 10.GB * task.attempt }
@@ -54,16 +59,18 @@ process CyseqConsensus {
     input:
         tuple val(sample_id), val(file_id), path(bam)
         tuple path(reference), val(reference_idx)
+        path(bed)
 
     output:
         tuple val(sample_id), val(file_id), path("${file_id}_consensus/${file_id}.sam"), path("${file_id}_consensus")
 
     script:
         """
-        cyseqtools consensus gw \\
+        cyseqtools consensus amp \\
             -n 4 \\
             -i $bam \\
             -r $reference \\
+            -b $bed \\
             -o ${file_id}_consensus
         
         mv ${file_id}_consensus/consensus.sam ${file_id}_consensus/${file_id}.sam

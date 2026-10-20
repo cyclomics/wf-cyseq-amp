@@ -7,8 +7,6 @@
 workflow report_live {
     take:
         consensus_folder // [sample_id, file_id, read_metrics_folder]
-        depth_table      // [sample_id, file_id, depth_yml]
-        on_target_rate    // [sample_id, file_id, on_target_rate_yml]
 
     main:
         // Accumulate read metrics
@@ -21,34 +19,7 @@ workflow report_live {
                 tuple(sample_id, file_id, cards, plots)
             }
 
-
-        // Accumulate amplicon depth
-        live_depth = depth_table
-            .map { sample_id, file_id, depth_yml ->
-                tuple(sample_id, file_id, depth_yml, ampDepthYml(sample_id))
-            }
-            | StreamDepth
-            | map { sample_id, file_id, _file ->
-                tuple(sample_id, file_id, ampDepthYml(sample_id))
-            }
-        
-        // Accumulate on-target rate
-        live_on_target = on_target_rate
-            .map { sample_id, file_id, on_target_rate_yml ->
-                tuple(sample_id, file_id, on_target_rate_yml, onTargetRateYml(sample_id))
-            }
-            | StreamOnTargetRate
-            | map { sample_id, file_id, _file ->
-                tuple(sample_id, file_id, onTargetRateYml(sample_id))
-            }
-
-        // Emit eagerly as soon as matching streams are available
-        paired = live_depth
-            .combine(live_on_target, by: [0, 1])
-            .combine(live_read_metrics, by: [0, 1])
-
-
-        ReportStreamData(paired, channel.fromPath(params.report_template).collect())
+        ReportStreamData(live_read_metrics, channel.fromPath(params.report_template).collect())
         live_report = ReportStreamData.out.report
 
     emit:
@@ -60,51 +31,6 @@ workflow report_live {
     PROCESSES
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-
-process StreamDepth {
-    publishDir { "${params.output_dir}/${sample_id}/report/depth" }, mode: 'copy', overwrite: true
-    container params.containers.alnutils
-    maxForks 1
-    cpus 1
-    memory 50.MB
-
-    input:
-        tuple val(sample_id), val(file_id), path(depth_yml), path(published_file)
-
-    output:
-        tuple val(sample_id), val(file_id), path("amplicon_depth_live.yml")
-
-    script:
-        def target_depth_arg = params.target_depth != null ? "--target_depth ${params.target_depth}" : ''
-        """
-        sum_depth.py \
-            --depth_yml "${depth_yml}" \
-            --published_file "${published_file}" \
-            $target_depth_arg
-        """
-}
-
-process StreamOnTargetRate {
-    publishDir { "${params.output_dir}/${sample_id}/report/depth" }, mode: 'copy', overwrite: true
-    container params.containers.alnutils
-    maxForks 1
-    cpus 1
-    memory 50.MB
-
-    input:
-        tuple val(sample_id), val(file_id), path(on_target_rate_yml), path(published_file)
-
-    output:
-        tuple val(sample_id), val(file_id), path("on_target_rate_live.yml")
-
-    script:
-        """
-        sum_on_target_rate.sh \
-            ${on_target_rate_yml} \
-            ${published_file} \
-            on_target_rate_live.yml
-        """
-}
 
 process StreamReadMetrics {
     publishDir { "${params.output_dir}/${sample_id}/report" }, mode: 'copy', overwrite: true
@@ -137,9 +63,7 @@ process ReportStreamData {
 
     input:
         tuple val(sample_id), val(file_id),
-              path(depth_yml),
-              path(on_target_rate_yml),
-              path(consensus_cards_yml), path(consensus_yml)
+              path(consensus_cards_yml), path(consensus_plots_yml)
         path report_template
 
     output:
@@ -178,7 +102,7 @@ process FinalizeReport {
             --json ${report_json} ${variant_table} \
             --sample_id ${sample_id} \
             ${epiFlag} \
-            --clean_dir "${absoluteOutputDir}"
+            --clean_dir "${absoluteOutputDir}"     
         """
 }
 
