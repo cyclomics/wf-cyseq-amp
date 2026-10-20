@@ -40,7 +40,9 @@ def _write_yaml(data: dict, output_file: Path) -> None:
 
 
 def load_and_merge_metrics(
-    new_metrics_folder: Path, prev_metrics_folder: Path, output_folder: Path
+    new_metrics_folder: Path,
+    prev_metrics_folder: Path,
+    output_folder: Path,
 ) -> Report:
     """
     Load new metrics, merge with existing published metrics if present,
@@ -70,30 +72,50 @@ def save_metric_plots(report: Report) -> None:
     """
 
     Path("plots").mkdir(exist_ok=True)
+
     for plot in report.available_plots:
-        try:
-            fig = report.plot(plot)
+        metric = report.plot_name_to_metric[plot]
+        plot_type = plot.split("/")[1]
 
-            # Update layout
-            for trace in fig.data:
-                if hasattr(trace, "name") and trace.name:
-                    # Breaks text into an array of strings every 30 characters
-                    trace.name = "<br>".join(wrap(trace.name, width=30))
+        # per-amplicon / per-region plots need one figure per key
+        if plot_type == "histogram_amplicon":
+            variants = [
+                (f"{plot}/{name}", {"amplicon_name": name})
+                for name in metric.data["run"]["success"]
+            ]
+        elif plot_type == "line_region":
+            variants = [(f"{plot}/{key}", {"region": key}) for key in metric.regions]
+        else:
+            variants = [(plot, {})]
 
-            fig.update_layout(
-                template="simple_white", height=450, autosize=True, legend={"valign": "top"}
-            )
+        for plot_label, kwargs in variants:
+            try:
+                fig = report.plot(plot, **kwargs)
+                # Update layout
+                for trace in fig.data:
+                    if hasattr(trace, "name") and trace.name:
+                        # Breaks text into an array of strings every 30 characters
+                        trace.name = "<br>".join(wrap(trace.name, width=30))
 
-            fig_json = json.loads(json.dumps(fig.to_plotly_json(), cls=PlotlyJSONEncoder))
-            
-            fig_json["name"] = plot
-            
-        except IndexError:
-            # Skip plots that cannot be generated due to lack of data
-            fig_json = {"name": plot, "data": [], "layout": {}}
-            continue
-        
-        _write_yaml(fig_json, Path(f"plots/{plot.replace('/', '_')}.yaml"))
+                fig.update_layout(
+                    template="simple_white",
+                    height=450,
+                    autosize=True,
+                    legend={"valign": "top"},
+                )
+
+                fig_json = json.loads(
+                    json.dumps(fig.to_plotly_json(), cls=PlotlyJSONEncoder)
+                )
+
+                fig_json["name"] = plot_label
+
+            except IndexError:
+                # Skip plots that cannot be generated due to lack of data
+                fig_json = {"name": plot_label, "data": [], "layout": {}}
+                continue
+
+            _write_yaml(fig_json, Path(f"plots/{plot_label.replace('/', '_')}.yaml"))
 
 
 def save_metric_cards(report: Report) -> None:
@@ -115,6 +137,9 @@ def save_metric_cards(report: Report) -> None:
     num_repeats = report.get_stats("num_repeats")
     mapped_bases = report.get_stats("mapped_bases")
     consensus = report.get_stats("consensus_length")
+    on_target_counts = _get_nested(report.get_stats("amplicon_target_counts"), "success", "n")
+    off_target_counts = _get_nested(report.get_stats("amplicon_off_target"), "total", "n")
+    on_target_rate = on_target_counts / (on_target_counts + off_target_counts) * 100 if (on_target_counts + off_target_counts) > 0 else 0
 
     cards = {
         "cards": {
@@ -130,6 +155,7 @@ def save_metric_cards(report: Report) -> None:
                 "success",
                 "median",
             ),
+            "on_target_rate": f"{on_target_rate:.1f}"
         }
     }
 
@@ -156,7 +182,9 @@ def main():
 
     # Update live cyseqtools metrics
     report = load_and_merge_metrics(
-        args.metrics_folder, PREV_METRICS_FOLDER, args.published_folder
+        args.metrics_folder,
+        PREV_METRICS_FOLDER,
+        args.published_folder,
     )
 
     # Save live metric figures

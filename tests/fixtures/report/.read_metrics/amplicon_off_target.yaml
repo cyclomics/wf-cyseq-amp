@@ -1,0 +1,7 @@
+run:
+  far from target:
+    NC_001416.1:
+      n: 1819
+  near target:
+    NC_001416.1:
+      n: 144

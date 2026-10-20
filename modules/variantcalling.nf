@@ -1,3 +1,5 @@
+include { FilterBidirectionalAlignments } from './alignment'
+
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     WORKFLOWS
@@ -11,9 +13,9 @@ workflow call_variants {
         regions
 
     main:
-        FilterAlignments(reads_aligned)
+        FilterBidirectionalAlignments(reads_aligned)
 
-        CallVariantsLofreq(FilterAlignments.out, reference, regions)
+        CallVariantsLofreq(FilterBidirectionalAlignments.out, reference, regions)
         FilterVcf(CallVariantsLofreq.out)
         ReformatVcf(FilterVcf.out)
 
@@ -60,24 +62,6 @@ workflow call_variants {
     PROCESSES
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-process FilterAlignments {
-    container params.containers.alnutils
-    cpus 1
-    memory 1.GB
-
-    input:
-        tuple val(sample_id), val(file_id), path(bam), path(bai)
-
-    output:
-        tuple val(sample_id), val(file_id), path("${file_id}.filtered.bam"), path("${file_id}.filtered.bai")
-
-    script:
-        """
-        samtools view -b -F 2304 ${bam} > ${file_id}.filtered.bam
-        samtools index ${file_id}.filtered.bam ${file_id}.filtered.bai
-        """
-}
-
 process CallVariantsLofreq {
     // publishDir { "${params.output_dir}/${sample_id}/variants" }, mode: 'copy'
     container params.containers.lofreq
@@ -149,8 +133,9 @@ process ReformatVcf {
 }
 
 process DownloadSnpEffDb {
+    storeDir "${workDir}/cache/snpeff/${db_name}"
     // storeDir "${params.snpeff_cache_dir}/${db_name}"
-    storeDir "${workDir}/cache"
+    // storeDir "${workDir}/cache"
     container params.containers.snpeff
     cpus 1
     memory 4.GB

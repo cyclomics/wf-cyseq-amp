@@ -1,0 +1,41 @@
+nextflow_process {
+
+    name "Test Process PosSortIndexAlignments"
+    script "modules/alignment.nf"
+    process "PosSortIndexAlignments"
+
+    test("Sorts and indexes a BAM file by position") {
+        tag "unit-test"
+
+        when {
+            process {
+                """
+                input[0] = Channel.of([
+                    "sample_1",
+                    "file_1",
+                    file("${projectDir}/tests/data/lambda/lambda_mut.bam")
+                ])
+                """
+            }
+        }
+
+        then {
+            assert process.success
+
+            // Output is a tuple [sample_id, file_id, bam, bai]
+            assert process.out[0][0].size() == 4
+            assert process.out[0][0][0] == "sample_1"
+            assert process.out[0][0][1] == "file_1"
+            assert path(process.out[0][0][2]).fileName.toString() == "file_1.bam"
+            assert path(process.out[0][0][3]).fileName.toString() == "file_1.bam.bai"
+
+            // BAM file should exist and be non-empty
+            assert path(process.out[0][0][2]).exists()
+            assert path(process.out[0][0][2]).size() > 0
+
+            // BAI file should exist and be non-empty
+            assert path(process.out[0][0][3]).exists()
+            assert path(process.out[0][0][3]).size() > 0
+        }
+    }
+}

@@ -40,12 +40,20 @@
                     "description": "Select the reference genome.",
                     "help_text": "Reference genome to be used for consensus, alignment and variant calling.\nThe selected genome data will be downloaded automatically Additionally, options ‘Lambda’ will download the Escherichia Lambda phage genome reference, and will inactivate variant annotation."
                 },
+                "panel": {
+                    "title": "Amplicon panel",
+                    "type": "string",
+                    "enum": ["Custom", "EGFR", "OralScreen"],
+                    "default": "Custom",
+                    "description": "Select the amplicon panel to use. If a custom panel is used, please provide a BED file with the target loci in the option below.",
+                    "help_text": "The selected panel will be used to form consensus and filter the variant calls. If you have a custom panel, please provide a BED file with the target loci in the option below."
+                },
                 "regions": {
-                    "title": "Regions of interest BED file",
+                    "title": "Regions of interest BED file (Custom panel only)",
                     "type": "string",
                     "format": "file-path",
-                    "description": "Path to a file in BED format with the amplicon target loci, relative to the reference used (GRCh38.p14).",
-                    "help_text": "Only locations in the BED file will be examined in the variant identification process."
+                    "description": "Path to a file in BED format with the amplicon target loci, relative to the reference used. Only necessary if using a Custom panel.",
+                    "help_text": "Only locations in the BED file will be used for consensus and examined in the variant identification process."
                 },
                 "target_vcf": {
                     "title": "VCF file with target mutations (Optional)",
@@ -68,7 +76,16 @@
                     "help_text": "This option only adjusts the amplicon read depth plot in the report."
                 }
             },
-            "required": ["sample_name", "input_dir", "reference", "regions"]
+            "required": ["sample_name", "input_dir", "reference", "panel"],
+            "allOf": [
+                {
+                    "if": {
+                        "properties": { "panel": { "const": "Custom" } },
+                        "required": ["panel"]
+                    },
+                    "then": { "required": ["regions"] }
+                }
+            ]
         },
         "output": {
             "title": "Output Options",

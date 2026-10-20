@@ -19,12 +19,9 @@ include { ingress } from './modules/ingress'
 include {
     PrepareGenome;
     SubsetGenome;
-    IndexReference;
-    GetAmpliconDepth;
     } from './modules/common'
 include { make_consensus } from './modules/consensus'
 include {
-    get_amplicon_metrics;
     merge_consensus;
     } from './modules/alignment'
 include { call_variants } from './modules/variantcalling'
@@ -43,7 +40,28 @@ workflow {
     
     def genome_info = params.genomes[params.reference]
     assert genome_info: "--reference must be one of: ${params.genomes.keySet().join(', ')} (got '${params.reference}')."
-    assert params.regions   : "--regions cannot be empty. Please provide an input BED file with loci of interest."
+
+    def selected_panel = null
+
+    if( !params.panel || params.panel == 'Custom' ) {
+        if( !params.regions ) {
+            error("--regions is required when --panel is 'Custom' or not provided. Please supply a BED file with the loci of interest, or choose one of: ${params.default_panels.keySet().join(', ')}.")
+        }
+        log.info "Using custom regions BED: ${params.regions}"
+        selected_panel = params.regions
+    }
+    else {
+        selected_panel = params.default_panels[params.panel]
+        if( !selected_panel ) {
+            error("--panel must be one of: Custom, ${params.default_panels.keySet().join(', ')} (got '${params.panel}').")
+        }
+        if( params.regions ) {
+            log.warn "--regions is ignored because the predefined panel '${params.panel}' was selected."
+        }
+        log.info "Using panel: ${params.panel} (${selected_panel})"
+    }
+
+    ch_regions = channel.value(file(selected_panel, checkIfExists: true)).collect()
 
 
     def allowed_modes = ["map-ont", "sr"]
@@ -51,15 +69,14 @@ workflow {
         "--minimap2.mode must be one of: ${allowed_modes.join(', ')}"
 
     def read_pattern = params.input_dir.endsWith("/")
-            ? "${params.input_dir}${params.read_pattern}"
-            : "${params.input_dir}/${params.read_pattern}"
+        ? "${params.input_dir}${params.read_pattern}"
+        : "${params.input_dir}/${params.read_pattern}"
         
     def stop_pattern = params.input_dir.endsWith("/")
         ? "${params.input_dir}${params.stop_pattern}"
         : "${params.input_dir}/${params.stop_pattern}"
 
     def minimap2_mode = params.minimap2.mode
-    def ch_regions = channel.value(file(params.regions)).collect()
 
     PrepareGenome(genome_info)
 
@@ -78,32 +95,23 @@ workflow {
     raw_fastq = ingress.out.ingested_fastq
 
     // 1. Consensus
-    make_consensus(raw_fastq, ch_reference)
-    consensus_sam = make_consensus.out.consensus_sam
+    make_consensus(raw_fastq, ch_reference, ch_regions)
+    consensus_bam = make_consensus.out.consensus_bam
     consensus_folder = make_consensus.out.consensus_folder
-
-    // 2. Alignment
-    // samtools fastq to transform bam to sam, then minimap2
-    get_amplicon_metrics(consensus_sam, ch_regions)
-    aligned_consensus_bam = get_amplicon_metrics.out.aligned_consensus_bam
-    depth_table = get_amplicon_metrics.out.depth_table
-    on_target_rate = get_amplicon_metrics.out.on_target_rate
 
     // REPORT: Live
     report_live(
-        consensus_folder,
-        depth_table,
-        on_target_rate
+        consensus_folder
     )
 
     // We require that all previous processes finish before continuing analysis.
     // groupTuple() controls this behaviour, since it collects all upstream channels.
     // 3. Merge all alignments
-    grouped_aligned_consensus_bam = aligned_consensus_bam
+    grouped_consensus_bam = consensus_bam
             .groupTuple(by: 0)
             .map { it -> tuple(it[0], it[1], it[2]) }
 
-    merge_consensus(grouped_aligned_consensus_bam)
+    merge_consensus(grouped_consensus_bam)
     merged_bam = merge_consensus.out.merged_bam
     
     // 4. Variant calling

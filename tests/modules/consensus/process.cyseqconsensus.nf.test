@@ -20,6 +20,7 @@ nextflow_process {
                     file("${projectDir}/tests/data/lambda/lambda_phage.fasta"),
                     file("${projectDir}/tests/data/lambda/lambda_phage.fasta.fai")
                 ])
+                input[2] = Channel.of(file("${projectDir}/tests/fixtures/small.bed"))
                 """
             }
         }

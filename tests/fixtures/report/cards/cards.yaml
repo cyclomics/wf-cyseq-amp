@@ -1,8 +1,9 @@
 cards:
-  n_raw_reads: 290010
-  median_read_length_raw: 1354.0
-  median_repeats: 5.0
-  n_mapped_raw: 181265
-  median_mappability_raw: 69.0
-  n_consensus_reads: 181265
-  median_read_length_consensus: 146.0
+  n_raw_reads: 2000
+  median_read_length_raw: 1500
+  median_repeats: 0
+  n_mapped_raw: 2000
+  median_mappability_raw: 0
+  n_consensus_reads: 37
+  median_read_length_consensus: 150
+  on_target_rate: '1.8'
