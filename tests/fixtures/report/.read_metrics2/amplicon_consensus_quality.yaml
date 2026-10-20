@@ -1,0 +1,21 @@
+run:
+  success:
+    amplicon1:
+      bins:
+        41: 28
+      n: 28
+      sum: 1148
+    amplicon2:
+      bins:
+        41: 2
+      n: 2
+      sum: 82
+    amplicon3:
+      bins:
+        41: 7
+      n: 7
+      sum: 287
+    amplicon4:
+      bins: {}
+      n: 0
+      sum: 0

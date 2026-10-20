@@ -1,94 +1,112 @@
 data:
-- link:
-    source:
-    - 0
-    - 0
-    - 1
-    - 1
-    - 1
-    - 2
-    - 2
-    - 2
-    - 2
-    - 2
-    - 2
-    - 2
-    target:
-    - 1
-    - 2
-    - 3
-    - 4
-    - 5
-    - 6
-    - 7
-    - 8
-    - 9
-    - 10
-    - 11
-    - 12
-    value:
-    - 181265
-    - 108745
-    - 41427
-    - 17421
-    - 122417
-    - 7215
-    - 321
-    - 47904
-    - 124
-    - 5802
-    - 45558
-    - 1821
-  node:
-    color:
-    - '#242323'
-    - '#42f5c8'
-    - '#f57e42'
-    - '#B0C4DE'
-    - '#6395EE'
-    - '#305CDE'
-    - '#228b22'
-    - '#f9f9f9'
-    - '#ffdf00'
-    - '#ffdf00'
-    - '#8b6914'
-    - '#030303'
-    - '#030303'
-    customdata:
-    - 'Total number of reads: 290010'
-    - 'Number of reads: 181265, 62.50% of total'
-    - 'Number of reads: 108745, 37.50% of total'
-    - 'Number of reads: 41427, 22.85% of success, 14.28% of total'
-    - 'Number of reads: 17421, 9.61% of success, 6.01% of total'
-    - 'Number of reads: 122417, 67.53% of success, 42.21% of total'
-    - 'Number of reads: 7215, 6.63% of failed, 2.49% of total'
-    - 'Number of reads: 321, 0.30% of failed, 0.11% of total'
-    - 'Number of reads: 47904, 44.05% of failed, 16.52% of total'
-    - 'Number of reads: 124, 0.11% of failed, 0.04% of total'
-    - 'Number of reads: 5802, 5.34% of failed, 2.00% of total'
-    - 'Number of reads: 45558, 41.89% of failed, 15.71% of total'
-    - 'Number of reads: 1821, 1.67% of failed, 0.63% of total'
-    hovertemplate: '%{customdata}'
-    label:
-    - run
-    - success
-    - fail
-    - 1D
-    - 2D
-    - 3D
-    - CHIMERA
-    - Consensus sequence did not align to reference genome
-    - Less than 3 segments
-    - No high complexity or longer than 30 bases prototypes
-    - Number of valid alignments too low
-    - Read has zero alignments
-    - Unclear forward/reverse pattern, failed to determine if 2D or 3D
-    line:
-      color: black
-      width: 0.5
-    pad: 15
-    thickness: 20
-  type: sankey
+- hovertemplate: 'Position: %{x}<br>% of assigned reads: %{y:.1f}%<extra></extra>'
+  legendgroup: other
+  line:
+    color: '#E69F00'
+  mode: lines
+  name: Unclassified
+  showlegend: true
+  x:
+  - 48300
+  - 48301
+  - 48302
+  - 48303
+  - 48304
+  - 48305
+  - 48306
+  - 48307
+  - 48308
+  - 48309
+  - 48310
+  - 48311
+  - 48312
+  - 48313
+  - 48314
+  - 48315
+  - 48316
+  - 48317
+  - 48318
+  - 48319
+  - 48320
+  - 48321
+  - 48322
+  - 48323
+  - 48324
+  - 48325
+  - 48326
+  - 48327
+  - 48328
+  - 48329
+  - 48330
+  - 48331
+  - 48332
+  - 48333
+  - 48334
+  - 48335
+  - 48336
+  - 48337
+  - 48338
+  - 48339
+  - 48340
+  - 48341
+  - 48342
+  - 48343
+  - 48344
+  - 48345
+  - 48346
+  - 48347
+  - 48348
+  y:
+  - 71.42857142857143
+  - 71.42857142857143
+  - 71.42857142857143
+  - 71.42857142857143
+  - 71.42857142857143
+  - 71.42857142857143
+  - 71.42857142857143
+  - 71.42857142857143
+  - 71.42857142857143
+  - 71.42857142857143
+  - 71.42857142857143
+  - 71.42857142857143
+  - 71.42857142857143
+  - 71.42857142857143
+  - 85.71428571428571
+  - 85.71428571428571
+  - 85.71428571428571
+  - 100.0
+  - 100.0
+  - 100.0
+  - 100.0
+  - 100.0
+  - 100.0
+  - 100.0
+  - 100.0
+  - 100.0
+  - 100.0
+  - 100.0
+  - 100.0
+  - 100.0
+  - 100.0
+  - 100.0
+  - 100.0
+  - 100.0
+  - 100.0
+  - 100.0
+  - 100.0
+  - 100.0
+  - 100.0
+  - 100.0
+  - 100.0
+  - 100.0
+  - 100.0
+  - 100.0
+  - 100.0
+  - 100.0
+  - 100.0
+  - 100.0
+  - 100.0
+  type: scatter
 layout:
   template:
     data:
@@ -586,9 +604,18 @@ layout:
         zeroline: false
         zerolinecolor: rgb(36,36,36)
   title:
-    text: Number of reads
+    text: Region coverage - amplicon3 (NC_001416.1:48300-48349)
+  xaxis:
+    title:
+      text: Genomic position (NC_001416.1)
+    tickformat: d
+    exponentformat: none
+    separatethousands: false
+  yaxis:
+    title:
+      text: '% of assigned reads'
   legend:
     valign: top
   height: 450
   autosize: true
-name: read_counts/sankey
+name: amplicon_positional_depth/line_region/amplicon3

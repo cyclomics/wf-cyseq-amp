@@ -1,0 +1,21 @@
+run:
+  failed:
+    'Failed: insufficient data': {}
+    'Failed: no consensus alignment': {}
+    'Failed: unexpected read structure':
+      Prototype(s) do not match a known amplicon:
+        n: 1963
+  success:
+    multi target:
+      amplicon2+amplicon3:
+        n: 7
+    off target: {}
+    on target:
+      amplicon1:
+        n: 28
+      amplicon2:
+        n: 0
+      amplicon3:
+        n: 2
+      amplicon4:
+        n: 0
