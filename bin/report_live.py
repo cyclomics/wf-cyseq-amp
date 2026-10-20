@@ -19,31 +19,31 @@ import yaml
 
 CARD_NAMES = {
     "n_raw_reads": (
-        "Raw reads",
+        "Processed reads",
         None,
-        "Total number of ingested raw reads in the sequencing run.",
+        "Total number of ingested reads in the sequencing run, after splitting based on chimera detection.",
     ),
     "median_read_length_raw": (
-        "Median raw read length",
+        "Median read length",
         "bp",
-        "Median length of all ingested raw reads.",
+        "Median length of all processed reads.",
     ),
     "median_repeats": (
         "Median number of repeats",
         None,
-        "Median number of identified repeats per raw read. "
+        "Median number of identified repeats per processed read. "
         "A repeat is the basic unit of a concatemeric read, "
         "typically corresponding to the insert.",
     ),
     "n_mapped_raw": (
-        "Mapped raw reads",
+        "Mapped processed reads",
         None,
-        "Number of ingested raw reads successfully mapped to the reference.",
+        "Number of processed reads successfully mapped to the reference.",
     ),
     "median_mappability_raw": (
         "Median alignment completeness",
         "%",
-        "Median percentage of mapped bases in a raw read over the its total length.",
+        "Median percentage of mapped bases in a processed read over the its total length.",
     ),
     "n_consensus_reads": (
         "Consensus reads",

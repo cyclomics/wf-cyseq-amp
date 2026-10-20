@@ -1,5 +1,4 @@
-include { NameSortAlignments; PosSortIndexAlignments } from './common'
-include { Minimap2Align } from './alignment'
+include { Minimap2Align; NameSortAlignments; PosSortIndexAlignments } from './alignment'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -16,9 +15,13 @@ workflow make_consensus {
         Minimap2Align(read_fastq, reference, "map-ont")
         NameSortAlignments(Minimap2Align.out)
         CyseqConsensus(NameSortAlignments.out, reference, regions)
+        consensus_sam = CyseqConsensus.out.map { it -> tuple(it[0], it[1], it[2]) }
+        PosSortIndexAlignments(consensus_sam)
+        PosSortIndexAlignments.out
+
 
     emit:
-        consensus_sam = CyseqConsensus.out.map { it -> tuple(it[0], it[1], it[2]) }
+        consensus_bam = PosSortIndexAlignments.out
         consensus_folder = CyseqConsensus.out.map { it -> tuple(it[0], it[1], it[3]) }
 }
 

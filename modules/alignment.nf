@@ -1,40 +1,15 @@
-include { PosSortIndexAlignments } from './common'
-
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     WORKFLOWS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-workflow get_amplicon_metrics {
-    take:
-        consensus_reads
-        regions
-
-    main:
-        PosSortIndexAlignments(consensus_reads)
-        aligned_consensus_bam = PosSortIndexAlignments.out
-
-        FilterR1Alignments(aligned_consensus_bam)
-        filtered_consensus_bam = FilterR1Alignments.out
-
-        GetAmpliconDepth(filtered_consensus_bam, regions)
-        GetOnTargetRate(filtered_consensus_bam, regions)
-        depth_table = GetAmpliconDepth.out
-        on_target_rate = GetOnTargetRate.out
-
-    emit:
-        aligned_consensus_bam
-        depth_table
-        on_target_rate
-}
-
-
 workflow merge_consensus {
     take:
-        annotated_bam_files
+        grouped_bam
 
     main:
-        MergeBamFiles(annotated_bam_files)
+
+        MergeBamFiles(grouped_bam)
         merged_bam = MergeBamFiles.out
 
     emit:
@@ -109,43 +84,59 @@ process FilterR1Alignments {
         """
 }
 
-process GetOnTargetRate {
+process FilterBidirectionalAlignments {
     container params.containers.alnutils
     cpus 1
-    memory 50.MB
+    memory 1.GB
 
     input:
         tuple val(sample_id), val(file_id), path(bam), path(bai)
-        path(bed)
 
     output:
-        tuple val(sample_id), val(file_id), path("${sample_id}_on_target_rate.yml")
+        tuple val(sample_id), val(file_id), path("${file_id}.filtered.bam"), path("${file_id}.filtered.bai")
 
     script:
         """
-        get_on_target_rate.sh ${bam} ${bed} ${sample_id}_on_target_rate.yml
+        samtools view -b -F 2304 ${bam} > ${file_id}.filtered.bam
+        samtools index ${file_id}.filtered.bam ${file_id}.filtered.bai
         """
 }
 
-process GetAmpliconDepth {
-    container params.containers.alnutils
+process PosSortIndexAlignments {
+    container params.containers.samtools
     cpus 1
-    memory 50.MB
-    
+    memory 100.MB
+
     input:
-        tuple val(sample_id), val(file_id), path(bam), path(bai)
-        path(bed)
+        tuple val(sample_id), val(file_id), path(sam)
 
     output:
-        tuple val(sample_id), val(file_id), path("${sample_id}_amplicon_depth.yml")
+        tuple val(sample_id), val(file_id), path("${file_id}.bam"), path("${file_id}.bam.bai") 
 
     script:
         """
-        samtools depth -a -J -b $bed $bam > ${sample_id}_depth.tsv
-        get_amplicon_depth.py ${sample_id}_depth.tsv $bed ${sample_id}_amplicon_depth.yml
+        samtools sort -o ${file_id}.bam $sam
+        samtools index ${file_id}.bam
         """
 }
 
+process NameSortAlignments {
+    publishDir { "${params.output_dir}/${sample_id}/concatemer_alignments" }, mode: 'copy'
+    container params.containers.samtools
+    cpus 1
+    memory 1.GB
+
+    input:
+        tuple val(sample_id), val(file_id), path(sam)
+
+    output:
+        tuple val(sample_id), val(file_id), path("${file_id}.bam")
+
+    script:
+        """
+        samtools sort -n -o ${file_id}.bam $sam
+        """
+}
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     FUNCTIONS

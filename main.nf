@@ -19,12 +19,9 @@ include { ingress } from './modules/ingress'
 include {
     PrepareGenome;
     SubsetGenome;
-    IndexReference;
-    GetAmpliconDepth;
     } from './modules/common'
 include { make_consensus } from './modules/consensus'
 include {
-    get_amplicon_metrics;
     merge_consensus;
     } from './modules/alignment'
 include { call_variants } from './modules/variantcalling'
@@ -99,31 +96,22 @@ workflow {
 
     // 1. Consensus
     make_consensus(raw_fastq, ch_reference, ch_regions)
-    consensus_sam = make_consensus.out.consensus_sam
+    consensus_bam = make_consensus.out.consensus_bam
     consensus_folder = make_consensus.out.consensus_folder
-
-    // 2. Alignment
-    // samtools fastq to transform bam to sam, then minimap2
-    get_amplicon_metrics(consensus_sam, ch_regions)
-    aligned_consensus_bam = get_amplicon_metrics.out.aligned_consensus_bam
-    depth_table = get_amplicon_metrics.out.depth_table
-    on_target_rate = get_amplicon_metrics.out.on_target_rate
 
     // REPORT: Live
     report_live(
-        consensus_folder,
-        depth_table,
-        on_target_rate
+        consensus_folder
     )
 
     // We require that all previous processes finish before continuing analysis.
     // groupTuple() controls this behaviour, since it collects all upstream channels.
     // 3. Merge all alignments
-    grouped_aligned_consensus_bam = aligned_consensus_bam
+    grouped_consensus_bam = consensus_bam
             .groupTuple(by: 0)
             .map { it -> tuple(it[0], it[1], it[2]) }
 
-    merge_consensus(grouped_aligned_consensus_bam)
+    merge_consensus(grouped_consensus_bam)
     merged_bam = merge_consensus.out.merged_bam
     
     // 4. Variant calling

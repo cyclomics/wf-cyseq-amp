@@ -1,3 +1,5 @@
+include { FilterBidirectionalAlignments } from './alignment'
+
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     WORKFLOWS
@@ -60,24 +62,6 @@ workflow call_variants {
     PROCESSES
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-process FilterBidirectionalAlignments {
-    container params.containers.alnutils
-    cpus 1
-    memory 1.GB
-
-    input:
-        tuple val(sample_id), val(file_id), path(bam), path(bai)
-
-    output:
-        tuple val(sample_id), val(file_id), path("${file_id}.filtered.bam"), path("${file_id}.filtered.bai")
-
-    script:
-        """
-        samtools view -b -F 2304 ${bam} > ${file_id}.filtered.bam
-        samtools index ${file_id}.filtered.bam ${file_id}.filtered.bai
-        """
-}
-
 process CallVariantsLofreq {
     // publishDir { "${params.output_dir}/${sample_id}/variants" }, mode: 'copy'
     container params.containers.lofreq

@@ -137,6 +137,9 @@ def save_metric_cards(report: Report) -> None:
     num_repeats = report.get_stats("num_repeats")
     mapped_bases = report.get_stats("mapped_bases")
     consensus = report.get_stats("consensus_length")
+    on_target_counts = _get_nested(report.get_stats("amplicon_target_counts"), "success", "n")
+    off_target_counts = _get_nested(report.get_stats("amplicon_off_target"), "total", "n")
+    on_target_rate = on_target_counts / (on_target_counts + off_target_counts) * 100 if (on_target_counts + off_target_counts) > 0 else 0
 
     cards = {
         "cards": {
@@ -152,6 +155,7 @@ def save_metric_cards(report: Report) -> None:
                 "success",
                 "median",
             ),
+            "on_target_rate": f"{on_target_rate:.1f}"
         }
     }
 
