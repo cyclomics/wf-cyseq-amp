@@ -64,6 +64,88 @@ nextflow_process {
                 // Single file emitted directly
                 assert path(splitFiles).exists()
             }
+            assert splitFiles.endsWith("file_1_001.fastq.gz")
+        }
+    }
+
+    test("Different valid extension: fq") {
+        tag "unit-test"
+
+        when {
+            params {
+                max_fastq_size = 40000
+            }
+            process {
+                """
+                input[0] = Channel.of([
+                    "sample_1",
+                    "file_1",
+                    file("${projectDir}/tests/data/simple/dummy.fq")
+                ])
+                """
+            }
+        }
+
+        then {
+            assert process.success
+
+            // split fastq should have same base extension as input
+            def splitFiles = process.out[0][0][2]
+            assert splitFiles.endsWith("file_1_001.fq.gz")
+        }
+    }
+
+    test("Different valid extension: fq.gz") {
+        tag "unit-test"
+
+        when {
+            params {
+                max_fastq_size = 40000
+            }
+            process {
+                """
+                input[0] = Channel.of([
+                    "sample_1",
+                    "file_1",
+                    file("${projectDir}/tests/data/simple/dummy.fq.gz")
+                ])
+                """
+            }
+        }
+
+        then {
+            assert process.success
+
+            // split fastq should have same base extension as input
+            def splitFiles = process.out[0][0][2]
+            assert splitFiles.endsWith("file_1_001.fq.gz")
+        }
+    }
+
+    test("Different valid extension: fastq.gz") {
+        tag "unit-test"
+
+        when {
+            params {
+                max_fastq_size = 40000
+            }
+            process {
+                """
+                input[0] = Channel.of([
+                    "sample_1",
+                    "file_1",
+                    file("${projectDir}/tests/data/simple/dummy.fastq.gz")
+                ])
+                """
+            }
+        }
+
+        then {
+            assert process.success
+
+            // split fastq should have same base extension as input
+            def splitFiles = process.out[0][0][2]
+            assert splitFiles.endsWith("file_1_001.fastq.gz")
         }
     }
 }

@@ -128,7 +128,7 @@ process SplitFastq {
         tuple val(sample_id), val(file_id), path(fastq)
 
     output:
-        tuple val(sample_id), val(file_id), path("split/${file_id}_*.fastq.gz")
+        tuple val(sample_id), val(file_id), path("split/${file_id}_*.{fq,fastq}.gz")
 
     script:
         """

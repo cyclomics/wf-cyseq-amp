@@ -36,14 +36,14 @@
                 "reference": {
                     "title": "Reference genome",
                     "type": "string",
-                    "enum": ["GRCh38.p14", "GRCh37.p13", "Lambda"],
+                    "enum": ["GRCh38.p14", "GRCh37.p13", "demo"],
                     "description": "Select the reference genome.",
-                    "help_text": "Reference genome to be used for consensus, alignment and variant calling.\nThe selected genome data will be downloaded automatically Additionally, options ‘Lambda’ will download the Escherichia Lambda phage genome reference, and will inactivate variant annotation."
+                    "help_text": "Reference genome to be used for consensus, alignment and variant calling.\nThe selected genome data will be downloaded automatically Additionally, option 'demo' will download the Escherichia Lambda phage genome reference, and will inactivate variant annotation."
                 },
                 "panel": {
                     "title": "Amplicon panel",
                     "type": "string",
-                    "enum": ["Custom", "EGFR", "OralScreen"],
+                    "enum": ["Custom", "EGFR", "OralScreen", "demo"],
                     "default": "Custom",
                     "description": "Select the amplicon panel to use. If a custom panel is used, please provide a BED file with the target loci in the option below.",
                     "help_text": "The selected panel will be used to form consensus and filter the variant calls. If you have a custom panel, please provide a BED file with the target loci in the option below."
