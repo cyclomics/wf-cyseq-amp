@@ -14,12 +14,33 @@ from pathlib import Path
 from textwrap import wrap
 from typing import Any, Mapping
 
+import numpy as np
+import plotly.graph_objects as go
 import yaml
 from cyseqtools.consensus.metrics.report import Report
 from plotly.utils import PlotlyJSONEncoder
 
 PREV_METRICS_FOLDER = Path(".prev_read_metrics")
 
+SELECTED_PLOTS = [
+    "amplicon_target_counts/sankey_group",
+    "amplicon_target_counts/bar_on_target",
+    "amplicon_target_counts/bar_multi_target",
+    "amplicon_positional_depth/line_assigned_reads",
+    "amplicon_positional_depth/heatmap_normalized",
+    "amplicon_consensus_quality/violin_group",
+    "amplicon_raw_quality/violin_group",
+    "amplicon_off_target/bar_near_far",
+    "read_counts/sankey_outcome",
+    "raw_length/histogram_outcome",
+    "raw_length/sankey_outcome",
+    "raw_read_average_quality_scores/histogram_outcome",
+    "num_repeats/histogram_outcome",
+    "mapped_bases/histogram_outcome",
+    "consensus_length/histogram_outcome",
+    "consensus_length/sankey_outcome",
+    "consensus_read_average_quality_scores/histogram_outcome"
+]
 
 def _get_nested(mapping: Mapping[str, Any], *keys: str, default: Any = 0) -> Any:
     """Safely retrieve a nested value from a mapping."""
@@ -65,6 +86,33 @@ def load_and_merge_metrics(
 
     return report
 
+def subsample_violin_traces(
+    fig: go.Figure,
+    max_points: int = 10000,
+    seed: int = 42,
+) -> go.Figure:
+    """Randomly subsample observations in violin traces."""
+
+    rng = np.random.default_rng(seed)
+
+    for trace in fig.data:
+        if trace.type != "violin":
+            continue
+
+        values = np.asarray(trace.y)
+
+        if len(values) <= max_points:
+            continue
+
+        indices = rng.choice(
+            len(values),
+            size=max_points,
+            replace=False,
+        )
+
+        trace.y = values[indices]
+
+    return fig
 
 def save_metric_plots(report: Report) -> None:
     """Loads the metric report, generates plot figures
@@ -73,7 +121,11 @@ def save_metric_plots(report: Report) -> None:
 
     Path("plots").mkdir(exist_ok=True)
 
-    for plot in report.available_plots:
+    for plot in SELECTED_PLOTS:
+        if plot not in report.available_plots:
+            print(f"Warning: Plot '{plot}' is not available in the report.")
+            continue      
+    
         metric = report.plot_name_to_metric[plot]
         plot_type = plot.split("/")[1]
 
@@ -91,6 +143,10 @@ def save_metric_plots(report: Report) -> None:
         for plot_label, kwargs in variants:
             try:
                 fig = report.plot(plot, **kwargs)
+                
+                if "violin" in plot:
+                    fig = subsample_violin_traces(fig)
+
                 # Update layout
                 for trace in fig.data:
                     if hasattr(trace, "name") and trace.name:
@@ -115,7 +171,9 @@ def save_metric_plots(report: Report) -> None:
                 fig_json = {"name": plot_label, "data": [], "layout": {}}
                 continue
 
-            _write_yaml(fig_json, Path(f"plots/{plot_label.replace('/', '_')}.yaml"))
+
+            output_file = Path(f"plots/{plot_label.replace('/', '_')}.yaml")
+            _write_yaml(fig_json, output_file)
 
 
 def save_metric_cards(report: Report) -> None:
@@ -163,29 +221,37 @@ def save_metric_cards(report: Report) -> None:
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--metrics_folder",
-        type=Path,
-        required=True,
-        help="Folder containing new metrics YML files from this file_id",
-    )
-    parser.add_argument(
-        "--published_folder",
-        type=Path,
-        required=True,
-        default=None,
-        help="Folder containing previously accumulated metrics (if any)",
-    )
+    DEV = False
+    if DEV:
+        report = load_and_merge_metrics(
+            Path("/scratch/projects/ROD/ROD_1026_ALK/output_wf-cyseq-amp-1.2/CYC000655/CYC000655_Exp_1_ALK_samples_5Ra0I56_barcode01/report/.read_metrics"),
+            Path("/scratch/projects/ROD/ROD_1026_ALK/output_wf-cyseq-amp-1.2/CYC000655/CYC000655_Exp_1_ALK_samples_5Ra0I56_barcode01/report/.read_metrics"),
+            Path("read_metrics"),
+        )
+    else:
+        parser = argparse.ArgumentParser(description=__doc__)
+        parser.add_argument(
+            "--metrics_folder",
+            type=Path,
+            required=True,
+            help="Folder containing new metrics YML files from this file_id",
+        )
+        parser.add_argument(
+            "--published_folder",
+            type=Path,
+            required=True,
+            default=None,
+            help="Folder containing previously accumulated metrics (if any)",
+        )
 
-    args = parser.parse_args()
+        args = parser.parse_args()
 
-    # Update live cyseqtools metrics
-    report = load_and_merge_metrics(
-        args.metrics_folder,
-        PREV_METRICS_FOLDER,
-        args.published_folder,
-    )
+        # Update live cyseqtools metrics
+        report = load_and_merge_metrics(
+            args.metrics_folder,
+            PREV_METRICS_FOLDER,
+            args.published_folder,
+        )
 
     # Save live metric figures
     save_metric_plots(report)

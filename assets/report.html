@@ -475,8 +475,7 @@
                     <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-amplicon-target-counts-bar-multi-target')">Multi-target counts</button>
                     <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-amplicon-off-target-bar-near-far')">Off-target counts</button>
                     <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-amplicon-positional-depth-heatmap-normalized')">Coverage homogeneity</button>
-                    <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-amplicon-positional-depth-line-assigned-reads')">Coverage completeness</button>
-                    <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-amplicon-coverage-violin-group')">Coverage distribution</button>            
+                    <button class="plot-tab-btn" onclick="switchPlot(this, 'plots-amplicon-positional-depth-line-assigned-reads')">Coverage completeness</button>           
                 </div>
 
                 <div id="plots-amplicon-target-counts-bar-on-target", class="plot-card active">
@@ -509,13 +508,6 @@
                     <div id="help-amplicon-depth" class="section-help-box">
                         This section shows the coverage homogeneity within regions, calculated as the percentage of read depth at each position relative to the maximum depth for that region.
                         <br/>The lineplot shows coverage for all amplicons, and individual amplicons or sets of amplicons can be selected either from the dropdown menu or by clicking on the legend.
-                    </div>
-                </div>
-
-                <div id="plots-amplicon-coverage-violin-group", class="plot-card">
-                    <div id="help-amplicon-depth" class="section-help-box">
-                        This section shows coverage distribution across all amplicons, with each violin plot representing the distribution of read depth for a specific amplicon.
-                        <br/>Uniform coverage suggests successful amplification, while consistently low-depth amplicons may indicate inefficient PCR amplification or low sequencing yield.
                     </div>
                 </div>
 
@@ -664,21 +656,13 @@ function showSection(sectionId, btn) {
 // Map plot names to section container IDs
 const PLOT_SECTION_MAP = {
     "amplicon_target_counts/sankey_group": "plots-amplicon-target-counts-sankey-group",
-    
     "amplicon_target_counts/bar_on_target": "plots-amplicon-target-counts-bar-on-target",
     "amplicon_target_counts/bar_multi_target": "plots-amplicon-target-counts-bar-multi-target",
-    
     "amplicon_positional_depth/line_assigned_reads": "plots-amplicon-positional-depth-line-assigned-reads",
-    "amplicon_positional_depth/heatmap_raw": "plots-amplicon-positional-depth-heatmap-raw",
     "amplicon_positional_depth/heatmap_normalized": "plots-amplicon-positional-depth-heatmap-normalized",
-    "amplicon_coverage/violin_group": "plots-amplicon-coverage-violin-group",
-
     "amplicon_consensus_quality/violin_group": "plots-amplicon-consensus-quality-violin-group",
     "amplicon_raw_quality/violin_group": "plots-amplicon-raw-quality-violin-group",
-
-    "amplicon_off_target/bar_chromosome": "plots-amplicon-off-target-bar-chromosome",
     "amplicon_off_target/bar_near_far": "plots-amplicon-off-target-bar-near-far",
-    
     "read_counts/sankey_outcome": "plots-read-counts-sankey-outcome",
     "raw_length/histogram_outcome": "plots-raw-length-histogram-outcome",
     "raw_length/sankey_outcome": "plots-raw-length-sankey-outcome",
