@@ -221,37 +221,29 @@ def save_metric_cards(report: Report) -> None:
 
 
 def main():
-    DEV = False
-    if DEV:
-        report = load_and_merge_metrics(
-            Path("/scratch/projects/ROD/ROD_1026_ALK/output_wf-cyseq-amp-1.2/CYC000655/CYC000655_Exp_1_ALK_samples_5Ra0I56_barcode01/report/.read_metrics"),
-            Path("/scratch/projects/ROD/ROD_1026_ALK/output_wf-cyseq-amp-1.2/CYC000655/CYC000655_Exp_1_ALK_samples_5Ra0I56_barcode01/report/.read_metrics"),
-            Path("read_metrics"),
-        )
-    else:
-        parser = argparse.ArgumentParser(description=__doc__)
-        parser.add_argument(
-            "--metrics_folder",
-            type=Path,
-            required=True,
-            help="Folder containing new metrics YML files from this file_id",
-        )
-        parser.add_argument(
-            "--published_folder",
-            type=Path,
-            required=True,
-            default=None,
-            help="Folder containing previously accumulated metrics (if any)",
-        )
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--metrics_folder",
+        type=Path,
+        required=True,
+        help="Folder containing new metrics YML files from this file_id",
+    )
+    parser.add_argument(
+        "--published_folder",
+        type=Path,
+        required=True,
+        default=None,
+        help="Folder containing previously accumulated metrics (if any)",
+    )
 
-        args = parser.parse_args()
+    args = parser.parse_args()
 
-        # Update live cyseqtools metrics
-        report = load_and_merge_metrics(
-            args.metrics_folder,
-            PREV_METRICS_FOLDER,
-            args.published_folder,
-        )
+    # Update live cyseqtools metrics
+    report = load_and_merge_metrics(
+        args.metrics_folder,
+        PREV_METRICS_FOLDER,
+        args.published_folder,
+    )
 
     # Save live metric figures
     save_metric_plots(report)
