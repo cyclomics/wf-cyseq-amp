@@ -28,38 +28,16 @@ CARD_NAMES = {
         "bp",
         "Median length of all processed reads.",
     ),
-    "median_repeats": (
-        "Median number of repeats",
-        None,
-        "Median number of identified repeats per processed read. "
-        "A repeat is the basic unit of a concatemeric read, "
-        "typically corresponding to the insert.",
-    ),
     "n_mapped_raw": (
         "Mapped processed reads",
         None,
         "Number of processed reads successfully mapped to the reference.",
     ),
-    "median_mappability_raw": (
-        "Median alignment completeness",
-        "%",
-        "Median percentage of mapped bases in a processed read over the its total length.",
-    ),
     "n_consensus_reads": (
-        "Consensus reads",
+        "Successful consensus reads",
         None,
-        "Number of consensus reads successfully generated.",
-    ),
-    "median_read_length_consensus": (
-        "Median consensus read length",
-        "bp",
-        "Median length of successful consensus reads.",
-    ),
-    "on_target_rate": (
-        "Consensus on-target rate",
-        "%",
-        "Percentage of successful consensus reads mapping to the target loci.",
-    ),
+        "Number of consensus reads successfully generated based on sufficient information per concatemer.",
+    )
 }
 
 
