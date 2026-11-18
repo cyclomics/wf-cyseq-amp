@@ -36,7 +36,7 @@
                 "reference": {
                     "title": "Reference genome",
                     "type": "string",
-                    "enum": ["GRCh38", "GRCh37", "demo"],
+                    "enum": ["GRCh38.p14", "GRCh37.p13", "demo"],
                     "description": "Select the reference genome.",
                     "help_text": "Reference genome to be used for consensus, alignment and variant calling.\nThe selected genome data will be downloaded automatically Additionally, option 'demo' will download the Escherichia Lambda phage genome reference, and will inactivate variant annotation."
                 },
