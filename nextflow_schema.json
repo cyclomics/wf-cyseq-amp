@@ -36,7 +36,7 @@
                 "reference": {
                     "title": "Reference genome",
                     "type": "string",
-                    "enum": ["GRCh38.p14", "GRCh37.p13", "demo"],
+                    "enum": ["GRCh38", "GRCh37", "demo"],
                     "description": "Select the reference genome.",
                     "help_text": "Reference genome to be used for consensus, alignment and variant calling.\nThe selected genome data will be downloaded automatically Additionally, option 'demo' will download the Escherichia Lambda phage genome reference, and will inactivate variant annotation."
                 },
@@ -44,7 +44,6 @@
                     "title": "Amplicon panel",
                     "type": "string",
                     "enum": ["Custom", "EGFR", "OralScreen", "demo"],
-                    "default": "Custom",
                     "description": "Select the amplicon panel to use. If a custom panel is used, please provide a BED file with the target loci in the option below.",
                     "help_text": "The selected panel will be used to form consensus and filter the variant calls. If you have a custom panel, please provide a BED file with the target loci in the option below."
                 },
@@ -68,12 +67,6 @@
                     "format": "file-path",
                     "description": "Path to a VCF file with the reject mutations, relative to the reference used.",
                     "help_text": "If provided, the workflow will compare the identified variants to those in the reject VCF file and remove them from the variant calling results. For example, this can be used to remove known contaminants. If not provided, no comparison will be made."
-                },
-                "target_depth": {
-                    "title": "Target read depth per amplicon (Optional)",
-                    "type": "integer",
-                    "description": "The desired amplicon depth, which will be used to mark the point at which all amplicons reach this value. If not set, then no target depth will be used.",
-                    "help_text": "This option only adjusts the amplicon read depth plot in the report."
                 }
             },
             "required": ["sample_name", "input_dir", "reference", "panel"],
